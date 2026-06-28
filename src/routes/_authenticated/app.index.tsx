@@ -267,6 +267,19 @@ function MapHome() {
         </div>
       )}
 
+      {/* Banner errore refresh layer */}
+      {layerError && (
+        <div
+          className="pointer-events-none absolute inset-x-0 z-[1000] flex justify-center"
+          style={{ top: "calc(env(safe-area-inset-top, 0px) + 50px)" }}
+        >
+          <div className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-destructive/90 px-3 py-1.5 text-destructive-foreground shadow-lg backdrop-blur">
+            <AlertTriangle size={12} />
+            <span className="text-[11px] font-semibold">{layerError}</span>
+          </div>
+        </div>
+      )}
+
       {/* Locate FAB */}
       <button
         type="button"
