@@ -174,9 +174,16 @@ function AdminDashboard() {
       <div className="mx-auto max-w-2xl px-5 py-6">
         <div className="flex items-center justify-between">
           <CiclaLogo size="md" />
-          <Badge variant="secondary" className="bg-destructive/10 text-destructive">
-            <Shield className="mr-1 size-3" /> Admin
-          </Badge>
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <Badge variant="secondary" className="bg-warning/15 text-warning">
+                <Bell className="mr-1 size-3" /> {unreadCount}
+              </Badge>
+            )}
+            <Badge variant="secondary" className="bg-destructive/10 text-destructive">
+              <Shield className="mr-1 size-3" /> Admin
+            </Badge>
+          </div>
         </div>
 
         <h1 className="mt-6 text-2xl font-bold tracking-tight">Pannello amministratore</h1>
