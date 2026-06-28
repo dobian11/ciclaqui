@@ -46,6 +46,12 @@ function CompanyDashboard() {
     retry: false,
   });
 
+  const { data: reviews } = useQuery({
+    queryKey: ["my-company-reviews"],
+    queryFn: () => listReviews({}),
+    enabled: hasSession === true && !!company,
+  });
+
   // Se non ha azienda → onboarding (solo se loggato)
   useEffect(() => {
     if (hasSession && !isLoading && !company) navigate({ to: "/azienda/onboarding" as never });
