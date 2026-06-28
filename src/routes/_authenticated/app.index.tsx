@@ -366,7 +366,7 @@ function MapHome() {
       {/* Locate FAB */}
       <button
         type="button"
-        onClick={() => setFollow((f) => !f)}
+        onClick={() => setFollow(!follow)}
         className={`absolute right-4 z-[1000] grid size-11 place-items-center rounded-full app-glass-strong shadow-xl transition-colors ${
           follow ? "text-cicla" : "text-muted-foreground"
         }`}
