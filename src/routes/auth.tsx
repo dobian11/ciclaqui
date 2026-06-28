@@ -34,7 +34,7 @@ const signupSchema = z.object({
   full_name: z.string().trim().min(2, "Inserisci il tuo nome").max(80),
   email: z.string().trim().email("Email non valida").max(255),
   password: z.string().min(8, "Almeno 8 caratteri").max(72),
-  company_code: z.string().trim().min(3, "Il codice azienda è obbligatorio").max(20),
+  company_code: z.string().trim().min(3, "Il codice è obbligatorio").max(20),
   terms: z.literal(true, { message: "Devi accettare i termini per continuare" }),
 });
 
