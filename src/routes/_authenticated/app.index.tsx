@@ -325,8 +325,14 @@ function MapHome() {
         style={{ bottom: "calc(275px + env(safe-area-inset-bottom, 0px))" }}
         aria-label="Punti d'interesse"
       >
-        {layersOpen ? <X size={18} strokeWidth={2.4} /> : <Layers size={18} strokeWidth={2.4} />}
-        {poiCategories.length > 0 && !layersOpen && (
+        {poiLoading ? (
+          <Loader2 size={18} strokeWidth={2.4} className="animate-spin text-cicla" />
+        ) : layersOpen ? (
+          <X size={18} strokeWidth={2.4} />
+        ) : (
+          <Layers size={18} strokeWidth={2.4} />
+        )}
+        {poiCategories.length > 0 && !layersOpen && !poiLoading && (
           <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-cicla text-[9px] font-bold text-cicla-foreground">
             {poiCategories.length}
           </span>
