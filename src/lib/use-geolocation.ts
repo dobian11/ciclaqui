@@ -44,6 +44,7 @@ export function useGeolocation(enabled = true): GeoState {
       return;
     }
     setState((s) => ({ ...s, error: null, loading: true }));
+    const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const speedMs = pos.coords.speed; // m/s, can be null
         const speedKmh = speedMs != null && !Number.isNaN(speedMs) ? Math.max(0, speedMs * 3.6) : 0;
