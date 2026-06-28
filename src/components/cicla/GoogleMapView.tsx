@@ -155,6 +155,7 @@ export function GoogleMapView({
   const ref = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
+  const lastIconUrlRef = useRef<string | null>(null);
   const accuracyRef = useRef<any>(null);
   const polyRef = useRef<any>(null);
   const routePolyRef = useRef<any>(null);
