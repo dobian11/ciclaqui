@@ -143,11 +143,13 @@ export function GoogleMapView({
   const markerRef = useRef<any>(null);
   const accuracyRef = useRef<any>(null);
   const polyRef = useRef<any>(null);
-  const poiMarkersRef = useRef<Map<string, any>>(new Map());
+  const routePolyRef = useRef<any>(null);
+  const poiMarkersRef = useRef<Map<string, { marker: any; poi: Poi }>>(new Map());
   const poiAbortRef = useRef<AbortController | null>(null);
   const poiDebounceRef = useRef<number | null>(null);
   const firstFix = useRef(true);
   const [error, setError] = useState<string | null>(null);
+
 
 
   // Init mappa
