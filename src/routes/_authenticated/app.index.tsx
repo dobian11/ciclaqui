@@ -241,9 +241,9 @@ function MapHome() {
   // GPS telemetry — fires on error transitions
   const lastGpsErrorRef = useRef<string | null>(null);
   useEffect(() => {
-    if (geo.error && geo.error !== lastGpsErrorRef.current) {
-      lastGpsErrorRef.current = geo.error;
-      void logTelemetry({ event: "watch", source: "gps", status: "error", errorMessage: geo.error });
+    if (geo.error && geo.error.message !== lastGpsErrorRef.current) {
+      lastGpsErrorRef.current = geo.error.message;
+      void logTelemetry({ event: "watch", source: "gps", status: "error", errorMessage: geo.error.message });
     } else if (!geo.error && lastGpsErrorRef.current) {
       lastGpsErrorRef.current = null;
       void logTelemetry({ event: "watch", source: "gps", status: "success" });
