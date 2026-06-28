@@ -275,6 +275,56 @@ function AdminDashboard() {
                       </Button>
                     </div>
                   )}
+                  <div className="mt-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-[11px]"
+                      onClick={() => setExpandedCompanyId(expandedCompanyId === c.id ? null : c.id)}
+                    >
+                      <History className="mr-1 size-3" />
+                      {expandedCompanyId === c.id ? "Nascondi storico" : "Vedi storico & documenti"}
+                    </Button>
+                  </div>
+                  {expandedCompanyId === c.id && (
+                    <div className="mt-2 space-y-2 rounded-md border border-border/50 bg-secondary/30 p-2">
+                      {!companyReviews || companyReviews.length === 0 ? (
+                        <p className="text-[11px] text-muted-foreground">Nessuna revisione registrata.</p>
+                      ) : (
+                        companyReviews.map((r) => {
+                          const docs = Array.isArray(r.documents) ? (r.documents as Array<{ name: string; path: string }>) : [];
+                          return (
+                            <div key={r.id} className="rounded border border-border/40 bg-background/60 p-2 text-[11px]">
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">{r.kind === "initial" ? "Iniziale" : "Nuova revisione"}</span>
+                                <Badge variant="secondary" className="text-[10px]">{r.status}</Badge>
+                              </div>
+                              <div className="text-[10px] text-muted-foreground">
+                                {new Date(r.submitted_at).toLocaleString("it-IT")}
+                              </div>
+                              {r.notes && <div className="mt-1">{r.notes}</div>}
+                              {r.reason && <div className="mt-1 text-destructive">Motivo: {r.reason}</div>}
+                              {docs.length > 0 && (
+                                <div className="mt-1.5 flex flex-wrap gap-1">
+                                  {docs.map((d) => (
+                                    <Button
+                                      key={d.path}
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-6 px-1.5 text-[10px]"
+                                      onClick={() => handleOpenDoc(d.path)}
+                                    >
+                                      <Download className="mr-1 size-3" /> {d.name}
+                                    </Button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
