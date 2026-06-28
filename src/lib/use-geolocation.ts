@@ -30,6 +30,7 @@ export function useGeolocation(enabled = true): GeoState {
     mode: "foot",
     accuracy: null,
     error: null,
+    loading: true,
   });
 
   const recentSpeeds = useRef<number[]>([]);
