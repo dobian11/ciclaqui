@@ -7,6 +7,7 @@ const createCompanySchema = z.object({
   vat: z.string().trim().max(32).optional().or(z.literal("")),
   iban: z.string().trim().max(34).optional().or(z.literal("")),
   contact_email: z.string().trim().email().max(255),
+  kind: z.enum(["company", "municipality"]).default("company"),
 });
 
 /**
