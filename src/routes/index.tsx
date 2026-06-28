@@ -1,8 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
-import { Button } from "@/components/ui/button";
-import { Bike, Building2, Leaf, MapPin, ShieldCheck, Coins } from "lucide-react";
+import { Bike, Building2, ShieldCheck, Coins, MapPin, ArrowRight } from "lucide-react";
 import { getPostLoginRedirect } from "@/lib/auth-redirect";
 
 export const Route = createFileRoute("/")({
@@ -29,57 +28,84 @@ export const Route = createFileRoute("/")({
 
 function WelcomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-secondary/40 to-background">
-      <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 py-8">
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      {/* Aurora glow background */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-20 -left-20 size-[420px] rounded-full bg-cicla opacity-20 blur-[120px]" />
+        <div className="absolute top-1/3 -right-24 size-[380px] rounded-full bg-info opacity-10 blur-[120px]" />
+      </div>
+
+      <div className="relative mx-auto flex min-h-screen max-w-md flex-col px-5 pb-8 pt-6"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 24px)" }}
+      >
         <header className="flex items-center justify-between">
           <CiclaLogo size="md" />
           <Link
             to="/auth"
             search={{ mode: "login" }}
-            className="rounded-full border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="rounded-full app-glass px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-foreground/80"
           >
             Accedi
           </Link>
         </header>
 
-        <section className="mt-10">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-cicla/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-cicla">
-            <Leaf size={12} /> Mobilità che premia
+        <section className="mt-12">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-cicla/15 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-cicla ring-1 ring-cicla/30">
+            <span className="size-1.5 rounded-full bg-cicla animate-pulse" /> Mobilità che premia
           </span>
-          <h1 className="mt-4 font-display text-4xl font-bold leading-tight tracking-tight">
+          <h1 className="mt-5 font-display text-[44px] font-bold leading-[1.05] tracking-tight">
             Muoviti green.
             <br />
-            <span className="text-cicla">Guadagna davvero.</span>
+            <span className="bg-gradient-to-r from-cicla to-info bg-clip-text text-transparent">
+              Guadagna davvero.
+            </span>
           </h1>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Cicla Qui traccia i tuoi spostamenti in bici o a piedi, ti protegge dai furti
-            con il passaporto della bicicletta e trasforma i tuoi chilometri in punti
-            convertibili in denaro. Per le persone e per le aziende che vogliono premiare
-            la sostenibilità dei propri dipendenti.
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+            Cicla Qui traccia i tuoi spostamenti sostenibili, protegge la tua bici
+            dai furti e trasforma i chilometri in denaro reale — per te o per i
+            dipendenti della tua azienda.
           </p>
         </section>
 
         <section className="mt-8 grid grid-cols-2 gap-3">
-          <FeatureCard icon={<MapPin size={18} />} title="Mappa & tracker" desc="Posizione precisa, rilevamento automatico del mezzo." />
-          <FeatureCard icon={<Coins size={18} />} title="Punti reali" desc="10 punti = 0,10 €. Prelievo sicuro via Stripe." />
-          <FeatureCard icon={<ShieldCheck size={18} />} title="Antifurto" desc="Passaporto bici e segnalazione furti pubblica." />
-          <FeatureCard icon={<Building2 size={18} />} title="Per aziende" desc="Codice univoco, dashboard, premi ai dipendenti." />
+          <FeatureCard icon={<MapPin size={16} />} title="Mappa GPS" desc="Rileva auto il mezzo: bici, piedi, auto." />
+          <FeatureCard icon={<Coins size={16} />} title="Punti reali" desc="10 punti = 0,10 €. Prelievo Stripe." />
+          <FeatureCard icon={<ShieldCheck size={16} />} title="Passaporto" desc="Antifurto via numero telaio." />
+          <FeatureCard icon={<Building2 size={16} />} title="Per aziende" desc="Codice, dashboard, premi team." />
         </section>
 
         <div className="mt-auto pt-10 space-y-3">
-          <Button asChild className="w-full h-12 text-base shadow-cicla">
-            <Link to="/auth" search={{ mode: "signup" }}>
-              <Bike className="mr-1" /> Inizia come persona
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="w-full h-12 text-base">
-            <Link to="/azienda/auth" search={{ mode: "signup" }}>
-              <Building2 className="mr-1" /> Sono un'azienda
-            </Link>
-          </Button>
-          <p className="text-center text-[11px] text-muted-foreground">
+          <Link
+            to="/auth"
+            search={{ mode: "signup" }}
+            className="group flex h-14 items-center justify-between rounded-2xl bg-cicla px-5 text-cicla-foreground shadow-cicla active:scale-[0.98] transition-transform"
+          >
+            <span className="flex items-center gap-3">
+              <span className="grid size-9 place-items-center rounded-xl bg-cicla-foreground/10">
+                <Bike size={18} />
+              </span>
+              <span className="font-display text-base font-bold">Inizia come persona</span>
+            </span>
+            <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+          </Link>
+
+          <Link
+            to="/azienda/auth"
+            search={{ mode: "signup" }}
+            className="group flex h-14 items-center justify-between rounded-2xl app-glass-strong px-5 text-foreground active:scale-[0.98] transition-transform"
+          >
+            <span className="flex items-center gap-3">
+              <span className="grid size-9 place-items-center rounded-xl bg-foreground/10">
+                <Building2 size={18} />
+              </span>
+              <span className="font-display text-base font-bold">Sono un'azienda</span>
+            </span>
+            <ArrowRight size={18} className="text-muted-foreground transition-transform group-hover:translate-x-1" />
+          </Link>
+
+          <p className="pt-1 text-center text-[11px] text-muted-foreground">
             Hai già un account?{" "}
-            <Link to="/auth" search={{ mode: "login" }} className="font-semibold text-foreground underline-offset-2 hover:underline">
+            <Link to="/auth" search={{ mode: "login" }} className="font-bold text-foreground underline-offset-2 hover:underline">
               Accedi
             </Link>
           </p>
@@ -91,11 +117,11 @@ function WelcomePage() {
 
 function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
-    <div className="rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
-      <div className="grid h-9 w-9 place-items-center rounded-full bg-cicla/10 text-cicla">
+    <div className="rounded-3xl app-glass p-4">
+      <div className="grid h-9 w-9 place-items-center rounded-2xl bg-cicla/15 text-cicla ring-1 ring-cicla/25">
         {icon}
       </div>
-      <div className="mt-3 text-sm font-semibold leading-tight">{title}</div>
+      <div className="mt-3 font-display text-sm font-bold leading-tight">{title}</div>
       <div className="mt-1 text-[11px] leading-snug text-muted-foreground">{desc}</div>
     </div>
   );

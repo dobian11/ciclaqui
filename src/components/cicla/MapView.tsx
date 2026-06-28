@@ -131,9 +131,10 @@ export function MapView({
       className="absolute inset-0 h-full w-full"
     >
       <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         maxZoom={19}
-        attribution='&copy; OpenStreetMap'
+        subdomains={["a", "b", "c", "d"]}
+        attribution='&copy; OpenStreetMap &copy; CARTO'
       />
       <LocationLayer position={position} mode={mode} follow={follow} />
     </MapContainer>
