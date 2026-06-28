@@ -56,10 +56,8 @@ function MapHome() {
     queryFn: () => fetchAQ({ data: { lat: geo.position![0], lng: geo.position![1] } }),
   });
 
-  const aqi = aqQuery.data?.aqi ?? null;
-  const aqiLabel = aqQuery.data?.category ?? (aqi == null ? "—" : String(aqi));
-  const aqiDot =
-    aqi == null ? "bg-muted-foreground" : aqi >= 80 ? "bg-cicla" : aqi >= 50 ? "bg-warning" : "bg-destructive";
+  // dettagli AQ usati dal trittico in basso (BottomTrio)
+
 
   const polylinePath = useMemo(
     () => trip.path.map((p) => ({ lat: p.lat, lng: p.lng })),
