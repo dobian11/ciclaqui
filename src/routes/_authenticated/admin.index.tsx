@@ -146,6 +146,58 @@ function AdminDashboard() {
           <Stat icon={<Wallet className="size-4" />} label="Prelievi pending" value={stats?.pending_payouts} highlight />
         </div>
 
+        {/* Enti (aziende/comuni) da approvare */}
+        <Card className="mt-6 p-5">
+          <div className="flex items-center justify-between">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Enti registrati
+            </div>
+            <span className="text-[11px] text-muted-foreground">
+              {companies?.filter((c) => c.status === "pending").length ?? 0} in attesa
+            </span>
+          </div>
+          {!companies || companies.length === 0 ? (
+            <p className="mt-3 text-[12px] text-muted-foreground">Nessun ente registrato.</p>
+          ) : (
+            <ul className="mt-3 space-y-3">
+              {companies.map((c) => (
+                <li key={c.id} className="rounded-lg border border-border/50 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate text-sm font-medium">{c.name}</span>
+                        <Badge variant="secondary" className="text-[10px]">
+                          {c.kind === "municipality" ? "Comune" : "Azienda"}
+                        </Badge>
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-muted-foreground">
+                        P.IVA/CF: {c.vat ?? "—"} · {c.contact_email}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {new Date(c.created_at).toLocaleString("it-IT")}
+                      </div>
+                      {c.status === "rejected" && c.rejection_reason && (
+                        <div className="mt-1 text-[10px] text-destructive">Motivo: {c.rejection_reason}</div>
+                      )}
+                    </div>
+                    <StatusBadge status={c.status} />
+                  </div>
+                  {c.status === "pending" && (
+                    <div className="mt-3 flex gap-2">
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleCompanyDecide(c.id, "approved")}>
+                        <Check className="mr-1 size-3.5" /> Approva
+                      </Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleCompanyDecide(c.id, "rejected")}>
+                        <X className="mr-1 size-3.5" /> Rifiuta
+                      </Button>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
         {/* Payouts */}
         <Card className="mt-6 p-5">
           <div className="flex items-center justify-between">
