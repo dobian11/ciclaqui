@@ -127,7 +127,7 @@ export function GoogleMapView({
   poiCategories?: PoiCategory[];
   refreshKey?: number;
   onRefreshError?: (message: string) => void;
-  onRefreshComplete?: () => void;
+  onRefreshComplete?: (result: { ok: boolean; error?: string; count?: number }) => void;
   onPoiLoadingChange?: (loading: boolean) => void;
 }) {
 
