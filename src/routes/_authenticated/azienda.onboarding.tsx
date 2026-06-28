@@ -61,7 +61,8 @@ function OnboardingPage() {
     setLoading(true);
     try {
       const company = await create({ data: { name, vat, iban, contact_email, kind } });
-      toast.success(`${kind === "municipality" ? "Comune" : "Azienda"} registrato! Codice: ${company.code}`, { duration: 8000 });
+      toast.success(`${kind === "municipality" ? "Comune" : "Azienda"} registrato! In attesa di approvazione admin.`, { duration: 8000 });
+      void company;
       await router.invalidate();
       navigate({ to: "/azienda" as never });
     } catch (err) {

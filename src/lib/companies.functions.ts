@@ -84,10 +84,21 @@ export const validateCompanyCode = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: company } = await supabaseAdmin
       .from("companies")
-      .select("id, name")
+      .select("id, name, status")
       .eq("code", data.code.toUpperCase())
       .maybeSingle();
-    if (!company) return { valid: false as const };
+    if (!company) return { valid: false as const, reason: "not_found" as const };
+    if (company.status !== "approved") {
+      return { valid: false as const, reason: "not_approved" as const };
+    }
+    const { data: sub } = await supabaseAdmin
+      .from("company_subscriptions")
+      .select("status")
+      .eq("company_id", company.id)
+      .maybeSingle();
+    if (!sub || !["active", "trial"].includes(sub.status)) {
+      return { valid: false as const, reason: "no_subscription" as const };
+    }
     return { valid: true as const, name: company.name };
   });
 
@@ -110,7 +121,7 @@ export const getMyCompany = createServerFn({ method: "GET" })
 
     const { data: company } = await supabase
       .from("companies")
-      .select("id, name, code, vat, iban, contact_email, created_at, kind, tracking_start, tracking_end, tracking_days")
+      .select("id, name, code, vat, iban, contact_email, created_at, kind, tracking_start, tracking_end, tracking_days, status, approved_at, rejection_reason")
       .eq("id", profile.company_id)
       .maybeSingle();
 
