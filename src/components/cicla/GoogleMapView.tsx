@@ -127,7 +127,7 @@ export function GoogleMapView({
   poiCategories?: PoiCategory[];
   refreshKey?: number;
   onRefreshError?: (message: string) => void;
-  onRefreshComplete?: () => void;
+  onRefreshComplete?: (result: { ok: boolean; error?: string; count?: number }) => void;
   onPoiLoadingChange?: (loading: boolean) => void;
 }) {
 
@@ -371,20 +371,30 @@ export function GoogleMapView({
       const ctrl = new AbortController();
       poiAbortRef.current = ctrl;
       onPoiLoadingChange?.(true);
+      let poiCount = 0;
+      let poiError: string | null = null;
       fetchPois([sw.lat(), sw.lng(), ne.lat(), ne.lng()], poiCategories, ctrl.signal)
         .then((pois) => {
+          poiCount = pois.length;
           console.info("[pois] caricati", pois.length, "per", poiCategories.join(","));
           renderPois(pois);
         })
         .catch((e) => {
           if (e?.name !== "AbortError") {
             console.warn("[pois] errore", e);
-            onRefreshError?.(e?.message ?? "Errore caricamento punti d'interesse");
+            poiError = e?.message ?? "Errore caricamento punti d'interesse";
+            onRefreshError?.(poiError!);
+          } else {
+            poiError = "aborted";
           }
         })
         .finally(() => {
           onPoiLoadingChange?.(false);
-          onRefreshComplete?.();
+          onRefreshComplete?.(
+            poiError && poiError !== "aborted"
+              ? { ok: false, error: poiError, count: poiCount }
+              : { ok: true, count: poiCount },
+          );
         });
     };
 

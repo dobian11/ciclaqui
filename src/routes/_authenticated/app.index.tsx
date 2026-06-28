@@ -12,6 +12,7 @@ import { endTrip } from "@/lib/trips.functions";
 import { getMyTrackingWindow } from "@/lib/companies.functions";
 import { POI_META, type PoiCategory } from "@/lib/pois";
 import { supabase } from "@/integrations/supabase/client";
+import { logTelemetry } from "@/lib/telemetry";
 
 import { toast } from "sonner";
 
@@ -65,20 +66,53 @@ function MapHome() {
   const [poiLoading, setPoiLoading] = useState(false);
   const [layerError, setLayerError] = useState<string | null>(null);
   const isRefreshingRef = useRef(false);
-  const aqPromiseRef = useRef<Promise<void> | null>(null);
+  const refreshStartRef = useRef<number>(0);
+  const aqPromiseRef = useRef<Promise<{ ok: boolean; error?: string }> | null>(null);
   const refreshLayers = () => {
     if (isRefreshingRef.current) return; // blocco richieste duplicate
     isRefreshingRef.current = true;
+    refreshStartRef.current = performance.now();
     setLayerError(null);
     setRefreshing(true);
     setRefreshKey((k) => k + 1);
+    void logTelemetry({ event: "refresh", source: "all", status: "start" });
+    void logTelemetry({ event: "refresh", source: "poi", status: "start" });
+    const aqStart = performance.now();
+    void logTelemetry({ event: "refresh", source: "air_quality", status: "start" });
     aqPromiseRef.current = qc.refetchQueries({ queryKey: ["aq"] })
-      .then(() => {})
-      .catch(() => {});
+      .then(() => {
+        void logTelemetry({
+          event: "refresh",
+          source: "air_quality",
+          status: "success",
+          durationMs: Math.round(performance.now() - aqStart),
+        });
+        return { ok: true };
+      })
+      .catch((e: any) => {
+        void logTelemetry({
+          event: "refresh",
+          source: "air_quality",
+          status: "error",
+          durationMs: Math.round(performance.now() - aqStart),
+          errorMessage: e?.message ?? String(e),
+        });
+        return { ok: false, error: e?.message ?? String(e) };
+      });
   };
-  const onRefreshComplete = async () => {
+  const onRefreshComplete = async (poiResult?: { ok: boolean; error?: string }) => {
     if (!isRefreshingRef.current) return;
-    try { await aqPromiseRef.current; } catch {}
+    const aqResult: { ok: boolean; error?: string } = await (aqPromiseRef.current ?? Promise.resolve({ ok: true }));
+    const totalMs = Math.round(performance.now() - refreshStartRef.current);
+    const allOk = (poiResult?.ok ?? true) && aqResult.ok;
+    void logTelemetry({
+      event: "refresh",
+      source: "all",
+      status: allOk ? "success" : "error",
+      durationMs: totalMs,
+      errorMessage: allOk ? null : (poiResult?.error || aqResult.error || "partial failure"),
+      meta: { poi_ok: poiResult?.ok ?? true, aq_ok: aqResult.ok },
+    });
     isRefreshingRef.current = false;
     setRefreshing(false);
     toast.message("Layer aggiornati");
@@ -100,6 +134,18 @@ function MapHome() {
     staleTime: 5 * 60_000,
   });
   const inWindow = isWithinWindow(winQuery.data as any);
+
+  // GPS telemetry — fires on error transitions
+  const lastGpsErrorRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (geo.error && geo.error !== lastGpsErrorRef.current) {
+      lastGpsErrorRef.current = geo.error;
+      void logTelemetry({ event: "watch", source: "gps", status: "error", errorMessage: geo.error });
+    } else if (!geo.error && lastGpsErrorRef.current) {
+      lastGpsErrorRef.current = null;
+      void logTelemetry({ event: "watch", source: "gps", status: "success" });
+    }
+  }, [geo.error]);
 
 
   const liveMode = trip.recording ? trip.dominantMode : geo.mode;
