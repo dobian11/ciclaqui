@@ -382,6 +382,7 @@ function QrModal({ bike, onClose }: { bike: BikeRow; onClose: () => void }) {
             <Share2 size={14} /> Condividi
           </button>
         </div>
+        <WalletButtons bikeId={bike.id} />
       </div>
     </div>
   );
