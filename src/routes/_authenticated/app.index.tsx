@@ -297,7 +297,14 @@ function BottomTrio({
 }) {
   const [expanded, setExpanded] = useState<null | "kcal" | "aq">(null);
   const aqi = aq?.aqi ?? null;
-  const aqiLabel = aq?.category ?? (aqi == null ? "—" : String(aqi));
+  const aqiLabel = useMemo(() => {
+    if (aqi == null) return "—";
+    const category = (aq?.category ?? "").toString().toLowerCase();
+    if (category.includes("scadente") || category.includes("poor") || aqi < 50) return "Qa scadente";
+    if (category.includes("media") || category.includes("moderate") || aqi < 80) return "Qa media";
+    return "Qa buona";
+  }, [aq, aqi]);
+  const aqiValue = aqi == null ? null : Math.round(aqi);
   const aqiDot =
     aqi == null ? "bg-muted-foreground" : aqi >= 80 ? "bg-cicla" : aqi >= 50 ? "bg-warning" : "bg-destructive";
 
@@ -337,7 +344,8 @@ function BottomTrio({
               </div>
             ) : (
               <div className="space-y-2 text-[12px]">
-                <Row label="AQI" value={aqLoading ? "…" : String(aqiLabel)} />
+                <Row label="AQI" value={aqLoading ? "…" : aqi != null ? String(Math.round(aqi)) : "—"} />
+                <Row label="Stato" value={aqLoading ? "…" : aqiLabel} />
                 <Row label="PM2.5" value={aq?.pm25 != null ? `${aq.pm25.toFixed(1)} µg/m³` : "—"} />
                 <Row label="PM10" value={aq?.pm10 != null ? `${aq.pm10.toFixed(1)} µg/m³` : "—"} />
                 <Row label="O₃" value={aq?.o3 != null ? `${aq.o3.toFixed(1)} µg/m³` : "—"} />
@@ -397,13 +405,17 @@ function BottomTrio({
           <button
             type="button"
             onClick={() => setExpanded((e) => (e === "aq" ? null : "aq"))}
-            className={`group relative grid size-16 place-items-center rounded-full app-glass-strong shadow-xl transition-transform active:scale-95 ${
+            className={`group relative flex size-16 flex-col items-center justify-center rounded-full app-glass-strong shadow-xl transition-transform active:scale-95 ${
               expanded === "aq" ? "ring-2 ring-info" : ""
             }`}
             aria-label="Qualità dell'aria"
           >
             <Wind size={18} className="text-info" />
-            <span className="mt-0.5 font-display text-[13px] font-bold leading-none">
+            <span
+              className={`mt-0.5 max-w-[3.5rem] truncate px-1 text-center font-display font-bold leading-none ${
+                aqiLabel.length > 3 ? "text-[10px]" : "text-[13px]"
+              }`}
+            >
               {aqLoading ? "…" : aqiLabel}
             </span>
             <span
