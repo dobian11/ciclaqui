@@ -137,7 +137,7 @@ export const startCompanySubscription = createServerFn({ method: "POST" })
         {
           company_id: profile.company_id,
           status: "trial",
-          plan: "monthly",
+          plan: "starter",
           current_period_end: trialEnd.toISOString(),
         },
         { onConflict: "company_id" },
