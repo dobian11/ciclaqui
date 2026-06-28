@@ -159,24 +159,67 @@ export function GoogleMapView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Aggiorna marker + camera quando la posizione cambia
+  const prevPosRef = useRef<{ lat: number; lng: number } | null>(null);
+  const headingRef = useRef<number | null>(null);
+  const animRef = useRef<number | null>(null);
+
+  // Aggiorna marker + camera quando la posizione cambia (con animazione fluida)
   useEffect(() => {
     const map = mapRef.current;
     const google = (window as any).google;
     if (!map || !google?.maps || !position) return;
     const latLng = { lat: position[0], lng: position[1] };
 
+    const prev = prevPosRef.current;
+    const distance = prev ? haversineMeters(prev, latLng) : 0;
+    // Soglia per considerare l'utente "in movimento" — sotto i 2m è rumore GPS.
+    const moving = distance > 2;
+    if (moving && prev) {
+      const newH = computeBearing(prev, latLng);
+      const curH = headingRef.current;
+      if (curH == null) headingRef.current = newH;
+      else {
+        const delta = ((newH - curH + 540) % 360) - 180;
+        headingRef.current = (curH + delta * 0.5 + 360) % 360;
+      }
+    }
+
+    const icon =
+      moving && headingRef.current != null
+        ? arrowIconForMode(mode, headingRef.current)
+        : pinIconForMode(mode);
+
     if (!markerRef.current) {
       markerRef.current = new google.maps.Marker({
         map,
         position: latLng,
-        icon: markerIconForMode(mode),
+        icon,
         zIndex: 10,
+        optimized: false,
       });
     } else {
-      markerRef.current.setPosition(latLng);
-      markerRef.current.setIcon(markerIconForMode(mode));
+      markerRef.current.setIcon(icon);
+      // Anima la posizione dal punto precedente al nuovo per un movimento fluido
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+      const start = markerRef.current.getPosition();
+      const startLat = start?.lat() ?? latLng.lat;
+      const startLng = start?.lng() ?? latLng.lng;
+      const duration = 800;
+      const t0 = performance.now();
+      const stepAnim = (now: number) => {
+        const k = Math.min(1, (now - t0) / duration);
+        const ease = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+        const lat = startLat + (latLng.lat - startLat) * ease;
+        const lng = startLng + (latLng.lng - startLng) * ease;
+        markerRef.current.setPosition({ lat, lng });
+        if (accuracyRef.current) accuracyRef.current.setCenter({ lat, lng });
+        if (k < 1) animRef.current = requestAnimationFrame(stepAnim);
+        else animRef.current = null;
+      };
+      animRef.current = requestAnimationFrame(stepAnim);
     }
+
+    prevPosRef.current = latLng;
 
     if (!accuracyRef.current) {
       accuracyRef.current = new google.maps.Circle({
