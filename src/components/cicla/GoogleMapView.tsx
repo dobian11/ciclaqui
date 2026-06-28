@@ -259,21 +259,29 @@ export function GoogleMapView({
 
     const runFetch = () => {
       const zoom = map.getZoom?.() ?? 0;
-      if (zoom < 13) {
+      if (zoom < 12) {
         clearAll();
+        console.info("[pois] zoom troppo basso, ingrandisci la mappa", zoom);
         return;
       }
       const b = map.getBounds?.();
-      if (!b) return;
+      if (!b) {
+        // bounds not ready yet — retry shortly
+        window.setTimeout(runFetch, 300);
+        return;
+      }
       const sw = b.getSouthWest();
       const ne = b.getNorthEast();
       poiAbortRef.current?.abort();
       const ctrl = new AbortController();
       poiAbortRef.current = ctrl;
       fetchPois([sw.lat(), sw.lng(), ne.lat(), ne.lng()], poiCategories, ctrl.signal)
-        .then(renderPois)
+        .then((pois) => {
+          console.info("[pois] caricati", pois.length, "per", poiCategories.join(","));
+          renderPois(pois);
+        })
         .catch((e) => {
-          if (e?.name !== "AbortError") console.warn("[pois]", e);
+          if (e?.name !== "AbortError") console.warn("[pois] errore", e);
         });
     };
 
@@ -284,6 +292,7 @@ export function GoogleMapView({
 
     runFetch();
     const listener = map.addListener("idle", onIdle);
+
     return () => {
       listener?.remove?.();
       if (poiDebounceRef.current) window.clearTimeout(poiDebounceRef.current);
