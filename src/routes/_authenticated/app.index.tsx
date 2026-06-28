@@ -198,8 +198,10 @@ function MapHome() {
       if (d < nearestDist) { nearestDist = d; nearestIdx = i; }
     }
 
-    // taglia la parte già percorsa → il percorso "si consuma" in tempo reale
-    if (nearestIdx > 0) {
+    // taglia la parte già percorsa → il percorso "si consuma" in tempo reale.
+    // Richiediamo un avanzamento di almeno 2 nodi per evitare rerender continui
+    // dovuti al jitter GPS quando si è quasi fermi.
+    if (nearestIdx >= 2) {
       setRouteData((rd) => (rd ? { ...rd, path: rd.path.slice(nearestIdx) } : rd));
     }
 
