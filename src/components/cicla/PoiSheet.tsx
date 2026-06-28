@@ -148,10 +148,15 @@ export function PoiSheet({
   );
 }
 
+const MODE_EMOJI: Record<"bike" | "foot" | "car", string> = { bike: "🚴", foot: "🚶", car: "🚗" };
+
 export function NavigationBanner({
   distanceMeters,
   durationSec,
+  totalDistanceMeters,
   recalculating,
+  tracking,
+  mode,
   onStop,
   onRefresh,
   onArrived,
@@ -159,7 +164,10 @@ export function NavigationBanner({
 }: {
   distanceMeters: number;
   durationSec: number;
+  totalDistanceMeters?: number;
   recalculating?: boolean;
+  tracking?: boolean;
+  mode?: "bike" | "foot" | "car";
   onStop: () => void;
   onRefresh?: () => void;
   onArrived?: () => void;
@@ -168,63 +176,106 @@ export function NavigationBanner({
   const km = distanceMeters / 1000;
   const distLabel = km < 1 ? `${Math.round(distanceMeters)} m` : `${km.toFixed(km < 10 ? 2 : 1)} km`;
   const mins = Math.max(1, Math.round(durationSec / 60));
+  const eta = new Date(Date.now() + durationSec * 1000);
+  const etaLabel = eta.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+
+  // progresso 0–1
+  const progress = totalDistanceMeters && totalDistanceMeters > 0
+    ? Math.min(1, Math.max(0, 1 - distanceMeters / totalDistanceMeters))
+    : 0;
+  const pct = Math.round(progress * 100);
+
   return (
     <div
       className="pointer-events-none absolute inset-x-0 z-[1050] flex justify-center px-3"
       style={{ top: "calc(env(safe-area-inset-top, 0px) + 50px)" }}
     >
-      <div className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-cicla/95 px-2.5 py-1.5 text-cicla-foreground shadow-cicla">
-        {recalculating ? (
-          <Loader2 size={12} className="animate-spin" />
-        ) : (
-          <Navigation size={12} strokeWidth={2.8} />
-        )}
-        <span className="font-display text-[11px] font-bold tabular-nums">{distLabel}</span>
-        <span className="text-[10px] opacity-70">·</span>
-        <span className="text-[10px] font-mono tabular-nums">{mins}′</span>
+      <div className="pointer-events-auto w-full max-w-md rounded-2xl bg-cicla/95 px-3 py-2 text-cicla-foreground shadow-cicla backdrop-blur-md">
+        {/* riga 1 — metriche live */}
+        <div className="flex items-center gap-1.5">
+          {recalculating ? (
+            <Loader2 size={12} className="animate-spin" />
+          ) : (
+            <Navigation size={12} strokeWidth={2.8} />
+          )}
+          <span className="font-display text-[12px] font-bold tabular-nums">{distLabel}</span>
+          <span className="text-[10px] opacity-70">·</span>
+          <span className="text-[11px] font-mono tabular-nums">{mins}′</span>
+          <span className="text-[10px] opacity-70">·</span>
+          <span className="text-[10px] font-mono tabular-nums opacity-90">ETA {etaLabel}</span>
+          <span className="ml-auto flex items-center gap-1">
+            {tracking !== undefined && (
+              <span
+                className={`flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${
+                  tracking ? "bg-white text-cicla" : "bg-black/25 text-white/80"
+                }`}
+                title={tracking ? "Tracking attivo" : "Tracking in pausa"}
+              >
+                <span
+                  className={`inline-block size-1.5 rounded-full ${tracking ? "animate-pulse bg-cicla" : "bg-white/50"}`}
+                />
+                {mode ? MODE_EMOJI[mode] : ""} {tracking ? "REC" : "—"}
+              </span>
+            )}
+          </span>
+        </div>
 
-        {onRefresh && (
+        {/* riga 2 — progress bar */}
+        <div className="mt-1.5 flex items-center gap-2">
+          <div className="h-1 flex-1 overflow-hidden rounded-full bg-black/25">
+            <div
+              className="h-full rounded-full bg-white transition-[width] duration-500 ease-out"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          <span className="font-mono text-[9px] tabular-nums opacity-90">{pct}%</span>
+        </div>
+
+        {/* riga 3 — azioni */}
+        <div className="mt-1.5 flex items-center justify-end gap-1">
+          {onRefresh && (
+            <button
+              type="button"
+              onClick={onRefresh}
+              className="grid size-6 place-items-center rounded-full bg-black/20 text-white active:scale-95"
+              aria-label="Aggiorna posizione GPS"
+              title="Aggiorna posizione"
+            >
+              <Locate size={11} strokeWidth={2.8} />
+            </button>
+          )}
+          {onRecalc && (
+            <button
+              type="button"
+              onClick={onRecalc}
+              disabled={recalculating}
+              className="grid size-6 place-items-center rounded-full bg-black/20 text-white active:scale-95 disabled:opacity-50"
+              aria-label="Ricalcola percorso"
+              title="Ricalcola"
+            >
+              <RotateCw size={11} strokeWidth={2.8} />
+            </button>
+          )}
+          {onArrived && (
+            <button
+              type="button"
+              onClick={onArrived}
+              className="grid size-6 place-items-center rounded-full bg-white text-cicla active:scale-95"
+              aria-label="Sono arrivato"
+              title="Sono arrivato"
+            >
+              <Flag size={11} strokeWidth={2.8} />
+            </button>
+          )}
           <button
             type="button"
-            onClick={onRefresh}
-            className="ml-1 grid size-6 place-items-center rounded-full bg-black/20 text-white active:scale-95"
-            aria-label="Aggiorna posizione GPS"
-            title="Aggiorna posizione"
+            onClick={onStop}
+            className="grid size-6 place-items-center rounded-full bg-black/25 text-white"
+            aria-label="Termina navigazione"
           >
-            <Locate size={11} strokeWidth={2.8} />
+            <X size={11} strokeWidth={3} />
           </button>
-        )}
-        {onRecalc && (
-          <button
-            type="button"
-            onClick={onRecalc}
-            disabled={recalculating}
-            className="grid size-6 place-items-center rounded-full bg-black/20 text-white active:scale-95 disabled:opacity-50"
-            aria-label="Ricalcola percorso"
-            title="Ricalcola"
-          >
-            <RotateCw size={11} strokeWidth={2.8} />
-          </button>
-        )}
-        {onArrived && (
-          <button
-            type="button"
-            onClick={onArrived}
-            className="grid size-6 place-items-center rounded-full bg-white text-cicla active:scale-95"
-            aria-label="Sono arrivato"
-            title="Sono arrivato"
-          >
-            <Flag size={11} strokeWidth={2.8} />
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={onStop}
-          className="ml-0.5 grid size-5 place-items-center rounded-full bg-black/25 text-white"
-          aria-label="Termina navigazione"
-        >
-          <X size={11} strokeWidth={3} />
-        </button>
+        </div>
       </div>
     </div>
   );
