@@ -12,34 +12,34 @@ const MODE_COLORS: Record<TripMode, string> = {
   car: "#E84A3A",
 };
 
-const MODE_GLYPH: Record<TripMode, string> = {
-  // Glifi semplificati: bici / persona / auto
-  bike: "M5 17a3 3 0 1 0 .001 0M19 17a3 3 0 1 0 .001 0M12 17l-3-8h3l2 4h3l-1-3h2",
-  foot: "M9 21l1-7-3-2 1-5 5 1 2 3 4 1-1 2-3-1-1 3 3 4-1 1-4-3-3 3z",
-  car: "M5 16l2-6h10l2 6m-14 0v3m14-3v3M5 16h14",
+const MODE_EMOJI: Record<TripMode, string> = {
+  bike: "🚴",
+  foot: "🚶",
+  car: "🚗",
 };
 
 function markerIconForMode(mode: TripMode) {
   const color = MODE_COLORS[mode];
-  const d = MODE_GLYPH[mode];
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="46" height="60" viewBox="0 0 46 60">
+  const emoji = MODE_EMOJI[mode];
+  // Pin grande con emoji ad alto contrasto su disco bianco — molto più riconoscibile
+  // dei glifi vettoriali, soprattutto per "a piedi".
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="66" viewBox="0 0 52 66">
     <defs><filter id="s-${mode}" x="-50%" y="-50%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="#000" flood-opacity="0.28"/>
+      <feDropShadow dx="0" dy="3" stdDeviation="2.8" flood-color="#000" flood-opacity="0.32"/>
     </filter></defs>
     <g filter="url(#s-${mode})">
-      <path d="M23 58 C 12 42 4 36 4 23 a19 19 0 1 1 38 0 c 0 13 -8 19 -19 35z" fill="${color}" stroke="white" stroke-width="2.5"/>
-      <circle cx="23" cy="23" r="13" fill="white" opacity="0.18"/>
-      <g transform="translate(11 11)" stroke="white" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-        <path d="${d}"/>
-      </g>
+      <path d="M26 64 C 13 46 4 39 4 24 a22 22 0 1 1 44 0 c 0 15 -9 22 -22 40z" fill="${color}" stroke="white" stroke-width="3"/>
+      <circle cx="26" cy="24" r="15" fill="white"/>
+      <text x="26" y="30" text-anchor="middle" font-size="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Emoji', 'Apple Color Emoji', system-ui">${emoji}</text>
     </g>
   </svg>`;
   return {
     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-    scaledSize: new (window as any).google.maps.Size(46, 60),
-    anchor: new (window as any).google.maps.Point(23, 58),
+    scaledSize: new (window as any).google.maps.Size(52, 66),
+    anchor: new (window as any).google.maps.Point(26, 64),
   };
 }
+
 
 // Stile dark "Verde Cicla"
 const DARK_STYLE: any[] = [
