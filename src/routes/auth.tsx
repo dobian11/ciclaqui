@@ -119,7 +119,7 @@ function AuthPage() {
             to="/azienda/auth"
             className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            <Building2 size={14} /> Sei un'azienda?
+            <Building2 size={14} /> Azienda o Comune?
           </Link>
         </div>
 
