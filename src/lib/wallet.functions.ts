@@ -18,11 +18,11 @@ export const getGoogleWalletLink = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: bike, error } = await context.supabase
       .from("bikes")
-      .select("id, marca, modello, colore, frame_number, user_id")
+      .select("id, marca, modello, colore, frame_number, owner_id")
       .eq("id", data.bike_id)
       .single();
     if (error || !bike) throw new Error("Bici non trovata");
-    if (bike.user_id !== context.userId) throw new Error("Non autorizzato");
+    if (bike.owner_id !== context.userId) throw new Error("Non autorizzato");
 
     const issuerId = process.env.GOOGLE_WALLET_ISSUER_ID;
     const classId = process.env.GOOGLE_WALLET_CLASS_ID;
