@@ -70,9 +70,47 @@ function MapHome() {
   const [refreshing, setRefreshing] = useState(false);
   const [poiLoading, setPoiLoading] = useState(false);
   const [layerError, setLayerError] = useState<string | null>(null);
+
+  // POI selection + in-app navigation
+  const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
+  const [routeData, setRouteData] = useState<
+    | { path: { lat: number; lng: number }[]; distanceMeters: number; durationSec: number; destination: Poi }
+    | null
+  >(null);
+
+  const computeRouteFn = useServerFn(computeRoute);
+  const routeMutation = useMutation({
+    mutationFn: async (poi: Poi) => {
+      if (!geo.position) throw new Error("Posizione non disponibile");
+      const res = await computeRouteFn({
+        data: {
+          origin: { lat: geo.position[0], lng: geo.position[1] },
+          destination: { lat: poi.lat, lng: poi.lng },
+          mode: geo.mode,
+        },
+      });
+      return { ...res, destination: poi };
+    },
+    onSuccess: (res) => {
+      const path = decodePolyline(res.encoded);
+      setRouteData({
+        path,
+        distanceMeters: res.distanceMeters,
+        durationSec: res.durationSec,
+        destination: res.destination,
+      });
+      setSelectedPoi(null);
+      toast.success("Percorso pronto");
+    },
+    onError: (e: any) => {
+      toast.error(e?.message ?? "Impossibile calcolare il percorso");
+    },
+  });
+
   const isRefreshingRef = useRef(false);
   const refreshStartRef = useRef<number>(0);
   const aqPromiseRef = useRef<Promise<{ ok: boolean; error?: string }> | null>(null);
+
   const refreshLayers = () => {
     if (isRefreshingRef.current) return; // blocco richieste duplicate
     isRefreshingRef.current = true;
