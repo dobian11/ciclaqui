@@ -12,7 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Loader2, Copy, Check, Users, CreditCard, Share2, LogOut, Building2, Mail, Hash, Download, Bike,
+  Loader2, Copy, Check, Users, CreditCard, Share2, LogOut, Building2, Landmark, Mail, Hash, Download, Bike,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/azienda/")({
