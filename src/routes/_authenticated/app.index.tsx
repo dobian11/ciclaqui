@@ -56,10 +56,11 @@ function isWithinWindow(win: { tracking_start: string | null; tracking_end: stri
 
 function MapHome() {
   const geo = useGeolocation(true);
-  const [follow, setFollow] = useState(true);
+  const { prefs, setFollow, setPoiCategories, togglePoi } = useMapPrefs();
+  const { follow, poiCategories } = prefs;
   const trip = useTripRecorder(geo.mode);
   const qc = useQueryClient();
-  const [poiCategories, setPoiCategories] = useState<PoiCategory[]>([]);
+  const [layersOpen, setLayersOpen] = useState(false);
   const [layersOpen, setLayersOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
