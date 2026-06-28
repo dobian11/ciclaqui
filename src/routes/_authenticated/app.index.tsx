@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { GoogleMapView } from "@/components/cicla/GoogleMapView";
 import { useGeolocation } from "@/lib/use-geolocation";
 import { useTripRecorder } from "@/lib/use-trip-recorder";
-import { Wind, Flame, Locate, Loader2, Search, Layers, X, Radio, AlertTriangle } from "lucide-react";
+import { Wind, Flame, Locate, Loader2, Search, Layers, X, Radio, AlertTriangle, RefreshCw } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAirQuality } from "@/lib/air-quality.functions";
@@ -59,6 +59,15 @@ function MapHome() {
   const qc = useQueryClient();
   const [poiCategories, setPoiCategories] = useState<PoiCategory[]>([]);
   const [layersOpen, setLayersOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshLayers = () => {
+    setRefreshing(true);
+    setRefreshKey((k) => k + 1);
+    qc.invalidateQueries({ queryKey: ["aq"] });
+    window.setTimeout(() => setRefreshing(false), 900);
+    toast.message("Layer aggiornati");
+  };
   const [authed, setAuthed] = useState(false);
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
@@ -162,7 +171,7 @@ function MapHome() {
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-background">
-      <GoogleMapView position={geo.position} mode={liveMode} follow={follow} path={polylinePath} poiCategories={poiCategories} />
+      <GoogleMapView position={geo.position} mode={liveMode} follow={follow} path={polylinePath} poiCategories={poiCategories} refreshKey={refreshKey} />
 
       {/* Top bar — pill compatte */}
       <div
@@ -273,11 +282,22 @@ function MapHome() {
         )}
       </button>
 
+      {/* Refresh layers FAB */}
+      <button
+        type="button"
+        onClick={refreshLayers}
+        className="absolute right-4 z-[1000] grid size-11 place-items-center rounded-full app-glass-strong text-muted-foreground shadow-xl transition-colors hover:text-cicla"
+        style={{ bottom: "calc(330px + env(safe-area-inset-bottom, 0px))" }}
+        aria-label="Aggiorna layer mappa"
+      >
+        <RefreshCw size={18} strokeWidth={2.4} className={refreshing ? "animate-spin text-cicla" : ""} />
+      </button>
+
       {/* Layers panel compatto */}
       {layersOpen && (
         <div
           className="absolute right-4 z-[1000] w-52 rounded-2xl app-glass-strong p-1.5 shadow-2xl"
-          style={{ bottom: "calc(330px + env(safe-area-inset-bottom, 0px))" }}
+          style={{ bottom: "calc(385px + env(safe-area-inset-bottom, 0px))" }}
         >
           <div className="px-2 pb-1 pt-1 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
             Punti d'interesse
