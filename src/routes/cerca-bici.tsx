@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Search, ShieldAlert, MapPin, Send, ArrowLeft } from "lucide-react";
@@ -43,12 +43,10 @@ function CercaBiciPage() {
   });
 
   // Auto-search if arriving with ?telaio=
-  useState(() => {
-    if (telaio && telaio.length >= 3) {
-      setTimeout(() => search.mutate(), 0);
-    }
-    return 0;
-  });
+  useEffect(() => {
+    if (telaio && telaio.length >= 3) search.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground">

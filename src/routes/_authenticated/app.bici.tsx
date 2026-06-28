@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Bike, Plus, QrCode, ShieldAlert, ShieldCheck, X, Copy, Share2 } from "lucide-react";
@@ -24,10 +24,9 @@ function BiciPage() {
   const listFn = useServerFn(listMyBikes);
   const [hasSession, setHasSession] = useState<boolean | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setHasSession(!!data.session));
-    return 0;
-  });
+  }, []);
 
   const { data: bikes = [], isLoading } = useQuery({
     queryKey: ["my-bikes"],
@@ -330,12 +329,11 @@ function QrModal({ bike, onClose }: { bike: BikeRow; onClose: () => void }) {
       ? `${window.location.origin}/cerca-bici?telaio=${encodeURIComponent(bike.frame_number)}`
       : "";
 
-  useState(() => {
+  useEffect(() => {
     QRCode.toDataURL(passportUrl, { width: 512, margin: 1, color: { dark: "#0c0c0e", light: "#ffffff" } })
       .then(setDataUrl)
       .catch(() => null);
-    return 0;
-  });
+  }, [passportUrl]);
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 backdrop-blur-sm p-4">
