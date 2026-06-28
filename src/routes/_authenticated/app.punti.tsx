@@ -55,9 +55,10 @@ function PuntiPage() {
   return (
     <div className="h-full overflow-y-auto bg-background">
       <div className="mx-auto max-w-md px-5 py-6 pb-32">
-        <h1 className="text-2xl font-bold tracking-tight">Punti & saldo</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Punti & premi</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          10 punti = 0,10 €. Bici 10 pt/km · piedi 3 pt/km · auto 0.
+          I punti si trasformano in premi (denaro, voucher o incentivi) decisi dalla
+          tua azienda o dal tuo Comune. Bici 10 pt/km · piedi 3 pt/km · auto 0.
         </p>
 
         <div className="mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-cicla to-emerald-600 p-6 text-white shadow-cicla">
@@ -68,18 +69,18 @@ function PuntiPage() {
             {balance?.points_balance ?? 0}
           </div>
           <div className="mt-1 text-sm opacity-90">
-            equivalente: € {Number(balance?.eur_balance ?? 0).toFixed(2)}
+            punti riscattabili in premi
           </div>
           <Button
             onClick={() => setOpen(true)}
             disabled={!hasSession || (balance?.points_balance ?? 0) < 50}
             className="mt-4 w-full bg-white text-cicla hover:bg-white/90"
           >
-            <ArrowDownToLine size={16} className="mr-2" /> Preleva
+            <ArrowDownToLine size={16} className="mr-2" /> Richiedi premio
           </Button>
           {hasSession && (balance?.points_balance ?? 0) < 50 && (
             <div className="mt-2 text-[11px] opacity-80">
-              Servono almeno 50 punti (0,50 €) per prelevare.
+              Servono almeno 50 punti per richiedere un premio.
             </div>
           )}
         </div>
