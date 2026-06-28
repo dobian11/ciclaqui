@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { getMyCompany } from "@/lib/companies.functions";
+import { getMyCompany, updateTrackingWindow } from "@/lib/companies.functions";
 import { startCompanySubscription } from "@/lib/payments.functions";
+
 import { listMyEmployees } from "@/lib/admin.functions";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { Button } from "@/components/ui/button";
