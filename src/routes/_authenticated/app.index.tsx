@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { GoogleMapView } from "@/components/cicla/GoogleMapView";
 import { useGeolocation } from "@/lib/use-geolocation";
 import { useTripRecorder } from "@/lib/use-trip-recorder";
-import { Wind, Flame, Locate, Loader2, Search, Layers, X, Radio, AlertTriangle } from "lucide-react";
+import { Wind, Flame, Locate, Loader2, Search, Layers, X, Radio, AlertTriangle, RefreshCw } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAirQuality } from "@/lib/air-quality.functions";
@@ -59,6 +59,15 @@ function MapHome() {
   const qc = useQueryClient();
   const [poiCategories, setPoiCategories] = useState<PoiCategory[]>([]);
   const [layersOpen, setLayersOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const refreshLayers = () => {
+    setRefreshing(true);
+    setRefreshKey((k) => k + 1);
+    aqQueryRef.current?.refetch?.();
+    window.setTimeout(() => setRefreshing(false), 900);
+    toast.message("Layer aggiornati");
+  };
   const [authed, setAuthed] = useState(false);
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
