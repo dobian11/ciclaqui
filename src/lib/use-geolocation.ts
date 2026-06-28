@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import type { TripMode } from "@/components/cicla/MapView";
 
+export type GeoErrorCode = "denied" | "unavailable" | "timeout" | "unsupported" | "unknown";
+
+export interface GeoError {
+  code: GeoErrorCode;
+  message: string;
+}
+
 export interface GeoState {
   position: [number, number] | null;
   speedKmh: number;
   mode: TripMode;
   accuracy: number | null;
-  error: string | null;
+  error: GeoError | null;
   loading: boolean;
   retry: () => void;
 }
