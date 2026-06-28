@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { GoogleMapView } from "@/components/cicla/GoogleMapView";
 import { PoiSheet, NavigationBanner } from "@/components/cicla/PoiSheet";
 import { SourceErrorChip, ErrorDot } from "@/components/cicla/SourceErrorChip";
+import { GpsPermissionSheet } from "@/components/cicla/GpsPermissionSheet";
 import { useGeolocation } from "@/lib/use-geolocation";
 import { useTripRecorder } from "@/lib/use-trip-recorder";
 import { Wind, Flame, Locate, Loader2, Search, Layers, X, Radio, AlertTriangle, RefreshCw, RotateCw } from "lucide-react";
