@@ -389,6 +389,10 @@ function MapHome() {
         onRetry={() => geo.retry()}
       />
 
+      {lastSummary && (
+        <TripSummarySheet summary={lastSummary} onClose={() => setLastSummary(null)} />
+      )}
+
 
       {routeData && (
         <NavigationBanner
