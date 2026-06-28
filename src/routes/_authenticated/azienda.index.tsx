@@ -5,13 +5,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyCompany } from "@/lib/companies.functions";
 import { startCompanySubscription } from "@/lib/payments.functions";
+import { listMyEmployees } from "@/lib/admin.functions";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Loader2, Copy, Check, Users, CreditCard, Share2, LogOut, Building2, Mail, Hash,
+  Loader2, Copy, Check, Users, CreditCard, Share2, LogOut, Building2, Mail, Hash, Download, Bike,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/azienda/")({
@@ -190,6 +191,9 @@ function CompanyDashboard() {
           </Card>
         )}
 
+        {/* Dipendenti */}
+        <EmployeesSection />
+
         {/* Dati azienda */}
         <Card className="mt-4 p-5">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -215,5 +219,79 @@ function Row({ icon, label, value }: { icon: React.ReactNode; label: string; val
       </div>
       <div className="truncate font-medium">{value}</div>
     </div>
+  );
+}
+
+function EmployeesSection() {
+  const list = useServerFn(listMyEmployees);
+  const { data, isLoading } = useQuery({
+    queryKey: ["my-employees"],
+    queryFn: () => list({}),
+    retry: false,
+  });
+
+  function exportCsv() {
+    if (!data || data.length === 0) return;
+    const header = ["Nome", "Iscritto il", "Viaggi", "Km totali", "Punti correnti", "Punti lifetime"];
+    const rows = data.map((e) => [
+      e.full_name,
+      new Date(e.joined_at).toLocaleDateString("it-IT"),
+      e.trips_count,
+      e.total_km,
+      e.points_balance,
+      e.lifetime_points,
+    ]);
+    const csv = [header, ...rows]
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `dipendenti-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("CSV esportato");
+  }
+
+  return (
+    <Card className="mt-4 p-5">
+      <div className="flex items-center justify-between">
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Dipendenti
+        </div>
+        <Button size="sm" variant="ghost" onClick={exportCsv} disabled={!data?.length}>
+          <Download className="mr-1 size-3.5" /> CSV
+        </Button>
+      </div>
+      {isLoading ? (
+        <div className="mt-4 flex justify-center">
+          <Loader2 className="size-4 animate-spin text-muted-foreground" />
+        </div>
+      ) : !data || data.length === 0 ? (
+        <p className="mt-3 text-[12px] text-muted-foreground">
+          Nessun dipendente ancora iscritto. Condividi il codice azienda per invitarli.
+        </p>
+      ) : (
+        <ul className="mt-3 divide-y divide-border/40">
+          {data.map((e) => (
+            <li key={e.id} className="flex items-center justify-between py-2.5">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-medium">{e.full_name}</div>
+                <div className="text-[11px] text-muted-foreground">
+                  {e.trips_count} viaggi · {e.total_km} km
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="font-display text-sm font-bold text-cicla">{e.points_balance} pt</div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <Bike className="mr-0.5 inline size-3" />lifetime {e.lifetime_points}
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   );
 }
