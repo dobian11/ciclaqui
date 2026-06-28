@@ -145,7 +145,8 @@ export const endTrip = createServerFn({ method: "POST" })
       await supabaseAdmin.from("point_transactions").insert({
         user_id: userId,
         trip_id: trip.id,
-        delta: points,
+        delta_points: points,
+        delta_eur: Math.round(points * eurPerPoint * 100) / 100,
         reason: "trip",
       });
       const { data: wallet } = await supabaseAdmin
