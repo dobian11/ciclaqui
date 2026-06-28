@@ -212,7 +212,8 @@ export const getMyTrackingWindow = createServerFn({ method: "GET" })
     const { data: profile } = await supabase
       .from("profiles").select("company_id").eq("id", userId).maybeSingle();
     if (!profile?.company_id) return null;
-    const { data: company } = await supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: company } = await supabaseAdmin
       .from("companies")
       .select("tracking_start, tracking_end, tracking_days, name, kind")
       .eq("id", profile.company_id)
