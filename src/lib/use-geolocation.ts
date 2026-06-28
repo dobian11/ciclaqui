@@ -8,6 +8,7 @@ export interface GeoState {
   accuracy: number | null;
   error: string | null;
   loading: boolean;
+  retry: () => void;
 }
 
 /**
