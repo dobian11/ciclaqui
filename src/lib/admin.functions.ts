@@ -205,3 +205,43 @@ export const isAdmin = createServerFn({ method: "GET" })
       .eq("user_id", context.userId);
     return { admin: !!roles?.some((r) => r.role === "admin") };
   });
+
+// ---------- Approvazione enti (aziende / comuni) ----------
+
+export const adminListPendingCompanies = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("companies")
+      .select("id, name, kind, vat, iban, contact_email, code, status, rejection_reason, approved_at, created_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    return data ?? [];
+  });
+
+const decideCompanySchema = z.object({
+  company_id: z.string().uuid(),
+  decision: z.enum(["approved", "rejected"]),
+  reason: z.string().trim().max(500).optional(),
+});
+
+export const adminDecideCompany = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => decideCompanySchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const patch: Record<string, unknown> = {
+      status: data.decision,
+      rejection_reason: data.decision === "rejected" ? (data.reason ?? null) : null,
+    };
+    if (data.decision === "approved") {
+      patch.approved_at = new Date().toISOString();
+      patch.approved_by = context.userId;
+    }
+    const { error } = await supabaseAdmin.from("companies").update(patch).eq("id", data.company_id);
+    if (error) throw new Error("Aggiornamento fallito");
+    return { ok: true };
+  });
