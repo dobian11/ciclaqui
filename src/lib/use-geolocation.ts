@@ -25,6 +25,7 @@ const BIKE_KMH = 35;
 const MODE_STABILITY = 3;
 
 export function useGeolocation(enabled = true): GeoState {
+  const [retryTick, setRetryTick] = useState(0);
   const [state, setState] = useState<GeoState>({
     position: null,
     speedKmh: 0,
@@ -32,6 +33,7 @@ export function useGeolocation(enabled = true): GeoState {
     accuracy: null,
     error: null,
     loading: true,
+    retry: () => setRetryTick((t) => t + 1),
   });
 
   const recentSpeeds = useRef<number[]>([]);
