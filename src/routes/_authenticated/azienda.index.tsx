@@ -48,6 +48,34 @@ function CompanyDashboard() {
     if (hasSession && !isLoading && !company) navigate({ to: "/azienda/onboarding" as never });
   }, [company, isLoading, hasSession, navigate]);
 
+  // Toast di stato approvazione (una volta per sessione, per stato)
+  useEffect(() => {
+    if (!company) return;
+    const c = company as { id: string; status?: string; rejection_reason?: string | null };
+    const status = c.status ?? "pending";
+    const key = `cicla:company-status-toast:${c.id}:${status}`;
+    if (typeof window === "undefined" || sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    if (status === "rejected") {
+      toast.error("Richiesta rifiutata dall'admin", {
+        description: c.rejection_reason
+          ? `Motivo: ${c.rejection_reason}`
+          : "Nessun motivo specificato. Contatta il supporto.",
+        duration: 10000,
+      });
+    } else if (status === "pending") {
+      toast.info("Registrazione in attesa di approvazione admin", {
+        description: "Verifica entro 24–48h. Riceverai una notifica appena approvato.",
+        duration: 7000,
+      });
+    } else if (status === "approved") {
+      toast.success("Ente approvato dall'admin", {
+        description: "Attiva l'abbonamento per generare il codice da distribuire.",
+        duration: 6000,
+      });
+    }
+  }, [company]);
+
   async function copyCode() {
     if (!company) return;
     await navigator.clipboard.writeText(company.code);
