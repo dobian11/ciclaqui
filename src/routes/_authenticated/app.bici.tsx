@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Bike, Plus, QrCode, ShieldAlert, ShieldCheck, X, Copy, Share2 } from "lucide-react";
+import { Bike, Plus, QrCode, ShieldAlert, ShieldCheck, X, Copy, Share2, Wallet } from "lucide-react";
 import QRCode from "qrcode";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import {
   reportStolen,
   markRecovered,
 } from "@/lib/bikes.functions";
+import { getGoogleWalletLink, getAppleWalletPass } from "@/lib/wallet.functions";
 
 export const Route = createFileRoute("/_authenticated/app/bici")({
   component: BiciPage,
