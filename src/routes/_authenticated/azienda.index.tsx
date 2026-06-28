@@ -184,8 +184,11 @@ function CompanyDashboard() {
                   {(company as { rejection_reason?: string | null }).rejection_reason?.trim() || "Nessun motivo specificato dall'admin."}
                 </p>
                 <p className="mt-2 text-[11px] text-muted-foreground">
-                  Aggiorna i tuoi dati ({isMuni ? "Comune" : "azienda"}, P.IVA/CF, email, IBAN) e contatta il supporto per richiedere una nuova revisione.
+                  Aggiorna i tuoi dati ({isMuni ? "Comune" : "azienda"}, P.IVA/CF, email, IBAN) e invia una nuova richiesta con i documenti aggiornati.
                 </p>
+                <Button size="sm" className="mt-3 w-full" onClick={() => setReviewOpen(true)}>
+                  <RefreshCw className="mr-2 size-3.5" /> Richiedi nuova revisione
+                </Button>
               </div>
             ) : (
               <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
@@ -194,6 +197,62 @@ function CompanyDashboard() {
             )}
           </Card>
         )}
+
+        {/* Storico revisioni */}
+        {reviews && reviews.length > 0 && (
+          <Card className="mt-4 p-5">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <History className="size-4" />
+              <span className="text-[11px] font-semibold uppercase tracking-wider">Storico revisioni</span>
+            </div>
+            <ul className="mt-3 space-y-2">
+              {reviews.map((r) => {
+                const docs = Array.isArray(r.documents) ? (r.documents as Array<{ name: string; path: string }>) : [];
+                const statusClass =
+                  r.status === "approved" ? "bg-cicla/15 text-cicla"
+                  : r.status === "rejected" ? "bg-destructive/15 text-destructive"
+                  : "bg-warning/15 text-warning";
+                const statusLabel = r.status === "approved" ? "Approvata" : r.status === "rejected" ? "Rifiutata" : "In attesa";
+                return (
+                  <li key={r.id} className="rounded-md border border-border/50 p-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-[12px] font-medium">
+                        {r.kind === "initial" ? "Registrazione iniziale" : "Nuova revisione"}
+                      </div>
+                      <Badge variant="secondary" className={`text-[10px] ${statusClass}`}>{statusLabel}</Badge>
+                    </div>
+                    <div className="mt-0.5 text-[10px] text-muted-foreground">
+                      Inviata: {new Date(r.submitted_at).toLocaleString("it-IT")}
+                      {r.reviewed_at && <> · Revisionata: {new Date(r.reviewed_at).toLocaleString("it-IT")}</>}
+                    </div>
+                    {r.notes && <div className="mt-1 text-[11px]">{r.notes}</div>}
+                    {r.status === "rejected" && r.reason && (
+                      <div className="mt-1 rounded bg-destructive/10 px-2 py-1 text-[11px] text-destructive">
+                        Motivo: {r.reason}
+                      </div>
+                    )}
+                    {docs.length > 0 && (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {docs.map((d) => (
+                          <span key={d.path} className="inline-flex items-center gap-1 rounded bg-secondary/60 px-1.5 py-0.5 text-[10px]">
+                            <FileText className="size-3" /> {d.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </Card>
+        )}
+
+        {/* Dialog: richiedi nuova revisione */}
+        <CompanyReviewDialog
+          companyId={company.id}
+          open={reviewOpen}
+          onOpenChange={setReviewOpen}
+        />
 
         {/* Codice — visibile solo dopo approvazione + abbonamento */}
         {canShowCode ? (
