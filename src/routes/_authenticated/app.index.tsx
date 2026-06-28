@@ -100,7 +100,9 @@ function MapHome() {
         destination: res.destination,
       });
       setSelectedPoi(null);
-      toast.success("Percorso pronto");
+      // Avvia automaticamente il tracking del tragitto: niente bottone manuale
+      if (!trip.isRecording) trip.start();
+      toast.success("Percorso pronto · tracking avviato");
     },
     onError: (e: any) => {
       toast.error(e?.message ?? "Impossibile calcolare il percorso");
