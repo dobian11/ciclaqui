@@ -24,6 +24,7 @@ function OnboardingPage() {
   const create = useServerFn(createCompany);
   const [loading, setLoading] = useState(false);
   const [hasSession, setHasSession] = useState<boolean | null>(null);
+  const [kind, setKind] = useState<"company" | "municipality">("company");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setHasSession(!!data.session));
@@ -36,7 +37,6 @@ function OnboardingPage() {
     retry: false,
   });
 
-  // Se ha già un'azienda, salta l'onboarding
   useEffect(() => {
     if (existing) navigate({ to: "/azienda" as never });
   }, [existing, navigate]);
@@ -50,22 +50,22 @@ function OnboardingPage() {
     const contact_email = String(fd.get("contact_email") || "").trim();
 
     if (!hasSession) {
-      toast.info("Anteprima attiva: accedi come azienda per salvare davvero questi dati.");
+      toast.info("Anteprima attiva: accedi per salvare davvero questi dati.");
       return;
     }
 
-    if (name.length < 2) return toast.error("Inserisci la ragione sociale");
-    if (vat.length < 4) return toast.error("Inserisci la partita IVA o il codice fiscale");
+    if (name.length < 2) return toast.error(kind === "municipality" ? "Inserisci il nome del Comune" : "Inserisci la ragione sociale");
+    if (vat.length < 4) return toast.error(kind === "municipality" ? "Inserisci il codice fiscale del Comune" : "Inserisci la partita IVA o il codice fiscale");
     if (!contact_email) return toast.error("Inserisci un'email di contatto");
 
     setLoading(true);
     try {
-      const company = await create({ data: { name, vat, iban, contact_email } });
-      toast.success(`Azienda registrata! Codice: ${company.code}`, { duration: 8000 });
+      const company = await create({ data: { name, vat, iban, contact_email, kind } });
+      toast.success(`${kind === "municipality" ? "Comune" : "Azienda"} registrato! Codice: ${company.code}`, { duration: 8000 });
       await router.invalidate();
       navigate({ to: "/azienda" as never });
     } catch (err) {
-      toast.error((err as Error)?.message ?? "Errore creazione azienda");
+      toast.error((err as Error)?.message ?? "Errore creazione");
     } finally {
       setLoading(false);
     }
@@ -79,6 +79,8 @@ function OnboardingPage() {
     );
   }
 
+  const isMuni = kind === "municipality";
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-secondary/40 to-background">
       <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 py-8">
@@ -86,26 +88,52 @@ function OnboardingPage() {
 
         <div className="mt-8">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-cicla/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-cicla">
-            <Building2 size={12} /> Onboarding azienda · passo 1 di 2
+            <Building2 size={12} /> Onboarding · passo 1 di 2
           </div>
-          <h1 className="mt-3 text-2xl font-bold tracking-tight">Registra la tua azienda</h1>
+          <h1 className="mt-3 text-2xl font-bold tracking-tight">Registra il tuo ente</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Questi dati appariranno sulla tua fattura e ti serviranno per generare il codice da
-            distribuire ai dipendenti.
+            Scegli il tipo di ente: i dati appariranno sulla tua fattura e ti serviranno
+            per generare il codice da distribuire ai tuoi {isMuni ? "cittadini" : "dipendenti"}.
           </p>
         </div>
 
-        <Card className="mt-6 border-border/60 p-6 shadow-cicla">
+        {/* Kind selector */}
+        <div className="mt-5 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setKind("company")}
+            className={`rounded-2xl border p-3 text-left transition-colors ${
+              kind === "company" ? "border-cicla bg-cicla/10" : "border-border/60 bg-card"
+            }`}
+          >
+            <div className="text-sm font-semibold">Azienda</div>
+            <div className="text-[11px] text-muted-foreground">Premia i dipendenti</div>
+          </button>
+          <button
+            type="button"
+            onClick={() => setKind("municipality")}
+            className={`rounded-2xl border p-3 text-left transition-colors ${
+              kind === "municipality" ? "border-cicla bg-cicla/10" : "border-border/60 bg-card"
+            }`}
+          >
+            <div className="text-sm font-semibold">Comune</div>
+            <div className="text-[11px] text-muted-foreground">Premia i cittadini</div>
+          </button>
+        </div>
+
+        <Card className="mt-4 border-border/60 p-6 shadow-cicla">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Ragione sociale *</Label>
-              <Input id="name" name="name" required maxLength={120} />
+              <Label htmlFor="name">{isMuni ? "Nome del Comune *" : "Ragione sociale *"}</Label>
+              <Input id="name" name="name" required maxLength={120} placeholder={isMuni ? "es. Comune di Bologna" : ""} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="vat">Partita IVA / Codice fiscale *</Label>
-              <Input id="vat" name="vat" required maxLength={32} placeholder="IT01234567890" />
+              <Label htmlFor="vat">{isMuni ? "Codice fiscale del Comune *" : "Partita IVA / Codice fiscale *"}</Label>
+              <Input id="vat" name="vat" required maxLength={32} placeholder={isMuni ? "00000000000" : "IT01234567890"} />
               <p className="text-[11px] text-muted-foreground">
-                Usato come codice matricola dell'azienda per la fatturazione.
+                {isMuni
+                  ? "Usato per la fatturazione e per identificare il Comune."
+                  : "Usato come codice matricola dell'azienda per la fatturazione."}
               </p>
             </div>
             <div className="space-y-2">
@@ -123,7 +151,8 @@ function OnboardingPage() {
         </Card>
 
         <p className="mt-4 text-center text-[11px] text-muted-foreground">
-          Nel passo successivo riceverai il <strong>codice azienda</strong> e potrai attivare l'abbonamento mensile.
+          Nel passo successivo riceverai il <strong>codice</strong> da condividere
+          con {isMuni ? "i cittadini" : "i dipendenti"} e potrai attivare l'abbonamento mensile.
         </p>
       </div>
     </div>

@@ -116,11 +116,13 @@ function CompanyAuthPage() {
 
         <div className="mb-4">
           <span className="rounded-full bg-cicla/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-cicla">
-            Area aziende
+            Aziende & Comuni
           </span>
-          <h1 className="mt-3 text-2xl font-bold tracking-tight">Cicla Qui per la tua azienda</h1>
+          <h1 className="mt-3 text-2xl font-bold tracking-tight">Cicla Qui per il tuo ente</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Crea l'account: nel passo successivo registrerai i dati aziendali (P.IVA, IBAN, codice matricola) e attiverai l'abbonamento.
+            Crea l'account del referente: nel passo successivo registrerai
+            l'<strong>azienda</strong> o il <strong>Comune</strong> (dati, codice da distribuire,
+            premi/voucher) e attiverai l'abbonamento mensile.
           </p>
         </div>
 

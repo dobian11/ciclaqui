@@ -34,7 +34,7 @@ const signupSchema = z.object({
   full_name: z.string().trim().min(2, "Inserisci il tuo nome").max(80),
   email: z.string().trim().email("Email non valida").max(255),
   password: z.string().min(8, "Almeno 8 caratteri").max(72),
-  company_code: z.string().trim().min(3, "Il codice azienda è obbligatorio").max(20),
+  company_code: z.string().trim().min(3, "Il codice è obbligatorio").max(20),
   terms: z.literal(true, { message: "Devi accettare i termini per continuare" }),
 });
 
@@ -119,7 +119,7 @@ function AuthPage() {
             to="/azienda/auth"
             className="inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            <Building2 size={14} /> Sei un'azienda?
+            <Building2 size={14} /> Azienda o Comune?
           </Link>
         </div>
 
@@ -162,7 +162,7 @@ function AuthPage() {
                   <p className="text-[11px] text-muted-foreground">Almeno 8 caratteri.</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="su-code">Codice azienda</Label>
+                  <Label htmlFor="su-code">Codice azienda o Comune</Label>
                   <Input
                     id="su-code"
                     name="company_code"
@@ -174,7 +174,8 @@ function AuthPage() {
                     className="uppercase tracking-wider"
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    Obbligatorio. Chiedi il codice al tuo datore di lavoro per essere associato alla tua azienda.
+                    Obbligatorio. Chiedi il codice al tuo datore di lavoro o al tuo Comune
+                    per essere associato e ricevere i premi sulla mobilità sostenibile.
                   </p>
                 </div>
                 <label className="flex items-start gap-2.5 rounded-lg border border-border/60 bg-muted/30 p-3">

@@ -163,6 +163,7 @@ export type Database = {
           employee_cap: number
           iban: string | null
           id: string
+          kind: Database["public"]["Enums"]["company_kind"]
           name: string
           plan: Database["public"]["Enums"]["subscription_plan"]
           stripe_customer_id: string | null
@@ -178,6 +179,7 @@ export type Database = {
           employee_cap?: number
           iban?: string | null
           id?: string
+          kind?: Database["public"]["Enums"]["company_kind"]
           name: string
           plan?: Database["public"]["Enums"]["subscription_plan"]
           stripe_customer_id?: string | null
@@ -193,6 +195,7 @@ export type Database = {
           employee_cap?: number
           iban?: string | null
           id?: string
+          kind?: Database["public"]["Enums"]["company_kind"]
           name?: string
           plan?: Database["public"]["Enums"]["subscription_plan"]
           stripe_customer_id?: string | null
@@ -502,6 +505,7 @@ export type Database = {
       app_role: "user" | "company_manager" | "admin"
       bike_report_type: "sighting" | "recovery"
       bike_status: "libera" | "custodita" | "rubata" | "recuperata"
+      company_kind: "company" | "municipality"
       payout_status: "pending" | "approved" | "paid" | "rejected"
       subscription_plan: "starter" | "pro" | "enterprise"
       subscription_status:
@@ -641,6 +645,7 @@ export const Constants = {
       app_role: ["user", "company_manager", "admin"],
       bike_report_type: ["sighting", "recovery"],
       bike_status: ["libera", "custodita", "rubata", "recuperata"],
+      company_kind: ["company", "municipality"],
       payout_status: ["pending", "approved", "paid", "rejected"],
       subscription_plan: ["starter", "pro", "enterprise"],
       subscription_status: [

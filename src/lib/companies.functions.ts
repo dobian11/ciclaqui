@@ -7,6 +7,7 @@ const createCompanySchema = z.object({
   vat: z.string().trim().max(32).optional().or(z.literal("")),
   iban: z.string().trim().max(34).optional().or(z.literal("")),
   contact_email: z.string().trim().email().max(255),
+  kind: z.enum(["company", "municipality"]).default("company"),
 });
 
 /**
@@ -47,6 +48,7 @@ export const createCompany = createServerFn({ method: "POST" })
         contact_email: data.contact_email,
         code: codeData,
         created_by: userId,
+        kind: data.kind,
       })
       .select()
       .single();
@@ -65,7 +67,7 @@ export const createCompany = createServerFn({ method: "POST" })
     // company in queries that filter by company_id).
     await supabase.from("profiles").update({ company_id: company.id }).eq("id", userId);
 
-    return { id: company.id, code: company.code, name: company.name };
+    return { id: company.id, code: company.code, name: company.name, kind: company.kind };
   });
 
 /**
@@ -108,7 +110,7 @@ export const getMyCompany = createServerFn({ method: "GET" })
 
     const { data: company } = await supabase
       .from("companies")
-      .select("id, name, code, vat, iban, contact_email, created_at")
+      .select("id, name, code, vat, iban, contact_email, created_at, kind")
       .eq("id", profile.company_id)
       .maybeSingle();
 
