@@ -49,7 +49,7 @@ export async function logTelemetry(input: TelemetryEventInput): Promise<void> {
       status: input.status,
       duration_ms: input.durationMs ?? null,
       error_message: input.errorMessage ?? null,
-      meta: input.meta ?? null,
+      meta: (input.meta ?? null) as any,
       user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 300) : null,
       created_at: ts,
     });
