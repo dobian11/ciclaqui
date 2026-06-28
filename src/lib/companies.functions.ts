@@ -110,7 +110,7 @@ export const getMyCompany = createServerFn({ method: "GET" })
 
     const { data: company } = await supabase
       .from("companies")
-      .select("id, name, code, vat, iban, contact_email, created_at")
+      .select("id, name, code, vat, iban, contact_email, created_at, kind")
       .eq("id", profile.company_id)
       .maybeSingle();
 
