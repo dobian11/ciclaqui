@@ -9,38 +9,148 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AziendaAuthRouteImport } from './routes/azienda.auth'
+import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
+import { Route as AuthenticatedAppPuntiRouteImport } from './routes/_authenticated/app.punti'
+import { Route as AuthenticatedAppProfiloRouteImport } from './routes/_authenticated/app.profilo'
+import { Route as AuthenticatedAppBiciRouteImport } from './routes/_authenticated/app.bici'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AziendaAuthRoute = AziendaAuthRouteImport.update({
+  id: '/azienda/auth',
+  path: '/azienda/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppPuntiRoute = AuthenticatedAppPuntiRouteImport.update({
+  id: '/punti',
+  path: '/punti',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppProfiloRoute = AuthenticatedAppProfiloRouteImport.update({
+  id: '/profilo',
+  path: '/profilo',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppBiciRoute = AuthenticatedAppBiciRouteImport.update({
+  id: '/bici',
+  path: '/bici',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/app': typeof AuthenticatedAppRouteWithChildren
+  '/azienda/auth': typeof AziendaAuthRoute
+  '/app/bici': typeof AuthenticatedAppBiciRoute
+  '/app/profilo': typeof AuthenticatedAppProfiloRoute
+  '/app/punti': typeof AuthenticatedAppPuntiRoute
+  '/app/': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/azienda/auth': typeof AziendaAuthRoute
+  '/app/bici': typeof AuthenticatedAppBiciRoute
+  '/app/profilo': typeof AuthenticatedAppProfiloRoute
+  '/app/punti': typeof AuthenticatedAppPuntiRoute
+  '/app': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
+  '/azienda/auth': typeof AziendaAuthRoute
+  '/_authenticated/app/bici': typeof AuthenticatedAppBiciRoute
+  '/_authenticated/app/profilo': typeof AuthenticatedAppProfiloRoute
+  '/_authenticated/app/punti': typeof AuthenticatedAppPuntiRoute
+  '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/app'
+    | '/azienda/auth'
+    | '/app/bici'
+    | '/app/profilo'
+    | '/app/punti'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/azienda/auth'
+    | '/app/bici'
+    | '/app/profilo'
+    | '/app/punti'
+    | '/app'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/app'
+    | '/azienda/auth'
+    | '/_authenticated/app/bici'
+    | '/_authenticated/app/profilo'
+    | '/_authenticated/app/punti'
+    | '/_authenticated/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  AziendaAuthRoute: typeof AziendaAuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +158,85 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/azienda/auth': {
+      id: '/azienda/auth'
+      path: '/azienda/auth'
+      fullPath: '/azienda/auth'
+      preLoaderRoute: typeof AziendaAuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/app': {
+      id: '/_authenticated/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AuthenticatedAppRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/app/': {
+      id: '/_authenticated/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/punti': {
+      id: '/_authenticated/app/punti'
+      path: '/punti'
+      fullPath: '/app/punti'
+      preLoaderRoute: typeof AuthenticatedAppPuntiRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/profilo': {
+      id: '/_authenticated/app/profilo'
+      path: '/profilo'
+      fullPath: '/app/profilo'
+      preLoaderRoute: typeof AuthenticatedAppProfiloRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/bici': {
+      id: '/_authenticated/app/bici'
+      path: '/bici'
+      fullPath: '/app/bici'
+      preLoaderRoute: typeof AuthenticatedAppBiciRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
   }
 }
 
+interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppBiciRoute: typeof AuthenticatedAppBiciRoute
+  AuthenticatedAppProfiloRoute: typeof AuthenticatedAppProfiloRoute
+  AuthenticatedAppPuntiRoute: typeof AuthenticatedAppPuntiRoute
+  AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
+}
+
+const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppBiciRoute: AuthenticatedAppBiciRoute,
+  AuthenticatedAppProfiloRoute: AuthenticatedAppProfiloRoute,
+  AuthenticatedAppPuntiRoute: AuthenticatedAppPuntiRoute,
+  AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
+}
+
+const AuthenticatedAppRouteWithChildren =
+  AuthenticatedAppRoute._addFileChildren(AuthenticatedAppRouteChildren)
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  AziendaAuthRoute: AziendaAuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
