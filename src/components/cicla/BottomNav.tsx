@@ -38,6 +38,7 @@ function NavItem({
   return (
     <Link
       to={to}
+      preload="intent"
       activeOptions={{ exact }}
       className="group flex flex-col items-center gap-1 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors data-[status=active]:text-cicla"
     >
