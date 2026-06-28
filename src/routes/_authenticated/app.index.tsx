@@ -428,7 +428,7 @@ function MapHome() {
             <SourceErrorChip
               compact
               label="No GPS"
-              detail={geo.error}
+              detail={geo.error.message}
               onRetry={() => geo.retry?.()}
             />
           ) : (
