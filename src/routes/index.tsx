@@ -57,21 +57,21 @@ function WelcomePage() {
             Muoviti green.
             <br />
             <span className="bg-gradient-to-r from-cicla to-info bg-clip-text text-transparent">
-              Guadagna davvero.
+              Vinci premi.
             </span>
           </h1>
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
             Cicla Qui traccia i tuoi spostamenti sostenibili, protegge la tua bici
-            dai furti e trasforma i chilometri in denaro reale — per te o per i
-            dipendenti della tua azienda.
+            dai furti e trasforma i chilometri in <strong>punti</strong> riscattabili
+            con i premi messi a disposizione dalla tua azienda o dal tuo Comune.
           </p>
         </section>
 
         <section className="mt-8 grid grid-cols-2 gap-3">
           <FeatureCard icon={<MapPin size={16} />} title="Mappa GPS" desc="Rileva auto il mezzo: bici, piedi, auto." />
-          <FeatureCard icon={<Coins size={16} />} title="Punti reali" desc="10 punti = 0,10 €. Prelievo Stripe." />
+          <FeatureCard icon={<Gift size={16} />} title="Punti = premi" desc="Voucher, premi e incentivi dedicati." />
           <FeatureCard icon={<ShieldCheck size={16} />} title="Passaporto" desc="Antifurto via numero telaio." />
-          <FeatureCard icon={<Building2 size={16} />} title="Per aziende" desc="Codice, dashboard, premi team." />
+          <FeatureCard icon={<Building2 size={16} />} title="Aziende & Comuni" desc="Codice, dashboard, premia il team." />
         </section>
 
         <div className="mt-auto pt-10 space-y-3">
@@ -84,7 +84,10 @@ function WelcomePage() {
               <span className="grid size-9 place-items-center rounded-xl bg-cicla-foreground/10">
                 <Bike size={18} />
               </span>
-              <span className="font-display text-base font-bold">Inizia come persona</span>
+              <span className="font-display text-base font-bold text-left leading-tight">
+                Sono un dipendente<br/>
+                <span className="text-[11px] font-medium opacity-80">o un cittadino con codice</span>
+              </span>
             </span>
             <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
           </Link>
@@ -96,9 +99,12 @@ function WelcomePage() {
           >
             <span className="flex items-center gap-3">
               <span className="grid size-9 place-items-center rounded-xl bg-foreground/10">
-                <Building2 size={18} />
+                <Landmark size={18} />
               </span>
-              <span className="font-display text-base font-bold">Sono un'azienda</span>
+              <span className="font-display text-base font-bold text-left leading-tight">
+                Registra azienda<br/>
+                <span className="text-[11px] font-medium text-muted-foreground">o Comune</span>
+              </span>
             </span>
             <ArrowRight size={18} className="text-muted-foreground transition-transform group-hover:translate-x-1" />
           </Link>
