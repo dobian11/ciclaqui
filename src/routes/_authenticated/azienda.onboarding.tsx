@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router"
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { createCompany, getMyCompany } from "@/lib/companies.functions";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { Button } from "@/components/ui/button";
@@ -22,10 +23,17 @@ function OnboardingPage() {
   const getMine = useServerFn(getMyCompany);
   const create = useServerFn(createCompany);
   const [loading, setLoading] = useState(false);
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setHasSession(!!data.session));
+  }, []);
 
   const { data: existing, isLoading: checking } = useQuery({
     queryKey: ["my-company"],
     queryFn: () => getMine({}),
+    enabled: hasSession === true,
+    retry: false,
   });
 
   // Se ha già un'azienda, salta l'onboarding
@@ -40,6 +48,11 @@ function OnboardingPage() {
     const vat = String(fd.get("vat") || "").trim();
     const iban = String(fd.get("iban") || "").trim();
     const contact_email = String(fd.get("contact_email") || "").trim();
+
+    if (!hasSession) {
+      toast.info("Anteprima attiva: accedi come azienda per salvare davvero questi dati.");
+      return;
+    }
 
     if (name.length < 2) return toast.error("Inserisci la ragione sociale");
     if (vat.length < 4) return toast.error("Inserisci la partita IVA o il codice fiscale");
@@ -58,7 +71,7 @@ function OnboardingPage() {
     }
   }
 
-  if (checking) {
+  if (hasSession === null || (hasSession && checking)) {
     return (
       <div className="grid min-h-screen place-items-center">
         <Loader2 className="size-6 animate-spin text-muted-foreground" />
