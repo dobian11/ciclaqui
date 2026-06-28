@@ -109,6 +109,66 @@ function MapHome() {
     },
   });
 
+  // ── NAVIGAZIONE LIVE: ricalcolo fuori percorso + auto-arrivo ──
+  const recalcLockRef = useRef(false);
+  const ARRIVED_M = 25;     // soglia "arrivato"
+  const OFFROUTE_M = 60;    // soglia "fuori percorso"
+  const RECALC_COOLDOWN = 10_000;
+
+  const hav = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
+    const R = 6371000, toRad = (d: number) => (d * Math.PI) / 180;
+    const dLat = toRad(b.lat - a.lat), dLng = toRad(b.lng - a.lng);
+    const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(s));
+  };
+
+  useEffect(() => {
+    if (!routeData || !geo.position) return;
+    const cur = { lat: geo.position[0], lng: geo.position[1] };
+    const dest = { lat: routeData.destination.lat, lng: routeData.destination.lng };
+
+    // arrivo automatico
+    if (hav(cur, dest) < ARRIVED_M) {
+      toast.success("🎯 Arrivato a destinazione");
+      setRouteData(null);
+      return;
+    }
+
+    // trova segmento di percorso più vicino
+    let nearestIdx = 0, nearestDist = Infinity;
+    for (let i = 0; i < routeData.path.length; i++) {
+      const d = hav(cur, routeData.path[i]);
+      if (d < nearestDist) { nearestDist = d; nearestIdx = i; }
+    }
+
+    // taglia la parte già percorsa → il percorso "si consuma" in tempo reale
+    if (nearestIdx > 0) {
+      setRouteData((rd) => (rd ? { ...rd, path: rd.path.slice(nearestIdx) } : rd));
+    }
+
+    // ricalcolo se sei deviato troppo
+    if (nearestDist > OFFROUTE_M && !recalcLockRef.current && !routeMutation.isPending) {
+      recalcLockRef.current = true;
+      toast.message("⤴︎ Fuori percorso · ricalcolo…");
+      routeMutation.mutate(routeData.destination);
+      window.setTimeout(() => { recalcLockRef.current = false; }, RECALC_COOLDOWN);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geo.position, routeData?.destination.id]);
+
+  // distanza/tempo rimanenti live (somma del percorso residuo + tratto fino al primo nodo)
+  const liveRouteInfo = useMemo(() => {
+    if (!routeData || !geo.position) return null;
+    const cur = { lat: geo.position[0], lng: geo.position[1] };
+    let m = hav(cur, routeData.path[0]);
+    for (let i = 1; i < routeData.path.length; i++) m += hav(routeData.path[i - 1], routeData.path[i]);
+    const ratio = routeData.distanceMeters > 0 ? m / routeData.distanceMeters : 1;
+    const sec = Math.max(15, Math.round(routeData.durationSec * Math.min(1, ratio)));
+    return { distanceMeters: m, durationSec: sec };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeData, geo.position]);
+
+
   const isRefreshingRef = useRef(false);
   const refreshStartRef = useRef<number>(0);
   const aqPromiseRef = useRef<Promise<{ ok: boolean; error?: string }> | null>(null);
@@ -301,9 +361,16 @@ function MapHome() {
 
       {routeData && (
         <NavigationBanner
-          distanceMeters={routeData.distanceMeters}
-          durationSec={routeData.durationSec}
+          distanceMeters={liveRouteInfo?.distanceMeters ?? routeData.distanceMeters}
+          durationSec={liveRouteInfo?.durationSec ?? routeData.durationSec}
+          recalculating={routeMutation.isPending}
           onStop={() => setRouteData(null)}
+          onRefresh={() => geo.retry()}
+          onArrived={() => {
+            toast.success("🎯 Arrivato a destinazione");
+            setRouteData(null);
+          }}
+          onRecalc={() => routeMutation.mutate(routeData.destination)}
         />
       )}
 
