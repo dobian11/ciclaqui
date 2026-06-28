@@ -497,6 +497,25 @@ function BottomTrio({
                   Stima basata su peso medio 70 kg. In auto non bruci calorie attive.
                 </p>
               </div>
+            ) : aqError ? (
+              <div className="space-y-3 text-[12px]">
+                <div className="flex items-start gap-2 rounded-2xl bg-destructive/15 p-3 ring-1 ring-destructive/40">
+                  <AlertTriangle size={14} className="mt-0.5 shrink-0 text-destructive" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-destructive">Dati non disponibili</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                      Non riesco a contattare il servizio qualità aria. Verifica la connessione e riprova.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => aqRetry()}
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-cicla px-3 py-2 text-[12px] font-bold uppercase tracking-wider text-cicla-foreground transition-transform active:scale-95"
+                >
+                  <RotateCw size={12} strokeWidth={2.8} /> Riprova
+                </button>
+              </div>
             ) : (
               <div className="space-y-2 text-[12px]">
                 <Row label="AQI" value={aqLoading ? "…" : aqi != null ? String(Math.round(aqi)) : "—"} />
