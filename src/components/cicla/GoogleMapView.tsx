@@ -18,10 +18,16 @@ const MODE_EMOJI: Record<TripMode, string> = {
   car: "🚗",
 };
 
+// Cache delle icone SVG: evita di rigenerare data-URL ad ogni fix GPS
+// (il GC delle stringhe pesava su dispositivi low-end e causava micro-stutter).
+const PIN_ICON_CACHE: Record<string, any> = {};
+const ARROW_ICON_CACHE: Record<string, any> = {};
+
 function pinIconForMode(mode: TripMode) {
+  const cached = PIN_ICON_CACHE[mode];
+  if (cached) return cached;
   const color = MODE_COLORS[mode];
   const emoji = MODE_EMOJI[mode];
-  // Pin statico mostrato quando l'utente è fermo
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="66" viewBox="0 0 52 66">
     <defs><filter id="s-${mode}" x="-50%" y="-50%" width="200%" height="200%">
       <feDropShadow dx="0" dy="3" stdDeviation="2.8" flood-color="#000" flood-opacity="0.32"/>
@@ -32,35 +38,43 @@ function pinIconForMode(mode: TripMode) {
       <text x="26" y="30" text-anchor="middle" font-size="22" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI Emoji', 'Apple Color Emoji', system-ui">${emoji}</text>
     </g>
   </svg>`;
-  return {
+  const icon = {
     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
     scaledSize: new (window as any).google.maps.Size(52, 66),
     anchor: new (window as any).google.maps.Point(26, 64),
   };
+  PIN_ICON_CACHE[mode] = icon;
+  return icon;
 }
 
 function arrowIconForMode(mode: TripMode, heading: number) {
+  // Quantizza l'heading a 5° → al massimo 72 varianti per modalità, cache-friendly
+  const h = Math.round(heading / 5) * 5;
+  const key = `${mode}-${h}`;
+  const cached = ARROW_ICON_CACHE[key];
+  if (cached) return cached;
   const color = MODE_COLORS[mode];
-  // Freccia direzionale: ruota seguendo l'heading dell'utente in movimento.
-  // Il rotate è applicato nell'SVG così Google Maps non deve ri-renderizzare il marker.
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56">
     <defs><filter id="as-${mode}" x="-50%" y="-50%" width="200%" height="200%">
       <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.35"/>
     </filter></defs>
     <g filter="url(#as-${mode})">
       <circle cx="28" cy="28" r="13" fill="${color}" fill-opacity="0.22" stroke="${color}" stroke-opacity="0.5" stroke-width="1"/>
-      <g transform="rotate(${heading} 28 28)">
+      <g transform="rotate(${h} 28 28)">
         <path d="M28 8 L42 38 L28 31 L14 38 Z" fill="${color}" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>
         <circle cx="28" cy="31" r="3" fill="white"/>
       </g>
     </g>
   </svg>`;
-  return {
+  const icon = {
     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
     scaledSize: new (window as any).google.maps.Size(56, 56),
     anchor: new (window as any).google.maps.Point(28, 28),
   };
+  ARROW_ICON_CACHE[key] = icon;
+  return icon;
 }
+
 
 function computeBearing(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const toRad = (d: number) => (d * Math.PI) / 180;
@@ -141,6 +155,7 @@ export function GoogleMapView({
   const ref = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
+  const lastIconUrlRef = useRef<string | null>(null);
   const accuracyRef = useRef<any>(null);
   const polyRef = useRef<any>(null);
   const routePolyRef = useRef<any>(null);
@@ -214,8 +229,13 @@ export function GoogleMapView({
         zIndex: 10,
         optimized: false,
       });
+      lastIconUrlRef.current = icon.url;
     } else {
-      markerRef.current.setIcon(icon);
+      // setIcon è costoso: chiamalo solo se l'icona è effettivamente cambiata
+      if (icon.url !== lastIconUrlRef.current) {
+        markerRef.current.setIcon(icon);
+        lastIconUrlRef.current = icon.url;
+      }
       // Anima la posizione dal punto precedente al nuovo per un movimento fluido
       if (animRef.current) cancelAnimationFrame(animRef.current);
       const start = markerRef.current.getPosition();
