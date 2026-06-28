@@ -191,6 +191,17 @@
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
+
+  /* Reattività touch: rimuove il delay di 300ms su tap, abilita zoom solo sui contenitori scrollabili */
+  button, a, [role="button"], [role="tab"], input, select, textarea, label {
+    touch-action: manipulation;
+  }
+
+  /* Feedback tattile immediato sui bottoni glass / FAB */
+  button:active:not(:disabled) {
+    transform: translateZ(0) scale(0.97);
+    transition: transform 80ms ease-out;
+  }
 }
 
 /* Leaflet container safety: it computes sizes after mount */
