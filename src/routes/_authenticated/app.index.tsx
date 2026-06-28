@@ -3,12 +3,14 @@ import { useMemo, useState } from "react";
 import { GoogleMapView } from "@/components/cicla/GoogleMapView";
 import { useGeolocation } from "@/lib/use-geolocation";
 import { useTripRecorder } from "@/lib/use-trip-recorder";
-import { Wind, Flame, Locate, Loader2, Search, Play, Square, Trophy } from "lucide-react";
+import { Wind, Flame, Locate, Loader2, Search, Play, Square, Trophy, Layers, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAirQuality } from "@/lib/air-quality.functions";
 import { endTrip } from "@/lib/trips.functions";
+import { POI_META, type PoiCategory } from "@/lib/pois";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: MapHome,
