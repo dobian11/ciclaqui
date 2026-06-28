@@ -63,11 +63,33 @@ function AdminDashboard() {
 
   const listPendingCompanies = useServerFn(adminListPendingCompanies);
   const decideCompanyFn = useServerFn(adminDecideCompany);
+  const listNotifications = useServerFn(adminListNotifications);
+  const markRead = useServerFn(adminMarkNotificationRead);
+  const listCompanyReviews = useServerFn(adminListCompanyReviews);
+  const getDocUrl = useServerFn(getCompanyDocUrl);
+  const [expandedCompanyId, setExpandedCompanyId] = useState<string | null>(null);
+
   const { data: companies } = useQuery({
     queryKey: ["admin-companies"],
     queryFn: () => listPendingCompanies({}),
     enabled: adminCheck?.admin === true,
+    refetchInterval: 30000,
   });
+
+  const { data: notifications } = useQuery({
+    queryKey: ["admin-notifications"],
+    queryFn: () => listNotifications({}),
+    enabled: adminCheck?.admin === true,
+    refetchInterval: 20000,
+  });
+
+  const { data: companyReviews } = useQuery({
+    queryKey: ["admin-company-reviews", expandedCompanyId],
+    queryFn: () => listCompanyReviews({ data: { company_id: expandedCompanyId! } }),
+    enabled: adminCheck?.admin === true && !!expandedCompanyId,
+  });
+
+  const unreadCount = notifications?.filter((n) => !n.read_at).length ?? 0;
 
   async function handleDecide(id: string, decision: "approved" | "rejected" | "paid") {
     try {
@@ -85,15 +107,33 @@ function AdminDashboard() {
   async function handleCompanyDecide(id: string, decision: "approved" | "rejected") {
     try {
       const reason = decision === "rejected"
-        ? (window.prompt("Motivo del rifiuto (opzionale):") ?? undefined)
+        ? (window.prompt("Motivo del rifiuto (verrà mostrato all'ente):") ?? undefined)
         : undefined;
       await decideCompanyFn({ data: { company_id: id, decision, reason } });
       toast.success(decision === "approved" ? "Ente approvato" : "Ente rifiutato");
-      await qc.invalidateQueries({ queryKey: ["admin-companies"] });
-      await qc.invalidateQueries({ queryKey: ["admin-stats"] });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["admin-companies"] }),
+        qc.invalidateQueries({ queryKey: ["admin-stats"] }),
+        qc.invalidateQueries({ queryKey: ["admin-notifications"] }),
+        qc.invalidateQueries({ queryKey: ["admin-company-reviews"] }),
+      ]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Errore");
     }
+  }
+
+  async function handleOpenDoc(path: string) {
+    try {
+      const { url } = await getDocUrl({ data: { path } });
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Impossibile aprire il documento");
+    }
+  }
+
+  async function markAllRead() {
+    await markRead({ data: { all: true } });
+    await qc.invalidateQueries({ queryKey: ["admin-notifications"] });
   }
 
   if (hasSession === false) {
