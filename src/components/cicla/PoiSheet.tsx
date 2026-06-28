@@ -158,6 +158,7 @@ export function NavigationBanner({
   tracking,
   mode,
   onStop,
+  onCancel,
   onRefresh,
   onArrived,
   onRecalc,
@@ -169,6 +170,7 @@ export function NavigationBanner({
   tracking?: boolean;
   mode?: "bike" | "foot" | "car";
   onStop: () => void;
+  onCancel?: () => void;
   onRefresh?: () => void;
   onArrived?: () => void;
   onRecalc?: () => void;
