@@ -321,7 +321,7 @@ function BottomTrio({
           <div className="mx-auto max-w-md rounded-3xl app-glass-strong p-4 shadow-2xl">
             <div className="mb-2 flex items-center justify-between">
               <h3 className="font-display text-sm font-bold uppercase tracking-widest">
-                {expanded === "kcal" ? "Calorie" : "Qualità dell'aria"}
+                {expanded === "kcal" ? "Calorie" : "Qa"}
               </h3>
               <button
                 type="button"
@@ -422,7 +422,7 @@ function BottomTrio({
               className={`absolute right-2 top-2 inline-block size-1.5 rounded-full ${aqiDot}`}
             />
             <span className="absolute -bottom-4 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
-              Aria
+              Qa
             </span>
           </button>
         </div>
