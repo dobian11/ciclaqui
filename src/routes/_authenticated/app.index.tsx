@@ -116,7 +116,7 @@ function MapHome() {
   const recalcLockRef = useRef(false);
   const ARRIVED_M = 25;          // soglia "arrivato" base
   const ARRIVED_MAX_M = 80;      // anche con GPS pessimo non superare mai questo
-  const OFFROUTE_M = 60;         // soglia "fuori percorso"
+  const OFFROUTE_M = 20;         // soglia "fuori percorso"
   const RECALC_COOLDOWN = 10_000;
   const ARRIVAL_CONFIRM_FIXES = 2;     // n. fix consecutivi dentro soglia
   const ARRIVAL_DWELL_MS = 8_000;      // o: fermo X sec entro raggio allargato
