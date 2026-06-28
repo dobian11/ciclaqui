@@ -135,6 +135,18 @@ function MapHome() {
   });
   const inWindow = isWithinWindow(winQuery.data as any);
 
+  // GPS telemetry — fires on error transitions
+  const lastGpsErrorRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (geo.error && geo.error !== lastGpsErrorRef.current) {
+      lastGpsErrorRef.current = geo.error;
+      void logTelemetry({ event: "watch", source: "gps", status: "error", errorMessage: geo.error });
+    } else if (!geo.error && lastGpsErrorRef.current) {
+      lastGpsErrorRef.current = null;
+      void logTelemetry({ event: "watch", source: "gps", status: "success" });
+    }
+  }, [geo.error]);
+
 
   const liveMode = trip.recording ? trip.dominantMode : geo.mode;
 
