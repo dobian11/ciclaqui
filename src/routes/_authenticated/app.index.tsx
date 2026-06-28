@@ -175,7 +175,19 @@ function MapHome() {
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-background">
-      <GoogleMapView position={geo.position} mode={liveMode} follow={follow} path={polylinePath} poiCategories={poiCategories} refreshKey={refreshKey} />
+      <GoogleMapView
+        position={geo.position}
+        mode={liveMode}
+        follow={follow}
+        path={polylinePath}
+        poiCategories={poiCategories}
+        refreshKey={refreshKey}
+        onRefreshError={(msg) => {
+          setLayerError(msg);
+          toast.error(msg);
+          window.setTimeout(() => setLayerError(null), 5000);
+        }}
+      />
 
       {/* Top bar — pill compatte */}
       <div
