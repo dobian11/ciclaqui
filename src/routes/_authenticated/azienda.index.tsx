@@ -101,6 +101,10 @@ function CompanyDashboard() {
   const subActive = subStatus === "active" || subStatus === "trial";
   const isMuni = company.kind === "municipality";
   const memberLabel = isMuni ? "Cittadini" : "Dipendenti";
+  const status = (company as { status?: string }).status ?? "pending";
+  const isApproved = status === "approved";
+  const isRejected = status === "rejected";
+  const canShowCode = isApproved && subActive;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-secondary/40 to-background pb-12">
@@ -117,10 +121,32 @@ function CompanyDashboard() {
             {isMuni ? <Landmark className="mr-1 size-3" /> : <Building2 className="mr-1 size-3" />}
             Pannello {isMuni ? "Comune" : "azienda"}
           </Badge>
+          {!isApproved && (
+            <Badge variant="secondary" className={isRejected ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"}>
+              {isRejected ? "Rifiutato" : "In attesa approvazione"}
+            </Badge>
+          )}
         </div>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">{company.name}</h1>
 
-        {/* Codice */}
+        {/* Stato approvazione */}
+        {!isApproved && (
+          <Card className={`mt-6 p-5 ${isRejected ? "border-destructive/40 bg-destructive/5" : "border-warning/40 bg-warning/5"}`}>
+            <div className="text-sm font-semibold">
+              {isRejected ? "Registrazione rifiutata" : "In attesa di approvazione admin"}
+            </div>
+            <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
+              {isRejected ? (
+                <>L'admin ha rifiutato la richiesta: <em>{(company as { rejection_reason?: string }).rejection_reason ?? "nessun motivo specificato"}</em>. Contatta il supporto per maggiori informazioni.</>
+              ) : (
+                <>Abbiamo ricevuto i tuoi dati ({isMuni ? "Comune" : "azienda"}, P.IVA/CF, email). Un amministratore li verifica entro 24–48h. Una volta approvato potrai attivare l'abbonamento e generare il codice da distribuire ai tuoi {isMuni ? "cittadini" : "dipendenti"}.</>
+              )}
+            </p>
+          </Card>
+        )}
+
+        {/* Codice — visibile solo dopo approvazione + abbonamento */}
+        {canShowCode ? (
         <Card className="mt-6 border-cicla/30 bg-cicla/5 p-5 shadow-cicla">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-cicla">
             Codice {isMuni ? "Comune" : "azienda"}
@@ -139,6 +165,14 @@ function CompanyDashboard() {
             <Share2 className="mr-2 size-4" /> Condividi invito
           </Button>
         </Card>
+        ) : isApproved && !subActive ? (
+          <Card className="mt-6 border-cicla/30 bg-cicla/5 p-5">
+            <div className="text-sm font-semibold text-cicla">✓ Ente approvato</div>
+            <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
+              Per <strong>generare e ricevere il codice</strong> da distribuire ai tuoi {isMuni ? "cittadini" : "dipendenti"}, attiva l'abbonamento mensile qui sotto.
+            </p>
+          </Card>
+        ) : null}
 
         {/* Statistiche */}
         <div className="mt-4 grid grid-cols-2 gap-3">
