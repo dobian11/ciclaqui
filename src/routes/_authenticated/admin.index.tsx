@@ -57,6 +57,14 @@ function AdminDashboard() {
     enabled: adminCheck?.admin === true,
   });
 
+  const listPendingCompanies = useServerFn(adminListPendingCompanies);
+  const decideCompanyFn = useServerFn(adminDecideCompany);
+  const { data: companies } = useQuery({
+    queryKey: ["admin-companies"],
+    queryFn: () => listPendingCompanies({}),
+    enabled: adminCheck?.admin === true,
+  });
+
   async function handleDecide(id: string, decision: "approved" | "rejected" | "paid") {
     try {
       await decide({ data: { payout_id: id, decision } });
@@ -64,6 +72,20 @@ function AdminDashboard() {
         decision === "approved" ? "Approvato" : decision === "rejected" ? "Rifiutato (punti restituiti)" : "Segnato come pagato",
       );
       await qc.invalidateQueries({ queryKey: ["admin-payouts"] });
+      await qc.invalidateQueries({ queryKey: ["admin-stats"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Errore");
+    }
+  }
+
+  async function handleCompanyDecide(id: string, decision: "approved" | "rejected") {
+    try {
+      const reason = decision === "rejected"
+        ? (window.prompt("Motivo del rifiuto (opzionale):") ?? undefined)
+        : undefined;
+      await decideCompanyFn({ data: { company_id: id, decision, reason } });
+      toast.success(decision === "approved" ? "Ente approvato" : "Ente rifiutato");
+      await qc.invalidateQueries({ queryKey: ["admin-companies"] });
       await qc.invalidateQueries({ queryKey: ["admin-stats"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Errore");
