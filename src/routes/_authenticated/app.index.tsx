@@ -363,7 +363,10 @@ function MapHome() {
         <NavigationBanner
           distanceMeters={liveRouteInfo?.distanceMeters ?? routeData.distanceMeters}
           durationSec={liveRouteInfo?.durationSec ?? routeData.durationSec}
+          totalDistanceMeters={routeData.distanceMeters}
           recalculating={routeMutation.isPending}
+          tracking={trip.recording}
+          mode={liveMode}
           onStop={() => setRouteData(null)}
           onRefresh={() => geo.retry()}
           onArrived={() => {
