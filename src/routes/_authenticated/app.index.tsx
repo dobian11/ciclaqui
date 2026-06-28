@@ -61,7 +61,6 @@ function MapHome() {
   const trip = useTripRecorder(geo.mode);
   const qc = useQueryClient();
   const [layersOpen, setLayersOpen] = useState(false);
-  const [layersOpen, setLayersOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [poiLoading, setPoiLoading] = useState(false);
