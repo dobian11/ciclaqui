@@ -198,15 +198,15 @@ function CompanyDashboard() {
           </Card>
         </div>
 
-        {/* Abbonamento CTA */}
-        {!subActive && (
+        {/* Abbonamento CTA — solo dopo approvazione */}
+        {isApproved && !subActive && (
           <Card className="mt-4 border-warning/40 bg-warning/5 p-5">
-            <div className="text-sm font-semibold">Attiva l'abbonamento</div>
+            <div className="text-sm font-semibold">Attiva l'abbonamento per generare il codice</div>
             <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
               Per riconoscere i premi (denaro, voucher o altri incentivi) ai punti accumulati
               dai tuoi {isMuni ? "cittadini" : "dipendenti"} serve un abbonamento mensile.
-              Stripe non è ancora collegato: puoi avviare un <strong>trial 14 giorni</strong>
-              {" "}per testare il pannello.
+              All'attivazione riceverai il <strong>codice ente</strong> da distribuire.
+              Stripe non è ancora collegato: puoi avviare un <strong>trial 14 giorni</strong> per testare il pannello.
             </p>
             <Button
               className="mt-3 w-full"
@@ -231,18 +231,20 @@ function CompanyDashboard() {
           </Card>
         )}
 
-        {/* Dipendenti */}
-        <EmployeesSection />
-
-        {/* Orario tracking */}
-        <TrackingWindowSection
-          initial={{
-            tracking_start: company.tracking_start ?? null,
-            tracking_end: company.tracking_end ?? null,
-            tracking_days: (company.tracking_days as number[] | null) ?? [1,2,3,4,5],
-          }}
-          isMuni={isMuni}
-        />
+        {/* Dipendenti & tracking — solo quando il codice è attivo */}
+        {canShowCode && (
+          <>
+            <EmployeesSection />
+            <TrackingWindowSection
+              initial={{
+                tracking_start: company.tracking_start ?? null,
+                tracking_end: company.tracking_end ?? null,
+                tracking_days: (company.tracking_days as number[] | null) ?? [1,2,3,4,5],
+              }}
+              isMuni={isMuni}
+            />
+          </>
+        )}
 
         {/* Dati azienda */}
         <Card className="mt-4 p-5">
