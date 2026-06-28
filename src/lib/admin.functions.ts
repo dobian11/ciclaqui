@@ -1,0 +1,207 @@
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { z } from "zod";
+
+/**
+ * Ritorna l'elenco dipendenti dell'azienda del manager corrente con
+ * km totali, punti lifetime e punti correnti. Usa supabaseAdmin previa
+ * verifica del ruolo company_manager.
+ */
+export const listMyEmployees = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+
+    // verifica ruolo
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    const isManager = roles?.some((r) => r.role === "company_manager");
+    if (!isManager) throw new Error("Solo i company manager possono vedere i dipendenti");
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("company_id")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!profile?.company_id) throw new Error("Nessuna azienda associata");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: employees } = await supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, created_at")
+      .eq("company_id", profile.company_id)
+      .order("created_at", { ascending: false });
+
+    if (!employees || employees.length === 0) return [];
+
+    const ids = employees.map((e) => e.id);
+    const [{ data: wallets }, { data: trips }] = await Promise.all([
+      supabaseAdmin
+        .from("wallets")
+        .select("user_id, points_balance, lifetime_points, lifetime_km")
+        .in("user_id", ids),
+      supabaseAdmin
+        .from("trips")
+        .select("user_id, distance_km, mode")
+        .in("user_id", ids),
+    ]);
+
+    const tripsByUser = new Map<string, { km: number; trips: number }>();
+    (trips ?? []).forEach((t) => {
+      const cur = tripsByUser.get(t.user_id) ?? { km: 0, trips: 0 };
+      cur.km += Number(t.distance_km ?? 0);
+      cur.trips += 1;
+      tripsByUser.set(t.user_id, cur);
+    });
+
+    const walletByUser = new Map(wallets?.map((w) => [w.user_id, w]) ?? []);
+
+    return employees.map((e) => {
+      const w = walletByUser.get(e.id);
+      const t = tripsByUser.get(e.id) ?? { km: 0, trips: 0 };
+      return {
+        id: e.id,
+        full_name: e.full_name ?? "—",
+        joined_at: e.created_at,
+        trips_count: t.trips,
+        total_km: Number(t.km.toFixed(2)),
+        points_balance: w?.points_balance ?? 0,
+        lifetime_points: w?.lifetime_points ?? 0,
+      };
+    });
+  });
+
+// --------------- ADMIN ---------------
+
+async function assertAdmin(supabase: any, userId: string) {
+  const { data: roles } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId);
+  const isAdmin = roles?.some((r: any) => r.role === "admin");
+  if (!isAdmin) throw new Error("Accesso riservato agli amministratori");
+}
+
+export const adminStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [
+      { count: users },
+      { count: companies },
+      { count: bikes },
+      { count: pendingPayouts },
+      { count: activeSubs },
+    ] = await Promise.all([
+      supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("companies").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("bikes").select("id", { count: "exact", head: true }),
+      supabaseAdmin
+        .from("payout_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "pending"),
+      supabaseAdmin
+        .from("company_subscriptions")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["active", "trial"]),
+    ]);
+    return {
+      users: users ?? 0,
+      companies: companies ?? 0,
+      bikes: bikes ?? 0,
+      pending_payouts: pendingPayouts ?? 0,
+      active_subscriptions: activeSubs ?? 0,
+    };
+  });
+
+export const adminListPayouts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("payout_requests")
+      .select("id, user_id, points_redeemed, amount_eur, status, iban_snapshot, created_at, admin_notes")
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    const ids = Array.from(new Set((data ?? []).map((p) => p.user_id)));
+    const names = new Map<string, string>();
+    if (ids.length) {
+      const { data: profs } = await supabaseAdmin
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", ids);
+      profs?.forEach((p) => names.set(p.id, p.full_name ?? "—"));
+    }
+    return (data ?? []).map((p) => ({ ...p, user_name: names.get(p.user_id) ?? "—" }));
+  });
+
+const decideSchema = z.object({
+  payout_id: z.string().uuid(),
+  decision: z.enum(["approved", "rejected", "paid"]),
+  notes: z.string().max(500).optional(),
+});
+
+export const adminDecidePayout = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => decideSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: payout } = await supabaseAdmin
+      .from("payout_requests")
+      .select("id, user_id, points_redeemed, amount_eur, status")
+      .eq("id", data.payout_id)
+      .maybeSingle();
+    if (!payout) throw new Error("Richiesta non trovata");
+    if (payout.status !== "pending" && data.decision !== "paid") {
+      throw new Error("Richiesta già processata");
+    }
+
+    // Se rigettata, riaccredita i punti all'utente
+    if (data.decision === "rejected") {
+      const { data: w } = await supabaseAdmin
+        .from("wallets")
+        .select("points_balance, eur_balance")
+        .eq("user_id", payout.user_id)
+        .maybeSingle();
+      if (w) {
+        await supabaseAdmin
+          .from("wallets")
+          .update({
+            points_balance: w.points_balance + payout.points_redeemed,
+            eur_balance: Number((Number(w.eur_balance) + Number(payout.amount_eur)).toFixed(2)),
+          })
+          .eq("user_id", payout.user_id);
+      }
+    }
+
+    const { error } = await supabaseAdmin
+      .from("payout_requests")
+      .update({
+        status: data.decision,
+        admin_notes: data.notes ?? null,
+        reviewed_by: context.userId,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("id", data.payout_id);
+    if (error) throw new Error("Aggiornamento fallito");
+
+    return { ok: true };
+  });
+
+export const isAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: roles } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    return { admin: !!roles?.some((r) => r.role === "admin") };
+  });

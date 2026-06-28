@@ -114,13 +114,21 @@ function ProfiloPage() {
             </div>
             <div className="mt-3 flex flex-col gap-2">
               {isManager && (
-                <Button variant="outline" disabled className="justify-start">
-                  <Building2 size={16} className="mr-2" /> Dashboard azienda (Sprint 5)
+                <Button
+                  variant="outline"
+                  className="justify-start"
+                  onClick={() => navigate({ to: "/azienda" as never })}
+                >
+                  <Building2 size={16} className="mr-2" /> Dashboard azienda
                 </Button>
               )}
               {isAdmin && (
-                <Button variant="outline" disabled className="justify-start">
-                  <Shield size={16} className="mr-2" /> Pannello admin (Sprint 5)
+                <Button
+                  variant="outline"
+                  className="justify-start"
+                  onClick={() => navigate({ to: "/admin" as never })}
+                >
+                  <Shield size={16} className="mr-2" /> Pannello admin
                 </Button>
               )}
             </div>
