@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletion_requests: {
+        Row: {
+          cancelled_at: string | null
+          created_at: string
+          id: string
+          reason: string | null
+          scheduled_for: string
+          user_id: string
+        }
+        Insert: {
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          scheduled_for?: string
+          user_id: string
+        }
+        Update: {
+          cancelled_at?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          scheduled_for?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_notifications: {
         Row: {
           body: string | null
@@ -456,6 +483,129 @@ export type Database = {
           },
         ]
       }
+      cookie_consents: {
+        Row: {
+          analytics: boolean
+          consented_at: string
+          id: string
+          ip_hash: string | null
+          marketing: boolean
+          necessary: boolean
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          analytics?: boolean
+          consented_at?: string
+          id?: string
+          ip_hash?: string | null
+          marketing?: boolean
+          necessary?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          analytics?: boolean
+          consented_at?: string
+          id?: string
+          ip_hash?: string | null
+          marketing?: boolean
+          necessary?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      data_export_requests: {
+        Row: {
+          error: string | null
+          expires_at: string | null
+          file_path: string | null
+          id: string
+          ready_at: string | null
+          requested_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          error?: string | null
+          expires_at?: string | null
+          file_path?: string | null
+          id?: string
+          ready_at?: string | null
+          requested_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          error?: string | null
+          expires_at?: string | null
+          file_path?: string | null
+          id?: string
+          ready_at?: string | null
+          requested_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      device_tokens: {
+        Row: {
+          created_at: string
+          id: string
+          last_seen: string
+          platform: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_seen?: string
+          platform: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_seen?: string
+          platform?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          push_bike: boolean
+          push_challenges: boolean
+          push_rewards: boolean
+          push_streak: boolean
+          push_trip_flag: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          push_bike?: boolean
+          push_challenges?: boolean
+          push_rewards?: boolean
+          push_streak?: boolean
+          push_trip_flag?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          push_bike?: boolean
+          push_challenges?: boolean
+          push_rewards?: boolean
+          push_streak?: boolean
+          push_trip_flag?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       payout_requests: {
         Row: {
           admin_notes: string | null
@@ -589,6 +739,115 @@ export type Database = {
           },
         ]
       }
+      reward_redemptions: {
+        Row: {
+          code: string
+          expires_at: string | null
+          id: string
+          points_spent: number
+          redeemed_at: string
+          reward_id: string
+          status: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code: string
+          expires_at?: string | null
+          id?: string
+          points_spent: number
+          redeemed_at?: string
+          reward_id: string
+          status?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code?: string
+          expires_at?: string | null
+          id?: string
+          points_spent?: number
+          redeemed_at?: string
+          reward_id?: string
+          status?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rewards_catalog: {
+        Row: {
+          active: boolean
+          cash_value_eur: number | null
+          category: string
+          company_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          partner: string | null
+          points_cost: number
+          region: string | null
+          scope: string
+          stock: number | null
+          terms: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          cash_value_eur?: number | null
+          category?: string
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          partner?: string | null
+          points_cost: number
+          region?: string | null
+          scope?: string
+          stock?: number | null
+          terms?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          cash_value_eur?: number | null
+          category?: string
+          company_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          partner?: string | null
+          points_cost?: number
+          region?: string | null
+          scope?: string
+          stock?: number | null
+          terms?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rewards_catalog_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       streaks: {
         Row: {
           best_days: number
@@ -615,6 +874,66 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      trip_flags: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          declared_mode: string
+          id: string
+          predicted_mode: string
+          reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          score: number
+          status: string
+          trip_id: string
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          declared_mode: string
+          id?: string
+          predicted_mode: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          score: number
+          status?: string
+          trip_id: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          declared_mode?: string
+          id?: string
+          predicted_mode?: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          score?: number
+          status?: string
+          trip_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_flags_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trip_flags_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       trips: {
         Row: {

@@ -13,6 +13,10 @@ import { Route as CercaBiciRouteImport } from './routes/cerca-bici'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LegalTermsRouteImport } from './routes/legal.terms'
+import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
+import { Route as LegalPermessiRouteImport } from './routes/legal.permessi'
+import { Route as LegalCookieRouteImport } from './routes/legal.cookie'
 import { Route as AziendaAuthRouteImport } from './routes/azienda.auth'
 import { Route as AuthenticatedAziendaRouteImport } from './routes/_authenticated/azienda'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
@@ -24,6 +28,8 @@ import { Route as AuthenticatedAziendaOnboardingRouteImport } from './routes/_au
 import { Route as AuthenticatedAppSfideRouteImport } from './routes/_authenticated/app.sfide'
 import { Route as AuthenticatedAppPuntiRouteImport } from './routes/_authenticated/app.punti'
 import { Route as AuthenticatedAppProfiloRouteImport } from './routes/_authenticated/app.profilo'
+import { Route as AuthenticatedAppPrivacyRouteImport } from './routes/_authenticated/app.privacy'
+import { Route as AuthenticatedAppPremiRouteImport } from './routes/_authenticated/app.premi'
 import { Route as AuthenticatedAppBiciRouteImport } from './routes/_authenticated/app.bici'
 
 const CercaBiciRoute = CercaBiciRouteImport.update({
@@ -43,6 +49,26 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalTermsRoute = LegalTermsRouteImport.update({
+  id: '/legal/terms',
+  path: '/legal/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
+  id: '/legal/privacy',
+  path: '/legal/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalPermessiRoute = LegalPermessiRouteImport.update({
+  id: '/legal/permessi',
+  path: '/legal/permessi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalCookieRoute = LegalCookieRouteImport.update({
+  id: '/legal/cookie',
+  path: '/legal/cookie',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AziendaAuthRoute = AziendaAuthRouteImport.update({
@@ -102,6 +128,16 @@ const AuthenticatedAppProfiloRoute = AuthenticatedAppProfiloRouteImport.update({
   path: '/profilo',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppPrivacyRoute = AuthenticatedAppPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppPremiRoute = AuthenticatedAppPremiRouteImport.update({
+  id: '/premi',
+  path: '/premi',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppBiciRoute = AuthenticatedAppBiciRouteImport.update({
   id: '/bici',
   path: '/bici',
@@ -116,7 +152,13 @@ export interface FileRoutesByFullPath {
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/azienda': typeof AuthenticatedAziendaRouteWithChildren
   '/azienda/auth': typeof AziendaAuthRoute
+  '/legal/cookie': typeof LegalCookieRoute
+  '/legal/permessi': typeof LegalPermessiRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/app/bici': typeof AuthenticatedAppBiciRoute
+  '/app/premi': typeof AuthenticatedAppPremiRoute
+  '/app/privacy': typeof AuthenticatedAppPrivacyRoute
   '/app/profilo': typeof AuthenticatedAppProfiloRoute
   '/app/punti': typeof AuthenticatedAppPuntiRoute
   '/app/sfide': typeof AuthenticatedAppSfideRoute
@@ -130,7 +172,13 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/cerca-bici': typeof CercaBiciRoute
   '/azienda/auth': typeof AziendaAuthRoute
+  '/legal/cookie': typeof LegalCookieRoute
+  '/legal/permessi': typeof LegalPermessiRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/app/bici': typeof AuthenticatedAppBiciRoute
+  '/app/premi': typeof AuthenticatedAppPremiRoute
+  '/app/privacy': typeof AuthenticatedAppPrivacyRoute
   '/app/profilo': typeof AuthenticatedAppProfiloRoute
   '/app/punti': typeof AuthenticatedAppPuntiRoute
   '/app/sfide': typeof AuthenticatedAppSfideRoute
@@ -149,7 +197,13 @@ export interface FileRoutesById {
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/azienda': typeof AuthenticatedAziendaRouteWithChildren
   '/azienda/auth': typeof AziendaAuthRoute
+  '/legal/cookie': typeof LegalCookieRoute
+  '/legal/permessi': typeof LegalPermessiRoute
+  '/legal/privacy': typeof LegalPrivacyRoute
+  '/legal/terms': typeof LegalTermsRoute
   '/_authenticated/app/bici': typeof AuthenticatedAppBiciRoute
+  '/_authenticated/app/premi': typeof AuthenticatedAppPremiRoute
+  '/_authenticated/app/privacy': typeof AuthenticatedAppPrivacyRoute
   '/_authenticated/app/profilo': typeof AuthenticatedAppProfiloRoute
   '/_authenticated/app/punti': typeof AuthenticatedAppPuntiRoute
   '/_authenticated/app/sfide': typeof AuthenticatedAppSfideRoute
@@ -168,7 +222,13 @@ export interface FileRouteTypes {
     | '/app'
     | '/azienda'
     | '/azienda/auth'
+    | '/legal/cookie'
+    | '/legal/permessi'
+    | '/legal/privacy'
+    | '/legal/terms'
     | '/app/bici'
+    | '/app/premi'
+    | '/app/privacy'
     | '/app/profilo'
     | '/app/punti'
     | '/app/sfide'
@@ -182,7 +242,13 @@ export interface FileRouteTypes {
     | '/auth'
     | '/cerca-bici'
     | '/azienda/auth'
+    | '/legal/cookie'
+    | '/legal/permessi'
+    | '/legal/privacy'
+    | '/legal/terms'
     | '/app/bici'
+    | '/app/premi'
+    | '/app/privacy'
     | '/app/profilo'
     | '/app/punti'
     | '/app/sfide'
@@ -200,7 +266,13 @@ export interface FileRouteTypes {
     | '/_authenticated/app'
     | '/_authenticated/azienda'
     | '/azienda/auth'
+    | '/legal/cookie'
+    | '/legal/permessi'
+    | '/legal/privacy'
+    | '/legal/terms'
     | '/_authenticated/app/bici'
+    | '/_authenticated/app/premi'
+    | '/_authenticated/app/privacy'
     | '/_authenticated/app/profilo'
     | '/_authenticated/app/punti'
     | '/_authenticated/app/sfide'
@@ -216,6 +288,10 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CercaBiciRoute: typeof CercaBiciRoute
   AziendaAuthRoute: typeof AziendaAuthRoute
+  LegalCookieRoute: typeof LegalCookieRoute
+  LegalPermessiRoute: typeof LegalPermessiRoute
+  LegalPrivacyRoute: typeof LegalPrivacyRoute
+  LegalTermsRoute: typeof LegalTermsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -246,6 +322,34 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/terms': {
+      id: '/legal/terms'
+      path: '/legal/terms'
+      fullPath: '/legal/terms'
+      preLoaderRoute: typeof LegalTermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/privacy': {
+      id: '/legal/privacy'
+      path: '/legal/privacy'
+      fullPath: '/legal/privacy'
+      preLoaderRoute: typeof LegalPrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/permessi': {
+      id: '/legal/permessi'
+      path: '/legal/permessi'
+      fullPath: '/legal/permessi'
+      preLoaderRoute: typeof LegalPermessiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/cookie': {
+      id: '/legal/cookie'
+      path: '/legal/cookie'
+      fullPath: '/legal/cookie'
+      preLoaderRoute: typeof LegalCookieRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/azienda/auth': {
@@ -325,6 +429,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppProfiloRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/privacy': {
+      id: '/_authenticated/app/privacy'
+      path: '/privacy'
+      fullPath: '/app/privacy'
+      preLoaderRoute: typeof AuthenticatedAppPrivacyRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/premi': {
+      id: '/_authenticated/app/premi'
+      path: '/premi'
+      fullPath: '/app/premi'
+      preLoaderRoute: typeof AuthenticatedAppPremiRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/bici': {
       id: '/_authenticated/app/bici'
       path: '/bici'
@@ -348,6 +466,8 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppBiciRoute: typeof AuthenticatedAppBiciRoute
+  AuthenticatedAppPremiRoute: typeof AuthenticatedAppPremiRoute
+  AuthenticatedAppPrivacyRoute: typeof AuthenticatedAppPrivacyRoute
   AuthenticatedAppProfiloRoute: typeof AuthenticatedAppProfiloRoute
   AuthenticatedAppPuntiRoute: typeof AuthenticatedAppPuntiRoute
   AuthenticatedAppSfideRoute: typeof AuthenticatedAppSfideRoute
@@ -356,6 +476,8 @@ interface AuthenticatedAppRouteChildren {
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppBiciRoute: AuthenticatedAppBiciRoute,
+  AuthenticatedAppPremiRoute: AuthenticatedAppPremiRoute,
+  AuthenticatedAppPrivacyRoute: AuthenticatedAppPrivacyRoute,
   AuthenticatedAppProfiloRoute: AuthenticatedAppProfiloRoute,
   AuthenticatedAppPuntiRoute: AuthenticatedAppPuntiRoute,
   AuthenticatedAppSfideRoute: AuthenticatedAppSfideRoute,
@@ -399,6 +521,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CercaBiciRoute: CercaBiciRoute,
   AziendaAuthRoute: AziendaAuthRoute,
+  LegalCookieRoute: LegalCookieRoute,
+  LegalPermessiRoute: LegalPermessiRoute,
+  LegalPrivacyRoute: LegalPrivacyRoute,
+  LegalTermsRoute: LegalTermsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
