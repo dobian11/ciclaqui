@@ -29,9 +29,11 @@ function CompanyDashboard() {
   const qc = useQueryClient();
   const getMine = useServerFn(getMyCompany);
   const startSub = useServerFn(startCompanySubscription);
+  const listReviews = useServerFn(listMyCompanyReviews);
   const [copied, setCopied] = useState(false);
   const [subLoading, setSubLoading] = useState(false);
   const [hasSession, setHasSession] = useState<boolean | null>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setHasSession(!!data.session));
