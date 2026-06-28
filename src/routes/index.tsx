@@ -1,7 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
-import { Bike, Building2, ShieldCheck, Coins, MapPin, ArrowRight } from "lucide-react";
+import { Bike, Building2, ShieldCheck, Gift, MapPin, ArrowRight, Landmark } from "lucide-react";
 import { getPostLoginRedirect } from "@/lib/auth-redirect";
 
 export const Route = createFileRoute("/")({
