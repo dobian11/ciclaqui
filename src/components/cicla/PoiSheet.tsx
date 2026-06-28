@@ -1,4 +1,4 @@
-import { Navigation, X, ExternalLink, Loader2, MapPin } from "lucide-react";
+import { Navigation, X, ExternalLink, Loader2, MapPin, Locate, RotateCw, Flag } from "lucide-react";
 import { POI_META, type Poi } from "@/lib/pois";
 
 function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
