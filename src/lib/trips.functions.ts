@@ -191,8 +191,9 @@ export const endTrip = createServerFn({ method: "POST" })
         _user_id: userId,
         _mode: data.mode,
         _distance_km: distance,
-        _company_id: prof?.company_id ?? null,
-      });
+        _company_id: prof?.company_id ?? undefined,
+      } as any);
+
     } catch (e) {
       console.error("[endTrip] gamification rpc failed", e);
     }
