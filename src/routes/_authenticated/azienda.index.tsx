@@ -200,6 +200,16 @@ function CompanyDashboard() {
         {/* Dipendenti */}
         <EmployeesSection />
 
+        {/* Orario tracking */}
+        <TrackingWindowSection
+          initial={{
+            tracking_start: company.tracking_start ?? null,
+            tracking_end: company.tracking_end ?? null,
+            tracking_days: (company.tracking_days as number[] | null) ?? [1,2,3,4,5],
+          }}
+          isMuni={isMuni}
+        />
+
         {/* Dati azienda */}
         <Card className="mt-4 p-5">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
