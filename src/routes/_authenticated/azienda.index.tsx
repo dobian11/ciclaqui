@@ -167,8 +167,9 @@ function CompanyDashboard() {
           <Card className="mt-4 border-warning/40 bg-warning/5 p-5">
             <div className="text-sm font-semibold">Attiva l'abbonamento</div>
             <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
-              Per pagare i punti accumulati dai tuoi dipendenti serve un abbonamento
-              mensile. Stripe non è ancora collegato: puoi avviare un <strong>trial 14 giorni</strong>
+              Per riconoscere i premi (denaro, voucher o altri incentivi) ai punti accumulati
+              dai tuoi {isMuni ? "cittadini" : "dipendenti"} serve un abbonamento mensile.
+              Stripe non è ancora collegato: puoi avviare un <strong>trial 14 giorni</strong>
               {" "}per testare il pannello.
             </p>
             <Button
