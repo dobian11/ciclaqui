@@ -169,6 +169,7 @@ function MapHome() {
   }, [routeData, geo.position]);
 
 
+  const isRefreshingRef = useRef(false);
   const refreshStartRef = useRef<number>(0);
   const aqPromiseRef = useRef<Promise<{ ok: boolean; error?: string }> | null>(null);
 
