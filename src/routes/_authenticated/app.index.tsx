@@ -282,13 +282,25 @@ function MapHome() {
   const stopMutation = useMutation({
     mutationFn: async () => {
       const startedAt = new Date(trip.startedAt!).toISOString();
-      const endedAt = new Date().toISOString();
+      const endedAtMs = Date.now();
+      const endedAt = new Date(endedAtMs).toISOString();
       const path = trip.path.map((p) => ({ lat: p.lat, lng: p.lng, t: p.t, s: p.s }));
-      return endTripFn({
+      // snapshot del tragitto PRIMA della chiamata: serve per il riepilogo
+      // anche se reset() svuota lo stato
+      const snapshot = {
+        startedAt: trip.startedAt!,
+        endedAt: endedAtMs,
+        durationS: trip.durationS,
+        distanceKm: trip.distanceKm,
+        mode: trip.dominantMode,
+        path: trip.path.slice(),
+      };
+      const res = await endTripFn({
         data: { started_at: startedAt, ended_at: endedAt, mode: trip.dominantMode, path },
       });
+      return { res, snapshot };
     },
-    onSuccess: (res) => {
+    onSuccess: ({ res, snapshot }) => {
       if (res.anomaly) {
         toast.warning(`Viaggio sospetto: ${res.anomaly_reason ?? ""}`);
       } else if (res.points_earned > 0) {
@@ -296,6 +308,14 @@ function MapHome() {
       } else {
         toast.message(`Viaggio salvato: ${res.distance_km.toFixed(2)} km`);
       }
+      // mostra il riepilogo condivisibile (preferisci dati server)
+      setLastSummary({
+        ...snapshot,
+        distanceKm: res.distance_km ?? snapshot.distanceKm,
+        pointsEarned: res.points_earned ?? 0,
+        anomaly: !!res.anomaly,
+        anomalyReason: res.anomaly_reason ?? null,
+      });
       trip.reset();
       qc.invalidateQueries({ queryKey: ["wallet"] });
       qc.invalidateQueries({ queryKey: ["my-trips"] });
