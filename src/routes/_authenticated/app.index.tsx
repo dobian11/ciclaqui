@@ -418,6 +418,8 @@ function MapHome() {
         mode={liveMode}
         aq={aqQuery.data}
         aqLoading={aqQuery.isFetching}
+        aqError={aqQuery.isError}
+        aqRetry={() => aqQuery.refetch()}
         livePoints={
           trip.recording
             ? Math.floor(
