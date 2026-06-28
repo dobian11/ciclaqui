@@ -53,6 +53,36 @@ export type Database = {
         }
         Relationships: []
       }
+      badges: {
+        Row: {
+          code: string
+          description: string | null
+          earned_at: string
+          icon: string | null
+          id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          description?: string | null
+          earned_at?: string
+          icon?: string | null
+          id?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          description?: string | null
+          earned_at?: string
+          icon?: string | null
+          id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bike_reports: {
         Row: {
           bike_id: string
@@ -154,8 +184,72 @@ export type Database = {
         }
         Relationships: []
       }
+      challenges: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ends_at: string
+          goal: number
+          icon: string | null
+          id: string
+          is_active: boolean
+          period: Database["public"]["Enums"]["challenge_period"]
+          reward_points: number
+          starts_at: string
+          title: string
+          type: Database["public"]["Enums"]["challenge_type"]
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at: string
+          goal: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          period?: Database["public"]["Enums"]["challenge_period"]
+          reward_points?: number
+          starts_at?: string
+          title: string
+          type: Database["public"]["Enums"]["challenge_type"]
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string
+          goal?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          period?: Database["public"]["Enums"]["challenge_period"]
+          reward_points?: number
+          starts_at?: string
+          title?: string
+          type?: Database["public"]["Enums"]["challenge_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenges_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           code: string
           contact_email: string
           created_at: string
@@ -166,12 +260,16 @@ export type Database = {
           kind: Database["public"]["Enums"]["company_kind"]
           name: string
           plan: Database["public"]["Enums"]["subscription_plan"]
+          rejection_reason: string | null
+          status: Database["public"]["Enums"]["company_status"]
           stripe_customer_id: string | null
           subscription_status: Database["public"]["Enums"]["subscription_status"]
           updated_at: string
           vat: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           code: string
           contact_email: string
           created_at?: string
@@ -182,12 +280,16 @@ export type Database = {
           kind?: Database["public"]["Enums"]["company_kind"]
           name: string
           plan?: Database["public"]["Enums"]["subscription_plan"]
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["company_status"]
           stripe_customer_id?: string | null
           subscription_status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string
           vat?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           code?: string
           contact_email?: string
           created_at?: string
@@ -198,6 +300,8 @@ export type Database = {
           kind?: Database["public"]["Enums"]["company_kind"]
           name?: string
           plan?: Database["public"]["Enums"]["subscription_plan"]
+          rejection_reason?: string | null
+          status?: Database["public"]["Enums"]["company_status"]
           stripe_customer_id?: string | null
           subscription_status?: Database["public"]["Enums"]["subscription_status"]
           updated_at?: string
@@ -379,6 +483,33 @@ export type Database = {
           },
         ]
       }
+      streaks: {
+        Row: {
+          best_days: number
+          current_days: number
+          last_active_date: string | null
+          multiplier: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          best_days?: number
+          current_days?: number
+          last_active_date?: string | null
+          multiplier?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          best_days?: number
+          current_days?: number
+          last_active_date?: string | null
+          multiplier?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       trips: {
         Row: {
           anomaly_flag: boolean
@@ -432,6 +563,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_challenges: {
+        Row: {
+          challenge_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          progress: number
+          reward_claimed: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          progress?: number
+          reward_claimed?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          progress?: number
+          reward_claimed?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_challenges_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -505,7 +677,15 @@ export type Database = {
       app_role: "user" | "company_manager" | "admin"
       bike_report_type: "sighting" | "recovery"
       bike_status: "libera" | "custodita" | "rubata" | "recuperata"
+      challenge_period: "weekly" | "monthly" | "one_off"
+      challenge_type:
+        | "km_bike"
+        | "km_foot"
+        | "streak_days"
+        | "trip_count"
+        | "co2_saved"
       company_kind: "company" | "municipality"
+      company_status: "pending" | "approved" | "rejected" | "suspended"
       payout_status: "pending" | "approved" | "paid" | "rejected"
       subscription_plan: "starter" | "pro" | "enterprise"
       subscription_status:
@@ -645,7 +825,16 @@ export const Constants = {
       app_role: ["user", "company_manager", "admin"],
       bike_report_type: ["sighting", "recovery"],
       bike_status: ["libera", "custodita", "rubata", "recuperata"],
+      challenge_period: ["weekly", "monthly", "one_off"],
+      challenge_type: [
+        "km_bike",
+        "km_foot",
+        "streak_days",
+        "trip_count",
+        "co2_saved",
+      ],
       company_kind: ["company", "municipality"],
+      company_status: ["pending", "approved", "rejected", "suspended"],
       payout_status: ["pending", "approved", "paid", "rejected"],
       subscription_plan: ["starter", "pro", "enterprise"],
       subscription_status: [
