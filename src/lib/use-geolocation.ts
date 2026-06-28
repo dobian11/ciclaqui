@@ -98,7 +98,7 @@ export function useGeolocation(enabled = true): GeoState {
     // We intentionally read state.mode inside the callback via closure-safe
     // setState updater, so we don't list it as a dep (would re-subscribe per fix).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled]);
+  }, [enabled, retryTick]);
 
   return state;
 }
