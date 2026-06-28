@@ -13,6 +13,7 @@ import { getMyTrackingWindow } from "@/lib/companies.functions";
 import { POI_META, type PoiCategory } from "@/lib/pois";
 import { supabase } from "@/integrations/supabase/client";
 import { logTelemetry } from "@/lib/telemetry";
+import { useMapPrefs } from "@/lib/use-map-prefs";
 
 import { toast } from "sonner";
 
@@ -56,10 +57,10 @@ function isWithinWindow(win: { tracking_start: string | null; tracking_end: stri
 
 function MapHome() {
   const geo = useGeolocation(true);
-  const [follow, setFollow] = useState(true);
+  const { prefs, setFollow, setPoiCategories, togglePoi } = useMapPrefs();
+  const { follow, poiCategories } = prefs;
   const trip = useTripRecorder(geo.mode);
   const qc = useQueryClient();
-  const [poiCategories, setPoiCategories] = useState<PoiCategory[]>([]);
   const [layersOpen, setLayersOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -123,8 +124,6 @@ function MapHome() {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setAuthed(!!s));
     return () => sub.subscription.unsubscribe();
   }, []);
-  const togglePoi = (cat: PoiCategory) =>
-    setPoiCategories((prev) => (prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]));
 
   const fetchWindow = useServerFn(getMyTrackingWindow);
   const winQuery = useQuery({
@@ -367,7 +366,7 @@ function MapHome() {
       {/* Locate FAB */}
       <button
         type="button"
-        onClick={() => setFollow((f) => !f)}
+        onClick={() => setFollow(!follow)}
         className={`absolute right-4 z-[1000] grid size-11 place-items-center rounded-full app-glass-strong shadow-xl transition-colors ${
           follow ? "text-cicla" : "text-muted-foreground"
         }`}

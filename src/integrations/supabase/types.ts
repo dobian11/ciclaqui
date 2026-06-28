@@ -700,6 +700,7 @@ export type Database = {
           full_name: string | null
           iban: string | null
           id: string
+          preferences: Json
           stripe_account_id: string | null
           stripe_account_status: string | null
           updated_at: string
@@ -712,6 +713,7 @@ export type Database = {
           full_name?: string | null
           iban?: string | null
           id: string
+          preferences?: Json
           stripe_account_id?: string | null
           stripe_account_status?: string | null
           updated_at?: string
@@ -724,6 +726,7 @@ export type Database = {
           full_name?: string | null
           iban?: string | null
           id?: string
+          preferences?: Json
           stripe_account_id?: string | null
           stripe_account_status?: string | null
           updated_at?: string
