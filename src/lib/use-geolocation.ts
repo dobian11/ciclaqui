@@ -60,7 +60,12 @@ export function useGeolocation(enabled = true): GeoState {
         } else {
           candidate.current = { mode: candidateMode, count: 1 };
         }
-        if (candidate.current.count >= MODE_STABILITY) {
+        // Stazionario (<1 km/h): blocca subito su "a piedi" senza aspettare la stabilità.
+        // Questo evita che a riposo il marker resti su un mode "ereditato" (bici/auto).
+        if (smoothed < 1) {
+          nextMode = "foot";
+          candidate.current = { mode: "foot", count: MODE_STABILITY };
+        } else if (candidate.current.count >= MODE_STABILITY) {
           nextMode = candidateMode;
         }
 
