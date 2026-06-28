@@ -360,6 +360,14 @@ function MapHome() {
         routePath={routeData?.path ?? null}
       />
 
+      <GpsPermissionSheet
+        error={geo.error}
+        loading={geo.loading}
+        hasPosition={!!geo.position}
+        onRetry={() => geo.retry()}
+      />
+
+
       {routeData && (
         <NavigationBanner
           distanceMeters={liveRouteInfo?.distanceMeters ?? routeData.distanceMeters}
