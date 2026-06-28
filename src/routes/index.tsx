@@ -3,13 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { Button } from "@/components/ui/button";
 import { Bike, Building2, Leaf, MapPin, ShieldCheck, Coins } from "lucide-react";
+import { getPostLoginRedirect } from "@/lib/auth-redirect";
 
 export const Route = createFileRoute("/")({
   ssr: false,
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
     if (data.user) {
-      throw redirect({ to: "/app" });
+      const dest = await getPostLoginRedirect();
+      throw redirect({ to: dest as never });
     }
   },
   head: () => ({
@@ -31,6 +33,13 @@ function WelcomePage() {
       <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 py-8">
         <header className="flex items-center justify-between">
           <CiclaLogo size="md" />
+          <Link
+            to="/auth"
+            search={{ mode: "login" }}
+            className="rounded-full border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Accedi
+          </Link>
         </header>
 
         <section className="mt-10">
@@ -59,18 +68,18 @@ function WelcomePage() {
 
         <div className="mt-auto pt-10 space-y-3">
           <Button asChild className="w-full h-12 text-base shadow-cicla">
-            <Link to="/auth">
+            <Link to="/auth" search={{ mode: "signup" }}>
               <Bike className="mr-1" /> Inizia come persona
             </Link>
           </Button>
           <Button asChild variant="outline" className="w-full h-12 text-base">
-            <Link to="/azienda/auth">
+            <Link to="/azienda/auth" search={{ mode: "signup" }}>
               <Building2 className="mr-1" /> Sono un'azienda
             </Link>
           </Button>
           <p className="text-center text-[11px] text-muted-foreground">
             Hai già un account?{" "}
-            <Link to="/auth" className="font-semibold text-foreground underline-offset-2 hover:underline">
+            <Link to="/auth" search={{ mode: "login" }} className="font-semibold text-foreground underline-offset-2 hover:underline">
               Accedi
             </Link>
           </p>
