@@ -7,6 +7,7 @@ export interface GeoState {
   mode: TripMode;
   accuracy: number | null;
   error: string | null;
+  loading: boolean;
 }
 
 /**
