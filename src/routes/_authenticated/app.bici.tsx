@@ -387,3 +387,58 @@ function QrModal({ bike, onClose }: { bike: BikeRow; onClose: () => void }) {
     </div>
   );
 }
+
+function WalletButtons({ bikeId }: { bikeId: string }) {
+  const googleFn = useServerFn(getGoogleWalletLink);
+  const appleFn = useServerFn(getAppleWalletPass);
+  const [loading, setLoading] = useState<"google" | "apple" | null>(null);
+
+  async function onGoogle() {
+    setLoading("google");
+    try {
+      const res = await googleFn({ data: { bike_id: bikeId } });
+      if (!res.configured) {
+        toast.info("Google Wallet non ancora configurato dall'admin.");
+      } else {
+        window.open(res.saveUrl, "_blank", "noopener");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Errore Google Wallet");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function onApple() {
+    setLoading("apple");
+    try {
+      const res = await appleFn({ data: { bike_id: bikeId } });
+      if (!res.configured) {
+        toast.info("Apple Wallet non ancora configurato dall'admin.");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Errore Apple Wallet");
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  return (
+    <div className="mt-2 grid grid-cols-2 gap-2">
+      <button
+        onClick={onApple}
+        disabled={loading !== null}
+        className="inline-flex items-center justify-center gap-1.5 rounded-full border border-border bg-foreground/95 px-3 py-2 text-xs font-semibold text-background disabled:opacity-50"
+      >
+        <Wallet size={14} /> {loading === "apple" ? "…" : "Apple Wallet"}
+      </button>
+      <button
+        onClick={onGoogle}
+        disabled={loading !== null}
+        className="inline-flex items-center justify-center gap-1.5 rounded-full border border-border px-3 py-2 text-xs font-semibold disabled:opacity-50"
+      >
+        <Wallet size={14} /> {loading === "google" ? "…" : "Google Wallet"}
+      </button>
+    </div>
+  );
+}
