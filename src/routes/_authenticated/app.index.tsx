@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { GoogleMapView } from "@/components/cicla/GoogleMapView";
 import { useGeolocation } from "@/lib/use-geolocation";
 import { useTripRecorder } from "@/lib/use-trip-recorder";
-import { Wind, Flame, Locate, Loader2, Search, Trophy, Layers, X, Radio } from "lucide-react";
+import { Wind, Flame, Locate, Loader2, Search, Trophy, Layers, X, Radio, AlertTriangle } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAirQuality } from "@/lib/air-quality.functions";
