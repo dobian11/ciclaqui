@@ -158,6 +158,7 @@ export function NavigationBanner({
   tracking,
   mode,
   onStop,
+  onCancel,
   onRefresh,
   onArrived,
   onRecalc,
@@ -169,6 +170,7 @@ export function NavigationBanner({
   tracking?: boolean;
   mode?: "bike" | "foot" | "car";
   onStop: () => void;
+  onCancel?: () => void;
   onRefresh?: () => void;
   onArrived?: () => void;
   onRecalc?: () => void;
@@ -267,11 +269,28 @@ export function NavigationBanner({
               <Flag size={11} strokeWidth={2.8} />
             </button>
           )}
+          {onCancel && (
+            <button
+              type="button"
+              onClick={() => {
+                if (confirm("Annullare il tragitto in corso? I km percorsi non saranno salvati.")) {
+                  onCancel();
+                }
+              }}
+              className="grid h-6 items-center gap-1 rounded-full bg-red-500/90 px-2 text-[10px] font-bold uppercase tracking-wider text-white active:scale-95"
+              aria-label="Annulla tragitto"
+              title="Annulla tragitto (non salva)"
+            >
+              <X size={11} strokeWidth={3} />
+              Annulla
+            </button>
+          )}
           <button
             type="button"
             onClick={onStop}
             className="grid size-6 place-items-center rounded-full bg-black/25 text-white"
-            aria-label="Termina navigazione"
+            aria-label="Chiudi navigazione"
+            title="Chiudi navigazione"
           >
             <X size={11} strokeWidth={3} />
           </button>

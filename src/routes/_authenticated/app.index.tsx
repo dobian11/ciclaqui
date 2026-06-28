@@ -462,6 +462,13 @@ function MapHome() {
           tracking={trip.recording}
           mode={liveMode}
           onStop={() => setRouteData(null)}
+          onCancel={() => {
+            // annulla: ferma tracking SENZA salvare e chiude navigazione
+            if (trip.recording) trip.stop();
+            trip.reset();
+            setRouteData(null);
+            toast.message("Tragitto annullato · non salvato");
+          }}
           onRefresh={() => geo.retry()}
           onArrived={() => {
             toast.success("🎯 Arrivato a destinazione");
