@@ -1,0 +1,27 @@
+{
+  "name": "Cicla Qui",
+  "short_name": "Cicla Qui",
+  "description": "Pedala, cammina, guadagna. Mobilità sostenibile premiata.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#00B86B",
+  "background_color": "#0a0f0d",
+  "lang": "it",
+  "categories": ["lifestyle", "health", "navigation"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
