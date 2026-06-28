@@ -386,6 +386,31 @@ function MapHome() {
 
   // ── AUTO-TRACKING: avvio/stop in base al movimento ──────────────
   const lastMoveAtRef = useRef<number>(Date.now());
+  const gpsReadyRef = useRef<boolean>(false);
+  const prevErrorRef = useRef<typeof geo.error>(null);
+
+  // Avvio immediato appena il GPS diventa valido (dopo permessi/servizi attivati),
+  // senza attendere il movimento. Si attiva solo dentro la finestra oraria.
+  useEffect(() => {
+    const validFix = !!geo.position && !geo.error && (geo.accuracy == null || geo.accuracy <= 100);
+    const recovered = !!prevErrorRef.current && !geo.error; // transizione errore → ok
+    const justBecameValid = validFix && (!gpsReadyRef.current || recovered);
+
+    if (justBecameValid) {
+      gpsReadyRef.current = true;
+      if (!trip.recording && inWindow) {
+        trip.start();
+        lastMoveAtRef.current = Date.now();
+        toast.message("Tracking avviato · GPS pronto", { duration: 2000 });
+      }
+    }
+    if (!geo.position && !!geo.error) {
+      gpsReadyRef.current = false;
+    }
+    prevErrorRef.current = geo.error;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geo.position, geo.error, geo.accuracy, inWindow]);
+
   useEffect(() => {
     if (!geo.position) return;
     const moving = geo.speedKmh >= MOVE_START_KMH;
@@ -409,6 +434,7 @@ function MapHome() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geo.position, geo.speedKmh, trip.recording, inWindow]);
+
 
 
   const fmtDuration = (s: number) => {
