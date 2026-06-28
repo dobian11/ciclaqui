@@ -265,46 +265,167 @@ function MapHome() {
         </div>
       )}
 
-      {/* Stat pill compatta in basso */}
+      {/* Trittico in basso: kcal · SOS · qualità aria */}
+      <BottomTrio
+        caloriesPerMin={caloriesPerMin}
+        mode={liveMode}
+        aq={aqQuery.data}
+        aqLoading={aqQuery.isLoading}
+        livePoints={
+          trip.recording
+            ? Math.floor(
+                trip.distanceKm *
+                  (trip.dominantMode === "bike" ? 10 : trip.dominantMode === "foot" ? 3 : 0),
+              )
+            : null
+        }
+      />
+    </div>
+  );
+}
+
+function BottomTrio({
+  caloriesPerMin,
+  mode,
+  aq,
+  aqLoading,
+  livePoints,
+}: {
+  caloriesPerMin: number;
+  mode: "foot" | "bike" | "car";
+  aq: any;
+  aqLoading: boolean;
+  livePoints: number | null;
+}) {
+  const [expanded, setExpanded] = useState<null | "kcal" | "aq">(null);
+  const aqi = aq?.aqi ?? null;
+  const aqiLabel = aq?.category ?? (aqi == null ? "—" : String(aqi));
+  const aqiDot =
+    aqi == null ? "bg-muted-foreground" : aqi >= 80 ? "bg-cicla" : aqi >= 50 ? "bg-warning" : "bg-destructive";
+
+  const kcalPerKm = mode === "bike" ? 30 : mode === "foot" ? 60 : 0;
+
+  return (
+    <>
+      {/* Pannello dettagli espandibile */}
+      {expanded && (
+        <div
+          className="pointer-events-auto absolute inset-x-0 z-[1000] px-4"
+          style={{ bottom: "calc(178px + env(safe-area-inset-bottom, 0px))" }}
+        >
+          <div className="mx-auto max-w-md rounded-3xl app-glass-strong p-4 shadow-2xl">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="font-display text-sm font-bold uppercase tracking-widest">
+                {expanded === "kcal" ? "Calorie" : "Qualità dell'aria"}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setExpanded(null)}
+                className="grid size-7 place-items-center rounded-full bg-white/5 text-muted-foreground hover:text-foreground"
+                aria-label="Chiudi"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            {expanded === "kcal" ? (
+              <div className="space-y-2 text-[12px]">
+                <Row label="Modalità" value={MODE_LABEL[mode]} />
+                <Row label="kcal / minuto" value={`${caloriesPerMin}`} />
+                <Row label="kcal / km stimate" value={kcalPerKm ? `${kcalPerKm}` : "—"} />
+                <Row label="MET" value={mode === "bike" ? "6.8" : mode === "foot" ? "3.5" : "1.3"} />
+                <p className="pt-1 text-[10px] leading-relaxed text-muted-foreground">
+                  Stima basata su peso medio 70 kg. In auto non bruci calorie attive.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2 text-[12px]">
+                <Row label="AQI" value={aqLoading ? "…" : String(aqiLabel)} />
+                <Row label="PM2.5" value={aq?.pm25 != null ? `${aq.pm25.toFixed(1)} µg/m³` : "—"} />
+                <Row label="PM10" value={aq?.pm10 != null ? `${aq.pm10.toFixed(1)} µg/m³` : "—"} />
+                <Row label="O₃" value={aq?.o3 != null ? `${aq.o3.toFixed(1)} µg/m³` : "—"} />
+                <Row label="NO₂" value={aq?.no2 != null ? `${aq.no2.toFixed(1)} µg/m³` : "—"} />
+                <p className="pt-1 text-[10px] leading-relaxed text-muted-foreground">
+                  Dati live nella tua zona. Più alto l'AQI, migliore l'aria.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div
-        className="pointer-events-none absolute inset-x-0 z-[1000] px-3"
-        style={{ bottom: "calc(100px + env(safe-area-inset-bottom, 0px))" }}
+        className="pointer-events-none absolute inset-x-0 z-[1000] px-6"
+        style={{ bottom: "calc(86px + env(safe-area-inset-bottom, 0px))" }}
       >
-        <div className="pointer-events-auto mx-auto flex max-w-md items-center gap-2 rounded-full app-glass px-3 py-1.5 shadow-xl">
-          <div className="flex flex-1 items-center gap-1.5">
-            <Flame size={12} className="shrink-0 text-warning" />
-            <span className="font-display text-sm font-bold tabular-nums leading-none">
+        <div className="pointer-events-auto mx-auto flex max-w-md items-center justify-between">
+          {/* Calorie */}
+          <button
+            type="button"
+            onClick={() => setExpanded((e) => (e === "kcal" ? null : "kcal"))}
+            className={`group relative grid size-16 place-items-center rounded-full app-glass-strong shadow-xl transition-transform active:scale-95 ${
+              expanded === "kcal" ? "ring-2 ring-warning" : ""
+            }`}
+            aria-label="Calorie"
+          >
+            <Flame size={18} className="text-warning" />
+            <span className="mt-0.5 font-display text-[13px] font-bold leading-none tabular-nums">
               {caloriesPerMin}
             </span>
-            <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="absolute -bottom-4 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
               kcal/min
             </span>
-          </div>
-          <span className="h-3 w-px bg-white/10" />
-          <div className="flex flex-1 items-center gap-1.5">
-            <Wind size={12} className="shrink-0 text-info" />
-            <span className="font-display text-sm font-bold leading-none">
-              {aqQuery.isLoading ? "…" : aqiLabel}
+            {livePoints != null && (
+              <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-cicla px-1 text-[9px] font-bold text-cicla-foreground">
+                +{livePoints}
+              </span>
+            )}
+          </button>
+
+          {/* SOS centrale */}
+          <a
+            href="https://www.db360app.it"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="SOS"
+            className="relative grid size-16 place-items-center rounded-full bg-destructive text-white shadow-[0_12px_28px_-6px_rgba(220,38,38,0.6)] ring-4 ring-background transition-transform active:scale-95"
+          >
+            <AlertTriangle size={22} strokeWidth={2.6} />
+            <span className="absolute -bottom-4 text-[10px] font-bold tracking-widest text-destructive">
+              SOS
             </span>
-            <span className={`inline-block size-1.5 rounded-full ${aqiDot}`} />
-          </div>
-          {trip.recording && (
-            <>
-              <span className="h-3 w-px bg-white/10" />
-              <div className="flex items-center gap-1">
-                <Trophy size={11} className="shrink-0 text-cicla" />
-                <span className="font-display text-sm font-bold tabular-nums leading-none text-cicla">
-                  +
-                  {Math.floor(
-                    trip.distanceKm *
-                      (trip.dominantMode === "bike" ? 10 : trip.dominantMode === "foot" ? 3 : 0),
-                  )}
-                </span>
-              </div>
-            </>
-          )}
+          </a>
+
+          {/* Qualità aria */}
+          <button
+            type="button"
+            onClick={() => setExpanded((e) => (e === "aq" ? null : "aq"))}
+            className={`group relative grid size-16 place-items-center rounded-full app-glass-strong shadow-xl transition-transform active:scale-95 ${
+              expanded === "aq" ? "ring-2 ring-info" : ""
+            }`}
+            aria-label="Qualità dell'aria"
+          >
+            <Wind size={18} className="text-info" />
+            <span className="mt-0.5 font-display text-[13px] font-bold leading-none">
+              {aqLoading ? "…" : aqiLabel}
+            </span>
+            <span
+              className={`absolute right-2 top-2 inline-block size-1.5 rounded-full ${aqiDot}`}
+            />
+            <span className="absolute -bottom-4 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
+              Aria
+            </span>
+          </button>
         </div>
       </div>
+    </>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-white/5 pb-1.5 last:border-0 last:pb-0">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-display font-bold tabular-nums">{value}</span>
     </div>
   );
 }
