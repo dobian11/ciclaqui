@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GoogleMapView } from "@/components/cicla/GoogleMapView";
+import { SourceErrorChip, ErrorDot } from "@/components/cicla/SourceErrorChip";
 import { useGeolocation } from "@/lib/use-geolocation";
 import { useTripRecorder } from "@/lib/use-trip-recorder";
-import { Wind, Flame, Locate, Loader2, Search, Layers, X, Radio, AlertTriangle, RefreshCw } from "lucide-react";
+import { Wind, Flame, Locate, Loader2, Search, Layers, X, Radio, AlertTriangle, RefreshCw, RotateCw } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAirQuality } from "@/lib/air-quality.functions";
