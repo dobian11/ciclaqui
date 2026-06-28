@@ -438,12 +438,16 @@ function BottomTrio({
   mode,
   aq,
   aqLoading,
+  aqError,
+  aqRetry,
   livePoints,
 }: {
   caloriesPerMin: number;
   mode: "foot" | "bike" | "car";
   aq: any;
   aqLoading: boolean;
+  aqError: boolean;
+  aqRetry: () => void;
   livePoints: number | null;
 }) {
   const [expanded, setExpanded] = useState<null | "kcal" | "aq">(null);
