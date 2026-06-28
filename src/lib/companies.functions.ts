@@ -140,7 +140,11 @@ export const getMyCompany = createServerFn({ method: "GET" })
 
     if (!profile?.company_id) return null;
 
-    const { data: company } = await supabase
+    // Sensitive columns (iban, vat, contact_email, ...) are not granted to the
+    // authenticated role; read them through the admin client after verifying
+    // the caller is associated with that company.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: company } = await supabaseAdmin
       .from("companies")
       .select("id, name, code, vat, iban, contact_email, created_at, kind, tracking_start, tracking_end, tracking_days, status, approved_at, rejection_reason")
       .eq("id", profile.company_id)
@@ -208,7 +212,8 @@ export const getMyTrackingWindow = createServerFn({ method: "GET" })
     const { data: profile } = await supabase
       .from("profiles").select("company_id").eq("id", userId).maybeSingle();
     if (!profile?.company_id) return null;
-    const { data: company } = await supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: company } = await supabaseAdmin
       .from("companies")
       .select("tracking_start, tracking_end, tracking_days, name, kind")
       .eq("id", profile.company_id)
