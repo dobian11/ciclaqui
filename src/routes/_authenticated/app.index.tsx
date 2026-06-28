@@ -97,7 +97,9 @@ function MapHome() {
   const aqQuery = useQuery({
     queryKey: ["aq", geo.position?.[0]?.toFixed(2), geo.position?.[1]?.toFixed(2)],
     enabled: !!geo.position,
-    staleTime: 10 * 60_000,
+    staleTime: 5 * 60_000,
+    refetchInterval: 5 * 60_000,
+    refetchIntervalInBackground: false,
     queryFn: () => fetchAQ({ data: { lat: geo.position![0], lng: geo.position![1] } }),
   });
 
