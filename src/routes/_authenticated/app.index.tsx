@@ -61,6 +61,7 @@ function MapHome() {
   const [layersOpen, setLayersOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [poiLoading, setPoiLoading] = useState(false);
   const [layerError, setLayerError] = useState<string | null>(null);
   const isRefreshingRef = useRef(false);
   const aqPromiseRef = useRef<Promise<void> | null>(null);
