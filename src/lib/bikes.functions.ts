@@ -81,10 +81,10 @@ export const reportStolen = createServerFn({ method: "POST" })
     await supabase.from("bike_reports").insert({
       bike_id: data.bike_id,
       reporter_id: userId,
-      type: "stolen",
+      type: "sighting",
       lat: data.lat ?? null,
       lng: data.lng ?? null,
-      note: data.note ?? null,
+      note: `[FURTO] ${data.note ?? ""}`.trim(),
     });
     return { ok: true };
   });
@@ -96,7 +96,7 @@ export const markRecovered = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { error } = await supabase
       .from("bikes")
-      .update({ status: "attiva", stolen_at: null })
+      .update({ status: "recuperata", stolen_at: null })
       .eq("id", data.bike_id)
       .eq("owner_id", userId);
     if (error) throw new Error(error.message);
