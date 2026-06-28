@@ -67,7 +67,7 @@ export const createCompany = createServerFn({ method: "POST" })
     // company in queries that filter by company_id).
     await supabase.from("profiles").update({ company_id: company.id }).eq("id", userId);
 
-    return { id: company.id, code: company.code, name: company.name };
+    return { id: company.id, code: company.code, name: company.name, kind: company.kind };
   });
 
 /**
