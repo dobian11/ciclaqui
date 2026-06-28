@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GoogleMapView } from "@/components/cicla/GoogleMapView";
+import { PoiSheet, NavigationBanner } from "@/components/cicla/PoiSheet";
 import { SourceErrorChip, ErrorDot } from "@/components/cicla/SourceErrorChip";
 import { useGeolocation } from "@/lib/use-geolocation";
 import { useTripRecorder } from "@/lib/use-trip-recorder";
@@ -10,12 +11,15 @@ import { useServerFn } from "@tanstack/react-start";
 import { getAirQuality } from "@/lib/air-quality.functions";
 import { endTrip } from "@/lib/trips.functions";
 import { getMyTrackingWindow } from "@/lib/companies.functions";
-import { POI_META, type PoiCategory } from "@/lib/pois";
+import { computeRoute } from "@/lib/routes.functions";
+import { decodePolyline } from "@/lib/polyline";
+import { POI_META, type Poi, type PoiCategory } from "@/lib/pois";
 import { supabase } from "@/integrations/supabase/client";
 import { logTelemetry } from "@/lib/telemetry";
 import { useMapPrefs } from "@/lib/use-map-prefs";
 
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: MapHome,
