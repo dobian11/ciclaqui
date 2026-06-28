@@ -70,12 +70,15 @@ export function GoogleMapView({
   mode,
   follow = true,
   path,
+  poiCategories = [],
 }: {
   position: [number, number] | null;
   mode: TripMode;
   follow?: boolean;
   path?: TripPathPoint[];
+  poiCategories?: PoiCategory[];
 }) {
+
   const ref = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
