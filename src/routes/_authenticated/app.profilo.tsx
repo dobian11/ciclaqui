@@ -1,10 +1,10 @@
-import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
-import { Building2, LogOut, Shield, User as UserIcon } from "lucide-react";
+import { Building2, Gift, LogOut, Shield, ShieldCheck, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/profilo")({
@@ -135,12 +135,29 @@ function ProfiloPage() {
           </Card>
         )}
 
+        <Card className="mt-4 p-3">
+          <div className="grid grid-cols-2 gap-2">
+            <Link to="/app/premi" className="flex items-center gap-2 rounded-xl bg-cicla/10 px-3 py-2 text-xs font-semibold text-cicla">
+              <Gift size={16} /> Premi
+            </Link>
+            <Link to="/app/privacy" className="flex items-center gap-2 rounded-xl bg-card px-3 py-2 text-xs font-semibold">
+              <ShieldCheck size={16} /> Privacy & dati
+            </Link>
+          </div>
+        </Card>
+
         <Button onClick={signOut} variant="outline" className="mt-6 w-full">
           <LogOut size={16} className="mr-2" /> Esci
         </Button>
 
-        <p className="mt-8 text-center text-[11px] text-muted-foreground">
-          Cicla Qui · MVP Sprint 1
+        <div className="mt-6 flex flex-wrap justify-center gap-2 text-[10px] text-muted-foreground">
+          <Link to="/legal/privacy">Privacy</Link>·
+          <Link to="/legal/terms">Termini</Link>·
+          <Link to="/legal/cookie">Cookie</Link>·
+          <Link to="/legal/permessi">Permessi</Link>
+        </div>
+        <p className="mt-3 text-center text-[11px] text-muted-foreground">
+          Cicla Qui · Sprint 10
         </p>
       </div>
     </div>
