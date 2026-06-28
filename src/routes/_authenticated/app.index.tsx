@@ -219,7 +219,12 @@ function MapHome() {
         </div>
 
         <div className="pointer-events-auto inline-flex shrink-0 items-center gap-1.5 rounded-full app-glass px-2.5 py-1.5 shadow-lg">
-          {geo.position ? (
+          {geo.loading ? (
+            <>
+              <Loader2 size={10} className="animate-spin text-muted-foreground" />
+              <span className="text-[11px] text-muted-foreground">Live…</span>
+            </>
+          ) : geo.position ? (
             <>
               <span
                 className={`inline-block size-1.5 rounded-full ring-2 ${MODE_RING[liveMode]}/30`}
