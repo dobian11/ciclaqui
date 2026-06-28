@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as CercaBiciRouteImport } from './routes/cerca-bici'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -22,6 +23,11 @@ import { Route as AuthenticatedAppPuntiRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAppProfiloRouteImport } from './routes/_authenticated/app.profilo'
 import { Route as AuthenticatedAppBiciRouteImport } from './routes/_authenticated/app.bici'
 
+const CercaBiciRoute = CercaBiciRouteImport.update({
+  id: '/cerca-bici',
+  path: '/cerca-bici',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -87,6 +93,7 @@ const AuthenticatedAppBiciRoute = AuthenticatedAppBiciRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/cerca-bici': typeof CercaBiciRoute
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/azienda': typeof AuthenticatedAziendaRouteWithChildren
   '/azienda/auth': typeof AziendaAuthRoute
@@ -100,6 +107,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/cerca-bici': typeof CercaBiciRoute
   '/azienda/auth': typeof AziendaAuthRoute
   '/app/bici': typeof AuthenticatedAppBiciRoute
   '/app/profilo': typeof AuthenticatedAppProfiloRoute
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/cerca-bici': typeof CercaBiciRoute
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/azienda': typeof AuthenticatedAziendaRouteWithChildren
   '/azienda/auth': typeof AziendaAuthRoute
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/cerca-bici'
     | '/app'
     | '/azienda'
     | '/azienda/auth'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/cerca-bici'
     | '/azienda/auth'
     | '/app/bici'
     | '/app/profilo'
@@ -153,6 +164,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/cerca-bici'
     | '/_authenticated/app'
     | '/_authenticated/azienda'
     | '/azienda/auth'
@@ -168,11 +180,19 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CercaBiciRoute: typeof CercaBiciRoute
   AziendaAuthRoute: typeof AziendaAuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/cerca-bici': {
+      id: '/cerca-bici'
+      path: '/cerca-bici'
+      fullPath: '/cerca-bici'
+      preLoaderRoute: typeof CercaBiciRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -307,6 +327,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  CercaBiciRoute: CercaBiciRoute,
   AziendaAuthRoute: AziendaAuthRoute,
 }
 export const routeTree = rootRouteImport
