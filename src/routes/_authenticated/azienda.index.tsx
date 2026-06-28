@@ -3,17 +3,18 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { getMyCompany, updateTrackingWindow } from "@/lib/companies.functions";
+import { getMyCompany, updateTrackingWindow, listMyCompanyReviews } from "@/lib/companies.functions";
 import { startCompanySubscription } from "@/lib/payments.functions";
 
 import { listMyEmployees } from "@/lib/admin.functions";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
+import { CompanyReviewDialog } from "@/components/cicla/CompanyReviewDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Loader2, Copy, Check, Users, CreditCard, Share2, LogOut, Building2, Landmark, Mail, Hash, Download, Bike, Clock,
+  Loader2, Copy, Check, Users, CreditCard, Share2, LogOut, Building2, Landmark, Mail, Hash, Download, Bike, Clock, RefreshCw, History, FileText,
 } from "lucide-react";
 
 
