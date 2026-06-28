@@ -61,7 +61,9 @@ function MapHome() {
   const [layersOpen, setLayersOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [layerError, setLayerError] = useState<string | null>(null);
   const refreshLayers = () => {
+    setLayerError(null);
     setRefreshing(true);
     setRefreshKey((k) => k + 1);
     qc.invalidateQueries({ queryKey: ["aq"] });
@@ -173,7 +175,19 @@ function MapHome() {
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-background">
-      <GoogleMapView position={geo.position} mode={liveMode} follow={follow} path={polylinePath} poiCategories={poiCategories} refreshKey={refreshKey} />
+      <GoogleMapView
+        position={geo.position}
+        mode={liveMode}
+        follow={follow}
+        path={polylinePath}
+        poiCategories={poiCategories}
+        refreshKey={refreshKey}
+        onRefreshError={(msg) => {
+          setLayerError(msg);
+          toast.error(msg);
+          window.setTimeout(() => setLayerError(null), 5000);
+        }}
+      />
 
       {/* Top bar — pill compatte */}
       <div
@@ -249,6 +263,19 @@ function MapHome() {
                 {winQuery.data.tracking_start.slice(0,5)}–{winQuery.data.tracking_end.slice(0,5)}
               </span>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Banner errore refresh layer */}
+      {layerError && (
+        <div
+          className="pointer-events-none absolute inset-x-0 z-[1000] flex justify-center"
+          style={{ top: "calc(env(safe-area-inset-top, 0px) + 50px)" }}
+        >
+          <div className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-destructive/90 px-3 py-1.5 text-destructive-foreground shadow-lg backdrop-blur">
+            <AlertTriangle size={12} />
+            <span className="text-[11px] font-semibold">{layerError}</span>
           </div>
         </div>
       )}

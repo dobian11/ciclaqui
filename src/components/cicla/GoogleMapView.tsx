@@ -116,6 +116,7 @@ export function GoogleMapView({
   path,
   poiCategories = [],
   refreshKey = 0,
+  onRefreshError,
 }: {
   position: [number, number] | null;
   mode: TripMode;
@@ -123,6 +124,7 @@ export function GoogleMapView({
   path?: TripPathPoint[];
   poiCategories?: PoiCategory[];
   refreshKey?: number;
+  onRefreshError?: (message: string) => void;
 }) {
 
   const ref = useRef<HTMLDivElement | null>(null);
@@ -370,7 +372,10 @@ export function GoogleMapView({
           renderPois(pois);
         })
         .catch((e) => {
-          if (e?.name !== "AbortError") console.warn("[pois] errore", e);
+          if (e?.name !== "AbortError") {
+            console.warn("[pois] errore", e);
+            onRefreshError?.(e?.message ?? "Errore caricamento punti d'interesse");
+          }
         });
     };
 
