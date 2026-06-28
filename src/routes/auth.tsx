@@ -34,7 +34,7 @@ const signupSchema = z.object({
   full_name: z.string().trim().min(2, "Inserisci il tuo nome").max(80),
   email: z.string().trim().email("Email non valida").max(255),
   password: z.string().min(8, "Almeno 8 caratteri").max(72),
-  company_code: z.string().trim().max(20).optional(),
+  company_code: z.string().trim().min(3, "Il codice azienda è obbligatorio").max(20),
   terms: z.literal(true, { message: "Devi accettare i termini per continuare" }),
 });
 
@@ -81,7 +81,7 @@ function AuthPage() {
       full_name: fd.get("full_name"),
       email: fd.get("email"),
       password: fd.get("password"),
-      company_code: fd.get("company_code") || undefined,
+      company_code: fd.get("company_code"),
       terms: acceptTerms,
     });
     if (!parsed.success) {
@@ -98,7 +98,7 @@ function AuthPage() {
         data: {
           full_name,
           signup_kind: "user",
-          company_code: company_code ? company_code.toUpperCase() : null,
+          company_code: company_code.toUpperCase(),
         },
       },
     });
@@ -162,19 +162,19 @@ function AuthPage() {
                   <p className="text-[11px] text-muted-foreground">Almeno 8 caratteri.</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="su-code">
-                    Codice azienda <span className="text-muted-foreground">(opzionale)</span>
-                  </Label>
+                  <Label htmlFor="su-code">Codice azienda</Label>
                   <Input
                     id="su-code"
                     name="company_code"
                     placeholder="es. ACME-7F2K"
                     maxLength={20}
+                    minLength={3}
+                    required
                     defaultValue={search.code ?? ""}
                     className="uppercase tracking-wider"
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    Hai un codice dal tuo datore di lavoro? Inseriscilo per essere associato alla tua azienda.
+                    Obbligatorio. Chiedi il codice al tuo datore di lavoro per essere associato alla tua azienda.
                   </p>
                 </div>
                 <label className="flex items-start gap-2.5 rounded-lg border border-border/60 bg-muted/30 p-3">
