@@ -48,6 +48,7 @@ export const createCompany = createServerFn({ method: "POST" })
         contact_email: data.contact_email,
         code: codeData,
         created_by: userId,
+        kind: data.kind,
       })
       .select()
       .single();
