@@ -1,5 +1,6 @@
-// Fetch POIs from OpenStreetMap via Overpass API.
-// Free, no API key. Data: drinking water (nasoni), bike parking, bike pumps.
+// POIs from OpenStreetMap via Overpass, proxied through a server function
+// to avoid browser CORS / network blocks and to enable mirror fallback.
+import { fetchPoisServer } from "./pois.functions";
 
 export type PoiCategory = "water" | "parking" | "pump";
 
@@ -12,63 +13,29 @@ export interface Poi {
   tags?: Record<string, string>;
 }
 
-const ENDPOINT = "https://overpass-api.de/api/interpreter";
-
-// Tag filters per category. Coverage in Italy is excellent for these.
-const QUERIES: Record<PoiCategory, (bbox: string) => string> = {
-  water: (bbox) => `
-    nwr["amenity"="drinking_water"](${bbox});
-    nwr["man_made"="water_tap"]["drinking_water"!~"no"](${bbox});
-    nwr["fountain"="drinking"](${bbox});
-  `,
-  parking: (bbox) => `
-    nwr["amenity"="bicycle_parking"](${bbox});
-  `,
-  pump: (bbox) => `
-    nwr["amenity"="bicycle_repair_station"](${bbox});
-    nwr["amenity"="compressed_air"](${bbox});
-  `,
-};
-
-interface OverpassElement {
-  type: "node" | "way" | "relation";
-  id: number;
-  lat?: number;
-  lon?: number;
-  center?: { lat: number; lon: number };
-  tags?: Record<string, string>;
-}
-
-// Simple in-memory cache keyed by bbox+cats, with TTL.
 const cache = new Map<string, { ts: number; data: Poi[] }>();
 const TTL_MS = 10 * 60_000;
 
 export async function fetchPois(
-  bbox: [number, number, number, number], // south, west, north, east
+  bbox: [number, number, number, number],
   categories: PoiCategory[],
   signal?: AbortSignal,
 ): Promise<Poi[]> {
   if (categories.length === 0) return [];
   const bboxStr = bbox.map((n) => n.toFixed(4)).join(",");
-  const cacheKey = `${bboxStr}|${categories.sort().join(",")}`;
+  const cacheKey = `${bboxStr}|${categories.slice().sort().join(",")}`;
   const cached = cache.get(cacheKey);
   if (cached && Date.now() - cached.ts < TTL_MS) return cached.data;
 
-  const body = `[out:json][timeout:25];(${categories
-    .map((c) => QUERIES[c](bboxStr))
-    .join("\n")});out center 300;`;
+  if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
 
-  const res = await fetch(ENDPOINT, {
-    method: "POST",
-    body: "data=" + encodeURIComponent(body),
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  const { elements } = await fetchPoisServer({
+    data: { bbox, categories },
     signal,
   });
-  if (!res.ok) throw new Error(`Overpass ${res.status}`);
-  const json = (await res.json()) as { elements: OverpassElement[] };
 
   const pois: Poi[] = [];
-  for (const el of json.elements ?? []) {
+  for (const el of elements) {
     const lat = el.lat ?? el.center?.lat;
     const lng = el.lon ?? el.center?.lon;
     if (lat == null || lng == null) continue;
