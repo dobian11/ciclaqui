@@ -33,6 +33,11 @@ function MapHome() {
   const [follow, setFollow] = useState(true);
   const trip = useTripRecorder(geo.mode);
   const qc = useQueryClient();
+  const [poiCategories, setPoiCategories] = useState<PoiCategory[]>([]);
+  const [layersOpen, setLayersOpen] = useState(false);
+  const togglePoi = (cat: PoiCategory) =>
+    setPoiCategories((prev) => (prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]));
+
 
   // Stato live: durante registrazione, mostra dominantMode/distanza viaggio
   const liveMode = trip.recording ? trip.dominantMode : geo.mode;
