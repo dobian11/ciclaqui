@@ -112,11 +112,16 @@ function MapHome() {
     },
   });
 
-  // ── NAVIGAZIONE LIVE: ricalcolo fuori percorso + auto-arrivo ──
+  // ── NAVIGAZIONE LIVE: ricalcolo fuori percorso + auto-arrivo robusto ──
   const recalcLockRef = useRef(false);
-  const ARRIVED_M = 25;     // soglia "arrivato"
-  const OFFROUTE_M = 60;    // soglia "fuori percorso"
+  const ARRIVED_M = 25;          // soglia "arrivato" base
+  const ARRIVED_MAX_M = 80;      // anche con GPS pessimo non superare mai questo
+  const OFFROUTE_M = 60;         // soglia "fuori percorso"
   const RECALC_COOLDOWN = 10_000;
+  const ARRIVAL_CONFIRM_FIXES = 2;     // n. fix consecutivi dentro soglia
+  const ARRIVAL_DWELL_MS = 8_000;      // o: fermo X sec entro raggio allargato
+  const DWELL_RADIUS_M = 60;           // raggio "in zona arrivo" per dwell
+  const POOR_ACCURACY_M = 50;          // sopra a questa accuracy = GPS instabile
 
   const hav = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
     const R = 6371000, toRad = (d: number) => (d * Math.PI) / 180;
@@ -125,16 +130,65 @@ function MapHome() {
     return 2 * R * Math.asin(Math.sqrt(s));
   };
 
+  // contatori per conferma arrivo
+  const arrivalFixesRef = useRef(0);
+  const dwellStartRef = useRef<number | null>(null);
+
+  const finishArrival = () => {
+    arrivalFixesRef.current = 0;
+    dwellStartRef.current = null;
+    toast.success("🎯 Arrivato a destinazione");
+    setRouteData(null);
+    // se stavamo registrando il tragitto verso il POI, chiudilo e mostra il riepilogo
+    if (trip.recording) {
+      trip.stop();
+      if (trip.path.length >= 2 && trip.durationS >= MIN_DURATION_S) {
+        stopMutation.mutate();
+      } else {
+        trip.reset();
+      }
+    }
+  };
+
   useEffect(() => {
-    if (!routeData || !geo.position) return;
+    if (!routeData || !geo.position) {
+      arrivalFixesRef.current = 0;
+      dwellStartRef.current = null;
+      return;
+    }
     const cur = { lat: geo.position[0], lng: geo.position[1] };
     const dest = { lat: routeData.destination.lat, lng: routeData.destination.lng };
+    const distToDest = hav(cur, dest);
 
-    // arrivo automatico
-    if (hav(cur, dest) < ARRIVED_M) {
-      toast.success("🎯 Arrivato a destinazione");
-      setRouteData(null);
-      return;
+    // soglia adattiva: con GPS impreciso allarghiamo, ma con un cap
+    const acc = geo.accuracy ?? 0;
+    const effectiveArrived = Math.min(
+      ARRIVED_MAX_M,
+      Math.max(ARRIVED_M, acc * 0.8),
+    );
+
+    // 1) conferma per fix consecutivi entro soglia
+    if (distToDest <= effectiveArrived && acc <= POOR_ACCURACY_M) {
+      arrivalFixesRef.current += 1;
+      if (arrivalFixesRef.current >= ARRIVAL_CONFIRM_FIXES) {
+        finishArrival();
+        return;
+      }
+    } else {
+      arrivalFixesRef.current = 0;
+    }
+
+    // 2) fallback "dwell": utente fermo da X sec dentro raggio allargato
+    //    utile quando il GPS oscilla intorno al POI senza mai entrare sotto soglia
+    const stationary = geo.speedKmh < 2;
+    if (distToDest <= DWELL_RADIUS_M && stationary) {
+      if (dwellStartRef.current == null) dwellStartRef.current = Date.now();
+      else if (Date.now() - dwellStartRef.current >= ARRIVAL_DWELL_MS) {
+        finishArrival();
+        return;
+      }
+    } else {
+      dwellStartRef.current = null;
     }
 
     // trova segmento di percorso più vicino
@@ -149,15 +203,20 @@ function MapHome() {
       setRouteData((rd) => (rd ? { ...rd, path: rd.path.slice(nearestIdx) } : rd));
     }
 
-    // ricalcolo se sei deviato troppo
-    if (nearestDist > OFFROUTE_M && !recalcLockRef.current && !routeMutation.isPending) {
+    // ricalcolo se deviato troppo — ignora se accuracy pessima (evita falsi positivi)
+    if (
+      nearestDist > OFFROUTE_M &&
+      acc <= POOR_ACCURACY_M &&
+      !recalcLockRef.current &&
+      !routeMutation.isPending
+    ) {
       recalcLockRef.current = true;
       toast.message("⤴︎ Fuori percorso · ricalcolo…");
       routeMutation.mutate(routeData.destination);
       window.setTimeout(() => { recalcLockRef.current = false; }, RECALC_COOLDOWN);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geo.position, routeData?.destination.id]);
+  }, [geo.position, geo.accuracy, geo.speedKmh, routeData?.destination.id]);
 
   // distanza/tempo rimanenti live (somma del percorso residuo + tratto fino al primo nodo)
   const liveRouteInfo = useMemo(() => {
