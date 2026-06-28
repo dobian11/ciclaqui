@@ -73,7 +73,7 @@ function CompanyDashboard() {
   }
 
   const subStatus = company.subscription?.status ?? "inactive";
-  const subActive = subStatus === "active" || subStatus === "trialing";
+  const subActive = subStatus === "active" || subStatus === "trial";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-secondary/40 to-background pb-12">
