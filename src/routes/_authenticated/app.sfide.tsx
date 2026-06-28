@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   listActiveChallenges,
   getMyStreak,
@@ -19,10 +21,31 @@ function SfidePage() {
   const badgesFn = useServerFn(getMyBadges);
   const lbFn = useServerFn(getCompanyLeaderboard);
 
-  const ch = useQuery({ queryKey: ["challenges"], queryFn: () => listFn({} as any) });
-  const st = useQuery({ queryKey: ["streak"], queryFn: () => streakFn({} as any) });
-  const bd = useQuery({ queryKey: ["badges"], queryFn: () => badgesFn({} as any) });
-  const lb = useQuery({ queryKey: ["leaderboard"], queryFn: () => lbFn({} as any) });
+  const [authed, setAuthed] = useState<boolean | null>(null);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setAuthed(!!s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const enabled = authed === true;
+  const ch = useQuery({ queryKey: ["challenges"], enabled, queryFn: () => listFn({} as any) });
+  const st = useQuery({ queryKey: ["streak"], enabled, queryFn: () => streakFn({} as any) });
+  const bd = useQuery({ queryKey: ["badges"], enabled, queryFn: () => badgesFn({} as any) });
+  const lb = useQuery({ queryKey: ["leaderboard"], enabled, queryFn: () => lbFn({} as any) });
+
+  if (authed === false) {
+    return (
+      <div className="min-h-dvh bg-background pb-32 pt-4">
+        <div className="mx-auto max-w-md px-4">
+          <h1 className="font-display text-2xl font-black tracking-tight">Sfide & premi</h1>
+          <div className="mt-6 rounded-3xl app-glass p-6 text-center text-sm text-muted-foreground shadow-xl">
+            Accedi con il tuo codice azienda o Comune per vedere sfide, streak e classifica.
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-dvh bg-background pb-32 pt-4">
