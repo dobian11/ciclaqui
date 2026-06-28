@@ -119,6 +119,9 @@ export function GoogleMapView({
   onRefreshError,
   onRefreshComplete,
   onPoiLoadingChange,
+  onPoiSelect,
+  selectedPoiId,
+  routePath,
 }: {
   position: [number, number] | null;
   mode: TripMode;
@@ -129,18 +132,24 @@ export function GoogleMapView({
   onRefreshError?: (message: string) => void;
   onRefreshComplete?: (result: { ok: boolean; error?: string; count?: number }) => void;
   onPoiLoadingChange?: (loading: boolean) => void;
+  onPoiSelect?: (poi: Poi) => void;
+  selectedPoiId?: string | null;
+  routePath?: TripPathPoint[] | null;
 }) {
+
 
   const ref = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
   const accuracyRef = useRef<any>(null);
   const polyRef = useRef<any>(null);
-  const poiMarkersRef = useRef<Map<string, any>>(new Map());
+  const routePolyRef = useRef<any>(null);
+  const poiMarkersRef = useRef<Map<string, { marker: any; poi: Poi }>>(new Map());
   const poiAbortRef = useRef<AbortController | null>(null);
   const poiDebounceRef = useRef<number | null>(null);
   const firstFix = useRef(true);
   const [error, setError] = useState<string | null>(null);
+
 
 
   // Init mappa
@@ -292,7 +301,7 @@ export function GoogleMapView({
     if (!map || !google?.maps) return;
 
     const clearAll = () => {
-      poiMarkersRef.current.forEach((m) => m.setMap(null));
+      poiMarkersRef.current.forEach((entry) => entry.marker.setMap(null));
       poiMarkersRef.current.clear();
     };
 
@@ -301,22 +310,29 @@ export function GoogleMapView({
       return;
     }
 
-    const poiIcon = (cat: PoiCategory) => {
+    const poiIcon = (cat: PoiCategory, selected = false) => {
       const meta = POI_META[cat];
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
-        <defs><filter id="ps-${cat}" x="-50%" y="-50%" width="200%" height="200%">
+      const scale = selected ? 1.25 : 1;
+      const w = Math.round(32 * scale);
+      const h = Math.round(40 * scale);
+      const ring = selected
+        ? `<circle cx="16" cy="15" r="14" fill="none" stroke="white" stroke-width="2" stroke-opacity="0.9"/>`
+        : "";
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 32 40">
+        <defs><filter id="ps-${cat}-${selected ? "on" : "off"}" x="-50%" y="-50%" width="200%" height="200%">
           <feDropShadow dx="0" dy="2" stdDeviation="1.6" flood-color="#000" flood-opacity="0.3"/>
         </filter></defs>
-        <g filter="url(#ps-${cat})">
+        <g filter="url(#ps-${cat}-${selected ? "on" : "off"})">
           <path d="M16 38 C8 28 3 24 3 15 a13 13 0 1 1 26 0 c0 9 -5 13 -13 23z" fill="${meta.color}" stroke="white" stroke-width="2"/>
           <circle cx="16" cy="15" r="8.5" fill="white"/>
           <text x="16" y="19" text-anchor="middle" font-size="11" font-family="system-ui">${meta.emoji}</text>
+          ${ring}
         </g>
       </svg>`;
       return {
         url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
-        scaledSize: new google.maps.Size(32, 40),
-        anchor: new google.maps.Point(16, 38),
+        scaledSize: new google.maps.Size(w, h),
+        anchor: new google.maps.Point(Math.round(w / 2), h),
       };
     };
 
@@ -329,28 +345,23 @@ export function GoogleMapView({
         const m = new google.maps.Marker({
           map,
           position: { lat: p.lat, lng: p.lng },
-          icon: poiIcon(p.category),
-          zIndex: 5,
+          icon: poiIcon(p.category, p.id === selectedPoiId),
+          zIndex: p.id === selectedPoiId ? 8 : 5,
           title: p.name || POI_META[p.category].label,
         });
-        const info = new google.maps.InfoWindow({
-          content: `<div style="font-family:system-ui;font-size:13px;color:#111;min-width:140px">
-            <div style="font-weight:700;margin-bottom:2px">${POI_META[p.category].emoji} ${p.name ?? POI_META[p.category].label}</div>
-            <div style="font-size:11px;color:#555">${POI_META[p.category].label}</div>
-            <a href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}&travelmode=bicycling" target="_blank" style="display:inline-block;margin-top:6px;color:#00a35a;font-weight:600;text-decoration:none">Indicazioni →</a>
-          </div>`,
-        });
-        m.addListener("click", () => info.open({ map, anchor: m }));
-        poiMarkersRef.current.set(p.id, m);
+        m.addListener("click", () => onPoiSelect?.(p));
+        poiMarkersRef.current.set(p.id, { marker: m, poi: p });
       }
       // remove no-longer-visible markers
-      for (const [id, m] of poiMarkersRef.current) {
+      for (const [id, entry] of poiMarkersRef.current) {
         if (!seen.has(id)) {
-          m.setMap(null);
+          entry.marker.setMap(null);
           poiMarkersRef.current.delete(id);
         }
       }
     };
+
+
 
     const runFetch = () => {
       const zoom = map.getZoom?.() ?? 0;
@@ -412,6 +423,73 @@ export function GoogleMapView({
       poiAbortRef.current?.abort();
     };
   }, [poiCategories.join(","), refreshKey]);
+
+  // Highlight selected POI marker
+  useEffect(() => {
+    const google = (window as any).google;
+    if (!google?.maps) return;
+    const scaleIcon = (cat: PoiCategory, selected: boolean) => {
+      const meta = POI_META[cat];
+      const scale = selected ? 1.25 : 1;
+      const w = Math.round(32 * scale);
+      const h = Math.round(40 * scale);
+      const ring = selected
+        ? `<circle cx="16" cy="15" r="14" fill="none" stroke="white" stroke-width="2" stroke-opacity="0.9"/>`
+        : "";
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 32 40">
+        <g><path d="M16 38 C8 28 3 24 3 15 a13 13 0 1 1 26 0 c0 9 -5 13 -13 23z" fill="${meta.color}" stroke="white" stroke-width="2"/>
+        <circle cx="16" cy="15" r="8.5" fill="white"/>
+        <text x="16" y="19" text-anchor="middle" font-size="11" font-family="system-ui">${meta.emoji}</text>${ring}</g>
+      </svg>`;
+      return {
+        url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+        scaledSize: new google.maps.Size(w, h),
+        anchor: new google.maps.Point(Math.round(w / 2), h),
+      };
+    };
+    poiMarkersRef.current.forEach(({ marker, poi }) => {
+      const isSel = poi.id === selectedPoiId;
+      marker.setIcon(scaleIcon(poi.category, isSel));
+      marker.setZIndex(isSel ? 8 : 5);
+    });
+  }, [selectedPoiId]);
+
+  // Route polyline (in-app navigation)
+  useEffect(() => {
+    const map = mapRef.current;
+    const google = (window as any).google;
+    if (!map || !google?.maps) return;
+
+    if (!routePath || routePath.length < 2) {
+      if (routePolyRef.current) {
+        routePolyRef.current.setMap(null);
+        routePolyRef.current = null;
+      }
+      return;
+    }
+
+    if (!routePolyRef.current) {
+      routePolyRef.current = new google.maps.Polyline({
+        map,
+        path: routePath,
+        strokeColor: "#00B86B",
+        strokeOpacity: 0.95,
+        strokeWeight: 7,
+        zIndex: 6,
+      });
+    } else {
+      routePolyRef.current.setPath(routePath);
+    }
+
+    // Fit bounds to the route once
+    try {
+      const bounds = new google.maps.LatLngBounds();
+      routePath.forEach((p) => bounds.extend(p));
+      map.fitBounds(bounds, { top: 110, right: 60, bottom: 220, left: 60 });
+    } catch {}
+  }, [routePath]);
+
+
 
 
 

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GoogleMapView } from "@/components/cicla/GoogleMapView";
+import { PoiSheet, NavigationBanner } from "@/components/cicla/PoiSheet";
 import { SourceErrorChip, ErrorDot } from "@/components/cicla/SourceErrorChip";
 import { useGeolocation } from "@/lib/use-geolocation";
 import { useTripRecorder } from "@/lib/use-trip-recorder";
@@ -10,12 +11,15 @@ import { useServerFn } from "@tanstack/react-start";
 import { getAirQuality } from "@/lib/air-quality.functions";
 import { endTrip } from "@/lib/trips.functions";
 import { getMyTrackingWindow } from "@/lib/companies.functions";
-import { POI_META, type PoiCategory } from "@/lib/pois";
+import { computeRoute } from "@/lib/routes.functions";
+import { decodePolyline } from "@/lib/polyline";
+import { POI_META, type Poi, type PoiCategory } from "@/lib/pois";
 import { supabase } from "@/integrations/supabase/client";
 import { logTelemetry } from "@/lib/telemetry";
 import { useMapPrefs } from "@/lib/use-map-prefs";
 
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/_authenticated/app/")({
   component: MapHome,
@@ -66,9 +70,47 @@ function MapHome() {
   const [refreshing, setRefreshing] = useState(false);
   const [poiLoading, setPoiLoading] = useState(false);
   const [layerError, setLayerError] = useState<string | null>(null);
+
+  // POI selection + in-app navigation
+  const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
+  const [routeData, setRouteData] = useState<
+    | { path: { lat: number; lng: number }[]; distanceMeters: number; durationSec: number; destination: Poi }
+    | null
+  >(null);
+
+  const computeRouteFn = useServerFn(computeRoute);
+  const routeMutation = useMutation({
+    mutationFn: async (poi: Poi) => {
+      if (!geo.position) throw new Error("Posizione non disponibile");
+      const res = await computeRouteFn({
+        data: {
+          origin: { lat: geo.position[0], lng: geo.position[1] },
+          destination: { lat: poi.lat, lng: poi.lng },
+          mode: geo.mode,
+        },
+      });
+      return { ...res, destination: poi };
+    },
+    onSuccess: (res) => {
+      const path = decodePolyline(res.encoded);
+      setRouteData({
+        path,
+        distanceMeters: res.distanceMeters,
+        durationSec: res.durationSec,
+        destination: res.destination,
+      });
+      setSelectedPoi(null);
+      toast.success("Percorso pronto");
+    },
+    onError: (e: any) => {
+      toast.error(e?.message ?? "Impossibile calcolare il percorso");
+    },
+  });
+
   const isRefreshingRef = useRef(false);
   const refreshStartRef = useRef<number>(0);
   const aqPromiseRef = useRef<Promise<{ ok: boolean; error?: string }> | null>(null);
+
   const refreshLayers = () => {
     if (isRefreshingRef.current) return; // blocco richieste duplicate
     isRefreshingRef.current = true;
@@ -250,7 +292,29 @@ function MapHome() {
         }}
         onRefreshComplete={onRefreshComplete}
         onPoiLoadingChange={setPoiLoading}
+        onPoiSelect={(p) => setSelectedPoi(p)}
+        selectedPoiId={selectedPoi?.id ?? routeData?.destination.id ?? null}
+        routePath={routeData?.path ?? null}
       />
+
+      {routeData && (
+        <NavigationBanner
+          distanceMeters={routeData.distanceMeters}
+          durationSec={routeData.durationSec}
+          onStop={() => setRouteData(null)}
+        />
+      )}
+
+      {selectedPoi && (
+        <PoiSheet
+          poi={selectedPoi}
+          origin={geo.position}
+          loadingRoute={routeMutation.isPending}
+          onNavigate={() => routeMutation.mutate(selectedPoi)}
+          onClose={() => setSelectedPoi(null)}
+        />
+      )}
+
 
       {/* Top bar — pill compatte */}
       <div
