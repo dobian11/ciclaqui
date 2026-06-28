@@ -166,7 +166,7 @@ function MapHome() {
       {trip.recording && (
         <div
           className="pointer-events-none absolute inset-x-0 z-[1000] flex justify-center"
-          style={{ top: "calc(env(safe-area-inset-top, 0px) + 130px)" }}
+          style={{ top: "calc(env(safe-area-inset-top, 0px) + 56px)" }}
         >
           <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-cicla/95 px-4 py-2 text-cicla-foreground shadow-cicla">
             <span className="relative flex size-2.5">
