@@ -18,11 +18,10 @@ const MODE_EMOJI: Record<TripMode, string> = {
   car: "🚗",
 };
 
-function markerIconForMode(mode: TripMode) {
+function pinIconForMode(mode: TripMode) {
   const color = MODE_COLORS[mode];
   const emoji = MODE_EMOJI[mode];
-  // Pin grande con emoji ad alto contrasto su disco bianco — molto più riconoscibile
-  // dei glifi vettoriali, soprattutto per "a piedi".
+  // Pin statico mostrato quando l'utente è fermo
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="66" viewBox="0 0 52 66">
     <defs><filter id="s-${mode}" x="-50%" y="-50%" width="200%" height="200%">
       <feDropShadow dx="0" dy="3" stdDeviation="2.8" flood-color="#000" flood-opacity="0.32"/>
@@ -38,6 +37,51 @@ function markerIconForMode(mode: TripMode) {
     scaledSize: new (window as any).google.maps.Size(52, 66),
     anchor: new (window as any).google.maps.Point(26, 64),
   };
+}
+
+function arrowIconForMode(mode: TripMode, heading: number) {
+  const color = MODE_COLORS[mode];
+  // Freccia direzionale: ruota seguendo l'heading dell'utente in movimento.
+  // Il rotate è applicato nell'SVG così Google Maps non deve ri-renderizzare il marker.
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56">
+    <defs><filter id="as-${mode}" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.35"/>
+    </filter></defs>
+    <g filter="url(#as-${mode})">
+      <circle cx="28" cy="28" r="13" fill="${color}" fill-opacity="0.22" stroke="${color}" stroke-opacity="0.5" stroke-width="1"/>
+      <g transform="rotate(${heading} 28 28)">
+        <path d="M28 8 L42 38 L28 31 L14 38 Z" fill="${color}" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="28" cy="31" r="3" fill="white"/>
+      </g>
+    </g>
+  </svg>`;
+  return {
+    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+    scaledSize: new (window as any).google.maps.Size(56, 56),
+    anchor: new (window as any).google.maps.Point(28, 28),
+  };
+}
+
+function computeBearing(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const toDeg = (r: number) => (r * 180) / Math.PI;
+  const φ1 = toRad(a.lat);
+  const φ2 = toRad(b.lat);
+  const Δλ = toRad(b.lng - a.lng);
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
 }
 
 
