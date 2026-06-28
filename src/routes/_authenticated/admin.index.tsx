@@ -73,15 +73,51 @@ function AdminDashboard() {
     queryKey: ["admin-companies"],
     queryFn: () => listPendingCompanies({}),
     enabled: adminCheck?.admin === true,
-    refetchInterval: 30000,
   });
 
   const { data: notifications } = useQuery({
     queryKey: ["admin-notifications"],
     queryFn: () => listNotifications({}),
     enabled: adminCheck?.admin === true,
-    refetchInterval: 20000,
   });
+
+  // Realtime: sostituisce il polling. Si iscrive a notifiche admin,
+  // enti registrati e revisioni; ad ogni evento invalida le query corrispondenti.
+  useEffect(() => {
+    if (adminCheck?.admin !== true) return;
+    const channel = supabase
+      .channel("admin-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "admin_notifications" },
+        (payload) => {
+          qc.invalidateQueries({ queryKey: ["admin-notifications"] });
+          if (payload.eventType === "INSERT") {
+            const n = payload.new as { title?: string; message?: string };
+            toast(n.title ?? "Nuova notifica", { description: n.message });
+          }
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "companies" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["admin-companies"] });
+          qc.invalidateQueries({ queryKey: ["admin-stats"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "company_reviews" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["admin-company-reviews"] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [adminCheck?.admin, qc]);
 
   const { data: companyReviews } = useQuery({
     queryKey: ["admin-company-reviews", expandedCompanyId],
