@@ -580,25 +580,27 @@ function BottomTrio({
             type="button"
             onClick={() => setExpanded((e) => (e === "aq" ? null : "aq"))}
             className={`group relative flex size-16 flex-col items-center justify-center rounded-full app-glass-strong shadow-xl transition-transform active:scale-95 ${
-              expanded === "aq" ? "ring-2 ring-info" : ""
+              expanded === "aq" ? "ring-2 ring-info" : aqError ? "ring-2 ring-destructive/60" : ""
             }`}
             aria-label="Qualità dell'aria"
           >
             {aqLoading ? (
               <Loader2 size={18} className="animate-spin text-info" />
+            ) : aqError ? (
+              <AlertTriangle size={18} className="text-destructive" />
             ) : (
               <Wind size={18} className="text-info" />
             )}
             <span
               className={`mt-0.5 max-w-[3.5rem] truncate px-1 text-center font-display font-bold leading-none ${
-                aqiLabel.length > 3 ? "text-[10px]" : "text-[13px]"
+                aqError ? "text-[10px] text-destructive" : aqiLabel.length > 3 ? "text-[10px]" : "text-[13px]"
               }`}
             >
-              {aqLoading ? "…" : aqiLabel}
+              {aqLoading ? "…" : aqError ? "Errore" : aqiLabel}
             </span>
-            <span
-              className={`absolute right-2 top-2 inline-block size-1.5 rounded-full ${aqiDot}`}
-            />
+            {!aqError && (
+              <span className={`absolute right-2 top-2 inline-block size-1.5 rounded-full ${aqiDot}`} />
+            )}
             <span className="absolute -bottom-4 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
               Qa
             </span>
