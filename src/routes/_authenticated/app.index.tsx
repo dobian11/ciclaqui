@@ -422,7 +422,7 @@ function BottomTrio({
               className={`absolute right-2 top-2 inline-block size-1.5 rounded-full ${aqiDot}`}
             />
             <span className="absolute -bottom-4 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
-              Aria
+              Qa
             </span>
           </button>
         </div>
