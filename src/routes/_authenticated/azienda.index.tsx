@@ -22,8 +22,11 @@ export const Route = createFileRoute("/_authenticated/azienda/")({
 function CompanyDashboard() {
   const navigate = useNavigate();
   const router = useRouter();
+  const qc = useQueryClient();
   const getMine = useServerFn(getMyCompany);
+  const startSub = useServerFn(startCompanySubscription);
   const [copied, setCopied] = useState(false);
+  const [subLoading, setSubLoading] = useState(false);
   const [hasSession, setHasSession] = useState<boolean | null>(null);
 
   useEffect(() => {
