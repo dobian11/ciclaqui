@@ -67,6 +67,27 @@ export const createCompany = createServerFn({ method: "POST" })
     // company in queries that filter by company_id).
     await supabase.from("profiles").update({ company_id: company.id }).eq("id", userId);
 
+    // Create the initial review record + admin notification
+    const { data: review } = await supabaseAdmin
+      .from("company_reviews")
+      .insert({
+        company_id: company.id,
+        kind: "initial",
+        status: "pending",
+        submitted_by: userId,
+        notes: "Registrazione iniziale",
+      })
+      .select("id")
+      .single();
+
+    await supabaseAdmin.from("admin_notifications").insert({
+      type: "company_review_submitted",
+      title: `Nuova richiesta di approvazione (${company.kind === "municipality" ? "Comune" : "Azienda"})`,
+      body: `${company.name} ha inviato la richiesta di registrazione.`,
+      company_id: company.id,
+      payload: { review_id: review?.id ?? null, kind: "initial" },
+    });
+
     return { id: company.id, code: company.code, name: company.name, kind: company.kind };
   });
 
