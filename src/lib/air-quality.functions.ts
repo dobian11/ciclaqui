@@ -79,8 +79,10 @@ export const getAirQuality = createServerFn({ method: "POST" })
           else if (aqi < 100) category = "Scadente";
           else category = "Molto scadente";
         }
+        // Normalizza alla scala "higher = better" (Google-like 0-100)
+        const normalized = aqi != null ? Math.max(0, Math.min(100, 100 - aqi)) : null;
         return {
-          aqi,
+          aqi: normalized,
           pm25: pm25 != null ? Math.round(pm25 * 10) / 10 : null,
           category,
           source: "open-meteo" as const,
