@@ -38,7 +38,12 @@ export const fetchPoisServer = createServerFn({ method: "POST" })
         const res = await fetch(url, {
           method: "POST",
           body,
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "CiclaQui/1.0 (+https://ciclaqui.app; contact@ciclaqui.app)",
+            "Accept": "application/json",
+            "Referer": "https://ciclaqui.app",
+          },
           signal: AbortSignal.timeout(15000),
         });
         if (!res.ok) {
