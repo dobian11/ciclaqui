@@ -378,6 +378,9 @@ export function GoogleMapView({
             console.warn("[pois] errore", e);
             onRefreshError?.(e?.message ?? "Errore caricamento punti d'interesse");
           }
+        })
+        .finally(() => {
+          onRefreshComplete?.();
         });
     };
 
