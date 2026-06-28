@@ -110,7 +110,7 @@ export const getMyCompany = createServerFn({ method: "GET" })
 
     const { data: company } = await supabase
       .from("companies")
-      .select("id, name, code, vat, iban, contact_email, created_at, kind")
+      .select("id, name, code, vat, iban, contact_email, created_at, kind, tracking_start, tracking_end, tracking_days")
       .eq("id", profile.company_id)
       .maybeSingle();
 
@@ -134,3 +134,53 @@ export const getMyCompany = createServerFn({ method: "GET" })
       subscription: sub ?? null,
     };
   });
+
+const trackingWindowSchema = z.object({
+  tracking_start: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable(),
+  tracking_end: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/).nullable(),
+  tracking_days: z.array(z.number().int().min(0).max(6)).max(7),
+});
+
+/**
+ * Aggiorna la finestra oraria di tracking dell'azienda/comune del manager.
+ * Solo i company_manager possono modificare la propria azienda.
+ */
+export const updateTrackingWindow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => trackingWindowSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: profile } = await supabase
+      .from("profiles").select("company_id").eq("id", userId).maybeSingle();
+    if (!profile?.company_id) throw new Error("Nessuna azienda associata");
+    const { error } = await supabase
+      .from("companies")
+      .update({
+        tracking_start: data.tracking_start,
+        tracking_end: data.tracking_end,
+        tracking_days: data.tracking_days,
+      })
+      .eq("id", profile.company_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
+ * Restituisce la finestra di tracking dell'azienda/comune dell'utente loggato.
+ * Usata dall'app per decidere se avviare il tracking automatico.
+ */
+export const getMyTrackingWindow = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: profile } = await supabase
+      .from("profiles").select("company_id").eq("id", userId).maybeSingle();
+    if (!profile?.company_id) return null;
+    const { data: company } = await supabase
+      .from("companies")
+      .select("tracking_start, tracking_end, tracking_days, name, kind")
+      .eq("id", profile.company_id)
+      .maybeSingle();
+    return company ?? null;
+  });
+
