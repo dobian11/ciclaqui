@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import type { TripMode } from "@/components/cicla/MapView";
 
+export type GeoErrorCode = "denied" | "unavailable" | "timeout" | "unsupported" | "unknown";
+
+export interface GeoError {
+  code: GeoErrorCode;
+  message: string;
+}
+
 export interface GeoState {
   position: [number, number] | null;
   speedKmh: number;
   mode: TripMode;
   accuracy: number | null;
-  error: string | null;
+  error: GeoError | null;
   loading: boolean;
   retry: () => void;
 }
@@ -86,7 +93,9 @@ export function useGeolocation(enabled = true): GeoState {
         }));
       },
       (err) => {
-        setState((s) => ({ ...s, error: err.message, loading: false }));
+        const code: GeoErrorCode =
+          err.code === 1 ? "denied" : err.code === 2 ? "unavailable" : err.code === 3 ? "timeout" : "unknown";
+        setState((s) => ({ ...s, error: { code, message: err.message }, loading: false }));
       },
       {
         enableHighAccuracy: true,

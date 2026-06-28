@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { GoogleMapView } from "@/components/cicla/GoogleMapView";
 import { PoiSheet, NavigationBanner } from "@/components/cicla/PoiSheet";
 import { SourceErrorChip, ErrorDot } from "@/components/cicla/SourceErrorChip";
+import { GpsPermissionSheet } from "@/components/cicla/GpsPermissionSheet";
 import { useGeolocation } from "@/lib/use-geolocation";
 import { useTripRecorder } from "@/lib/use-trip-recorder";
 import { Wind, Flame, Locate, Loader2, Search, Layers, X, Radio, AlertTriangle, RefreshCw, RotateCw } from "lucide-react";
@@ -241,9 +242,9 @@ function MapHome() {
   // GPS telemetry — fires on error transitions
   const lastGpsErrorRef = useRef<string | null>(null);
   useEffect(() => {
-    if (geo.error && geo.error !== lastGpsErrorRef.current) {
-      lastGpsErrorRef.current = geo.error;
-      void logTelemetry({ event: "watch", source: "gps", status: "error", errorMessage: geo.error });
+    if (geo.error && geo.error.message !== lastGpsErrorRef.current) {
+      lastGpsErrorRef.current = geo.error.message;
+      void logTelemetry({ event: "watch", source: "gps", status: "error", errorMessage: geo.error.message });
     } else if (!geo.error && lastGpsErrorRef.current) {
       lastGpsErrorRef.current = null;
       void logTelemetry({ event: "watch", source: "gps", status: "success" });
@@ -359,6 +360,14 @@ function MapHome() {
         routePath={routeData?.path ?? null}
       />
 
+      <GpsPermissionSheet
+        error={geo.error}
+        loading={geo.loading}
+        hasPosition={!!geo.position}
+        onRetry={() => geo.retry()}
+      />
+
+
       {routeData && (
         <NavigationBanner
           distanceMeters={liveRouteInfo?.distanceMeters ?? routeData.distanceMeters}
@@ -428,7 +437,7 @@ function MapHome() {
             <SourceErrorChip
               compact
               label="No GPS"
-              detail={geo.error}
+              detail={geo.error.message}
               onRetry={() => geo.retry?.()}
             />
           ) : (
