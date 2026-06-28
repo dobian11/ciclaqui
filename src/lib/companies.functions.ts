@@ -84,10 +84,21 @@ export const validateCompanyCode = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: company } = await supabaseAdmin
       .from("companies")
-      .select("id, name")
+      .select("id, name, status")
       .eq("code", data.code.toUpperCase())
       .maybeSingle();
-    if (!company) return { valid: false as const };
+    if (!company) return { valid: false as const, reason: "not_found" as const };
+    if (company.status !== "approved") {
+      return { valid: false as const, reason: "not_approved" as const };
+    }
+    const { data: sub } = await supabaseAdmin
+      .from("company_subscriptions")
+      .select("status")
+      .eq("company_id", company.id)
+      .maybeSingle();
+    if (!sub || !["active", "trial"].includes(sub.status)) {
+      return { valid: false as const, reason: "no_subscription" as const };
+    }
     return { valid: true as const, name: company.name };
   });
 
