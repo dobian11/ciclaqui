@@ -88,3 +88,47 @@ export const validateCompanyCode = createServerFn({ method: "POST" })
     if (!company) return { valid: false as const };
     return { valid: true as const, name: company.name };
   });
+
+/**
+ * Ritorna l'azienda dell'utente autenticato (se è company_manager o membro).
+ * Include numero dipendenti e stato abbonamento.
+ */
+export const getMyCompany = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("company_id")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!profile?.company_id) return null;
+
+    const { data: company } = await supabase
+      .from("companies")
+      .select("id, name, code, vat, iban, contact_email, created_at")
+      .eq("id", profile.company_id)
+      .maybeSingle();
+
+    if (!company) return null;
+
+    const [{ count: employees }, { data: sub }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        .eq("company_id", company.id),
+      supabase
+        .from("company_subscriptions")
+        .select("status, current_period_end, plan")
+        .eq("company_id", company.id)
+        .maybeSingle(),
+    ]);
+
+    return {
+      ...company,
+      employees_count: employees ?? 0,
+      subscription: sub ?? null,
+    };
+  });
