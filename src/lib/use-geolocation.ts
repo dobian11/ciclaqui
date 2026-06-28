@@ -43,7 +43,7 @@ export function useGeolocation(enabled = true): GeoState {
     if (!enabled || typeof navigator === "undefined" || !navigator.geolocation) {
       return;
     }
-    const watchId = navigator.geolocation.watchPosition(
+    setState((s) => ({ ...s, error: null, loading: true }));
       (pos) => {
         const speedMs = pos.coords.speed; // m/s, can be null
         const speedKmh = speedMs != null && !Number.isNaN(speedMs) ? Math.max(0, speedMs * 3.6) : 0;
