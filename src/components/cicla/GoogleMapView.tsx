@@ -372,7 +372,10 @@ export function GoogleMapView({
           renderPois(pois);
         })
         .catch((e) => {
-          if (e?.name !== "AbortError") console.warn("[pois] errore", e);
+          if (e?.name !== "AbortError") {
+            console.warn("[pois] errore", e);
+            onRefreshError?.(e?.message ?? "Errore caricamento punti d'interesse");
+          }
         });
     };
 
