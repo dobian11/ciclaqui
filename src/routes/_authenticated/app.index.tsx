@@ -62,12 +62,23 @@ function MapHome() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [layerError, setLayerError] = useState<string | null>(null);
+  const isRefreshingRef = useRef(false);
+  const aqPromiseRef = useRef<Promise<void> | null>(null);
   const refreshLayers = () => {
+    if (isRefreshingRef.current) return; // blocco richieste duplicate
+    isRefreshingRef.current = true;
     setLayerError(null);
     setRefreshing(true);
     setRefreshKey((k) => k + 1);
-    qc.invalidateQueries({ queryKey: ["aq"] });
-    window.setTimeout(() => setRefreshing(false), 900);
+    aqPromiseRef.current = qc.refetchQueries({ queryKey: ["aq"] })
+      .then(() => {})
+      .catch(() => {});
+  };
+  const onRefreshComplete = async () => {
+    if (!isRefreshingRef.current) return;
+    try { await aqPromiseRef.current; } catch {}
+    isRefreshingRef.current = false;
+    setRefreshing(false);
     toast.message("Layer aggiornati");
   };
   const [authed, setAuthed] = useState(false);
@@ -186,7 +197,11 @@ function MapHome() {
           setLayerError(msg);
           toast.error(msg);
           window.setTimeout(() => setLayerError(null), 5000);
+          // sblocca il pulsante anche in caso di errore
+          isRefreshingRef.current = false;
+          setRefreshing(false);
         }}
+        onRefreshComplete={onRefreshComplete}
       />
 
       {/* Top bar — pill compatte */}
@@ -315,7 +330,8 @@ function MapHome() {
       <button
         type="button"
         onClick={refreshLayers}
-        className="absolute right-4 z-[1000] grid size-11 place-items-center rounded-full app-glass-strong text-muted-foreground shadow-xl transition-colors hover:text-cicla"
+        disabled={refreshing}
+        className="absolute right-4 z-[1000] grid size-11 place-items-center rounded-full app-glass-strong text-muted-foreground shadow-xl transition-colors hover:text-cicla disabled:cursor-not-allowed disabled:opacity-50"
         style={{ bottom: "calc(330px + env(safe-area-inset-bottom, 0px))" }}
         aria-label="Aggiorna layer mappa"
       >
