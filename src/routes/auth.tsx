@@ -162,7 +162,7 @@ function AuthPage() {
                   <p className="text-[11px] text-muted-foreground">Almeno 8 caratteri.</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="su-code">Codice azienda</Label>
+                  <Label htmlFor="su-code">Codice azienda o Comune</Label>
                   <Input
                     id="su-code"
                     name="company_code"
@@ -174,7 +174,8 @@ function AuthPage() {
                     className="uppercase tracking-wider"
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    Obbligatorio. Chiedi il codice al tuo datore di lavoro per essere associato alla tua azienda.
+                    Obbligatorio. Chiedi il codice al tuo datore di lavoro o al tuo Comune
+                    per essere associato e ricevere i premi sulla mobilità sostenibile.
                   </p>
                 </div>
                 <label className="flex items-start gap-2.5 rounded-lg border border-border/60 bg-muted/30 p-3">
