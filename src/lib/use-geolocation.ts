@@ -93,7 +93,9 @@ export function useGeolocation(enabled = true): GeoState {
         }));
       },
       (err) => {
-        setState((s) => ({ ...s, error: err.message, loading: false }));
+        const code: GeoErrorCode =
+          err.code === 1 ? "denied" : err.code === 2 ? "unavailable" : err.code === 3 ? "timeout" : "unknown";
+        setState((s) => ({ ...s, error: { code, message: err.message }, loading: false }));
       },
       {
         enableHighAccuracy: true,
