@@ -197,13 +197,6 @@ function AdminDashboard() {
           <Stat icon={<Wallet className="size-4" />} label="Prelievi pending" value={stats?.pending_payouts} highlight />
         </div>
 
-        {/* Enti (aziende/comuni) da approvare */}
-        <Card className="mt-6 p-5">
-          <div className="flex items-center justify-between">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Enti registrati
-            </div>
-            <span className="text-[11px] text-muted-foreground">
         {/* Notifiche admin */}
         {notifications && notifications.length > 0 && (
           <Card className="mt-6 p-5">
