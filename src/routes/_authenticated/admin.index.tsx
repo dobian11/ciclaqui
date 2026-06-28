@@ -204,6 +204,45 @@ function AdminDashboard() {
               Enti registrati
             </div>
             <span className="text-[11px] text-muted-foreground">
+        {/* Notifiche admin */}
+        {notifications && notifications.length > 0 && (
+          <Card className="mt-6 p-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Bell className="size-4" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider">Notifiche</span>
+                {unreadCount > 0 && <Badge variant="secondary" className="bg-warning/15 text-warning text-[10px]">{unreadCount} nuove</Badge>}
+              </div>
+              {unreadCount > 0 && (
+                <Button size="sm" variant="ghost" onClick={markAllRead}>Segna tutte lette</Button>
+              )}
+            </div>
+            <ul className="mt-3 space-y-2">
+              {notifications.slice(0, 8).map((n) => (
+                <li
+                  key={n.id}
+                  className={`rounded-md border border-border/50 p-2.5 text-[12px] ${!n.read_at ? "bg-warning/5" : ""}`}
+                  onClick={() => n.company_id && setExpandedCompanyId(n.company_id)}
+                  role="button"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{n.title}</span>
+                    <span className="text-[10px] text-muted-foreground">{new Date(n.created_at).toLocaleString("it-IT")}</span>
+                  </div>
+                  {n.body && <div className="mt-0.5 text-[11px] text-muted-foreground">{n.body}</div>}
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
+
+        {/* Enti (aziende/comuni) da approvare */}
+        <Card className="mt-6 p-5">
+          <div className="flex items-center justify-between">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Enti registrati
+            </div>
+            <span className="text-[11px] text-muted-foreground">
               {companies?.filter((c) => c.status === "pending").length ?? 0} in attesa
             </span>
           </div>
