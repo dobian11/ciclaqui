@@ -424,6 +424,73 @@ export function GoogleMapView({
     };
   }, [poiCategories.join(","), refreshKey]);
 
+  // Highlight selected POI marker
+  useEffect(() => {
+    const google = (window as any).google;
+    if (!google?.maps) return;
+    const scaleIcon = (cat: PoiCategory, selected: boolean) => {
+      const meta = POI_META[cat];
+      const scale = selected ? 1.25 : 1;
+      const w = Math.round(32 * scale);
+      const h = Math.round(40 * scale);
+      const ring = selected
+        ? `<circle cx="16" cy="15" r="14" fill="none" stroke="white" stroke-width="2" stroke-opacity="0.9"/>`
+        : "";
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 32 40">
+        <g><path d="M16 38 C8 28 3 24 3 15 a13 13 0 1 1 26 0 c0 9 -5 13 -13 23z" fill="${meta.color}" stroke="white" stroke-width="2"/>
+        <circle cx="16" cy="15" r="8.5" fill="white"/>
+        <text x="16" y="19" text-anchor="middle" font-size="11" font-family="system-ui">${meta.emoji}</text>${ring}</g>
+      </svg>`;
+      return {
+        url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+        scaledSize: new google.maps.Size(w, h),
+        anchor: new google.maps.Point(Math.round(w / 2), h),
+      };
+    };
+    poiMarkersRef.current.forEach(({ marker, poi }) => {
+      const isSel = poi.id === selectedPoiId;
+      marker.setIcon(scaleIcon(poi.category, isSel));
+      marker.setZIndex(isSel ? 8 : 5);
+    });
+  }, [selectedPoiId]);
+
+  // Route polyline (in-app navigation)
+  useEffect(() => {
+    const map = mapRef.current;
+    const google = (window as any).google;
+    if (!map || !google?.maps) return;
+
+    if (!routePath || routePath.length < 2) {
+      if (routePolyRef.current) {
+        routePolyRef.current.setMap(null);
+        routePolyRef.current = null;
+      }
+      return;
+    }
+
+    if (!routePolyRef.current) {
+      routePolyRef.current = new google.maps.Polyline({
+        map,
+        path: routePath,
+        strokeColor: "#00B86B",
+        strokeOpacity: 0.95,
+        strokeWeight: 7,
+        zIndex: 6,
+      });
+    } else {
+      routePolyRef.current.setPath(routePath);
+    }
+
+    // Fit bounds to the route once
+    try {
+      const bounds = new google.maps.LatLngBounds();
+      routePath.forEach((p) => bounds.extend(p));
+      map.fitBounds(bounds, { top: 110, right: 60, bottom: 220, left: 60 });
+    } catch {}
+  }, [routePath]);
+
+
+
 
 
   return (
