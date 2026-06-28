@@ -292,7 +292,29 @@ function MapHome() {
         }}
         onRefreshComplete={onRefreshComplete}
         onPoiLoadingChange={setPoiLoading}
+        onPoiSelect={(p) => setSelectedPoi(p)}
+        selectedPoiId={selectedPoi?.id ?? routeData?.destination.id ?? null}
+        routePath={routeData?.path ?? null}
       />
+
+      {routeData && (
+        <NavigationBanner
+          distanceMeters={routeData.distanceMeters}
+          durationSec={routeData.durationSec}
+          onStop={() => setRouteData(null)}
+        />
+      )}
+
+      {selectedPoi && (
+        <PoiSheet
+          poi={selectedPoi}
+          origin={geo.position}
+          loadingRoute={routeMutation.isPending}
+          onNavigate={() => routeMutation.mutate(selectedPoi)}
+          onClose={() => setSelectedPoi(null)}
+        />
+      )}
+
 
       {/* Top bar — pill compatte */}
       <div
