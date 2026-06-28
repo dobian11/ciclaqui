@@ -18,11 +18,10 @@ const MODE_EMOJI: Record<TripMode, string> = {
   car: "🚗",
 };
 
-function markerIconForMode(mode: TripMode) {
+function pinIconForMode(mode: TripMode) {
   const color = MODE_COLORS[mode];
   const emoji = MODE_EMOJI[mode];
-  // Pin grande con emoji ad alto contrasto su disco bianco — molto più riconoscibile
-  // dei glifi vettoriali, soprattutto per "a piedi".
+  // Pin statico mostrato quando l'utente è fermo
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="52" height="66" viewBox="0 0 52 66">
     <defs><filter id="s-${mode}" x="-50%" y="-50%" width="200%" height="200%">
       <feDropShadow dx="0" dy="3" stdDeviation="2.8" flood-color="#000" flood-opacity="0.32"/>
@@ -38,6 +37,51 @@ function markerIconForMode(mode: TripMode) {
     scaledSize: new (window as any).google.maps.Size(52, 66),
     anchor: new (window as any).google.maps.Point(26, 64),
   };
+}
+
+function arrowIconForMode(mode: TripMode, heading: number) {
+  const color = MODE_COLORS[mode];
+  // Freccia direzionale: ruota seguendo l'heading dell'utente in movimento.
+  // Il rotate è applicato nell'SVG così Google Maps non deve ri-renderizzare il marker.
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56">
+    <defs><filter id="as-${mode}" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000" flood-opacity="0.35"/>
+    </filter></defs>
+    <g filter="url(#as-${mode})">
+      <circle cx="28" cy="28" r="13" fill="${color}" fill-opacity="0.22" stroke="${color}" stroke-opacity="0.5" stroke-width="1"/>
+      <g transform="rotate(${heading} 28 28)">
+        <path d="M28 8 L42 38 L28 31 L14 38 Z" fill="${color}" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="28" cy="31" r="3" fill="white"/>
+      </g>
+    </g>
+  </svg>`;
+  return {
+    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+    scaledSize: new (window as any).google.maps.Size(56, 56),
+    anchor: new (window as any).google.maps.Point(28, 28),
+  };
+}
+
+function computeBearing(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const toDeg = (r: number) => (r * 180) / Math.PI;
+  const φ1 = toRad(a.lat);
+  const φ2 = toRad(b.lat);
+  const Δλ = toRad(b.lng - a.lng);
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
 }
 
 
@@ -115,24 +159,67 @@ export function GoogleMapView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Aggiorna marker + camera quando la posizione cambia
+  const prevPosRef = useRef<{ lat: number; lng: number } | null>(null);
+  const headingRef = useRef<number | null>(null);
+  const animRef = useRef<number | null>(null);
+
+  // Aggiorna marker + camera quando la posizione cambia (con animazione fluida)
   useEffect(() => {
     const map = mapRef.current;
     const google = (window as any).google;
     if (!map || !google?.maps || !position) return;
     const latLng = { lat: position[0], lng: position[1] };
 
+    const prev = prevPosRef.current;
+    const distance = prev ? haversineMeters(prev, latLng) : 0;
+    // Soglia per considerare l'utente "in movimento" — sotto i 2m è rumore GPS.
+    const moving = distance > 2;
+    if (moving && prev) {
+      const newH = computeBearing(prev, latLng);
+      const curH = headingRef.current;
+      if (curH == null) headingRef.current = newH;
+      else {
+        const delta = ((newH - curH + 540) % 360) - 180;
+        headingRef.current = (curH + delta * 0.5 + 360) % 360;
+      }
+    }
+
+    const icon =
+      moving && headingRef.current != null
+        ? arrowIconForMode(mode, headingRef.current)
+        : pinIconForMode(mode);
+
     if (!markerRef.current) {
       markerRef.current = new google.maps.Marker({
         map,
         position: latLng,
-        icon: markerIconForMode(mode),
+        icon,
         zIndex: 10,
+        optimized: false,
       });
     } else {
-      markerRef.current.setPosition(latLng);
-      markerRef.current.setIcon(markerIconForMode(mode));
+      markerRef.current.setIcon(icon);
+      // Anima la posizione dal punto precedente al nuovo per un movimento fluido
+      if (animRef.current) cancelAnimationFrame(animRef.current);
+      const start = markerRef.current.getPosition();
+      const startLat = start?.lat() ?? latLng.lat;
+      const startLng = start?.lng() ?? latLng.lng;
+      const duration = 800;
+      const t0 = performance.now();
+      const stepAnim = (now: number) => {
+        const k = Math.min(1, (now - t0) / duration);
+        const ease = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+        const lat = startLat + (latLng.lat - startLat) * ease;
+        const lng = startLng + (latLng.lng - startLng) * ease;
+        markerRef.current.setPosition({ lat, lng });
+        if (accuracyRef.current) accuracyRef.current.setCenter({ lat, lng });
+        if (k < 1) animRef.current = requestAnimationFrame(stepAnim);
+        else animRef.current = null;
+      };
+      animRef.current = requestAnimationFrame(stepAnim);
     }
+
+    prevPosRef.current = latLng;
 
     if (!accuracyRef.current) {
       accuracyRef.current = new google.maps.Circle({
