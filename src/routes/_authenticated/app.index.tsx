@@ -72,6 +72,7 @@ function MapHome() {
   const [refreshing, setRefreshing] = useState(false);
   const [poiLoading, setPoiLoading] = useState(false);
   const [layerError, setLayerError] = useState<string | null>(null);
+  const [lastSummary, setLastSummary] = useState<TripSummary | null>(null);
 
   // POI selection + in-app navigation
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
