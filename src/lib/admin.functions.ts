@@ -233,14 +233,18 @@ export const adminDecideCompany = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const patch: Record<string, unknown> = {
-      status: data.decision,
-      rejection_reason: data.decision === "rejected" ? (data.reason ?? null) : null,
-    };
-    if (data.decision === "approved") {
-      patch.approved_at = new Date().toISOString();
-      patch.approved_by = context.userId;
-    }
+    const patch =
+      data.decision === "approved"
+        ? {
+            status: "approved" as const,
+            rejection_reason: null,
+            approved_at: new Date().toISOString(),
+            approved_by: context.userId,
+          }
+        : {
+            status: "rejected" as const,
+            rejection_reason: data.reason ?? null,
+          };
     const { error } = await supabaseAdmin.from("companies").update(patch).eq("id", data.company_id);
     if (error) throw new Error("Aggiornamento fallito");
     return { ok: true };
