@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { loadGoogleMaps } from "@/lib/google-maps-loader";
+import { fetchPois, POI_META, type Poi, type PoiCategory } from "@/lib/pois";
+
+
 
 export type TripMode = "foot" | "bike" | "car";
 
