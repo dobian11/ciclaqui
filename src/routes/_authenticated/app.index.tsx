@@ -13,6 +13,7 @@ import { getMyTrackingWindow } from "@/lib/companies.functions";
 import { POI_META, type PoiCategory } from "@/lib/pois";
 import { supabase } from "@/integrations/supabase/client";
 import { logTelemetry } from "@/lib/telemetry";
+import { useMapPrefs } from "@/lib/use-map-prefs";
 
 import { toast } from "sonner";
 
