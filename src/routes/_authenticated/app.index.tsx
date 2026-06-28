@@ -35,6 +35,23 @@ const MOVE_START_KMH = 2.5;       // movimento per avviare il viaggio
 const IDLE_STOP_MS = 3 * 60_000;  // 3 min fermi → stop automatico
 const MIN_DURATION_S = 30;        // viaggi < 30 s scartati
 
+function isWithinWindow(win: { tracking_start: string | null; tracking_end: string | null; tracking_days: number[] | null } | null | undefined): boolean {
+  if (!win) return true; // nessun ente collegato → sempre attivo
+  const now = new Date();
+  const day = now.getDay(); // 0=Dom..6=Sab
+  const days = win.tracking_days && win.tracking_days.length > 0 ? win.tracking_days : null;
+  if (days && !days.includes(day)) return false;
+  if (!win.tracking_start || !win.tracking_end) return true;
+  const [sh, sm] = win.tracking_start.split(":").map(Number);
+  const [eh, em] = win.tracking_end.split(":").map(Number);
+  const mins = now.getHours() * 60 + now.getMinutes();
+  const startMins = sh * 60 + sm;
+  const endMins = eh * 60 + em;
+  return endMins >= startMins
+    ? mins >= startMins && mins <= endMins
+    : mins >= startMins || mins <= endMins; // finestra a cavallo della mezzanotte
+}
+
 function MapHome() {
   const geo = useGeolocation(true);
   const [follow, setFollow] = useState(true);
@@ -42,8 +59,24 @@ function MapHome() {
   const qc = useQueryClient();
   const [poiCategories, setPoiCategories] = useState<PoiCategory[]>([]);
   const [layersOpen, setLayersOpen] = useState(false);
+  const [authed, setAuthed] = useState(false);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setAuthed(!!s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
   const togglePoi = (cat: PoiCategory) =>
     setPoiCategories((prev) => (prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]));
+
+  const fetchWindow = useServerFn(getMyTrackingWindow);
+  const winQuery = useQuery({
+    queryKey: ["my-tracking-window"],
+    queryFn: () => fetchWindow({}),
+    enabled: authed,
+    staleTime: 5 * 60_000,
+  });
+  const inWindow = isWithinWindow(winQuery.data as any);
+
 
   const liveMode = trip.recording ? trip.dominantMode : geo.mode;
 
