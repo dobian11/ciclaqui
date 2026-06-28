@@ -61,6 +61,7 @@ function MapHome() {
   const [layersOpen, setLayersOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [poiLoading, setPoiLoading] = useState(false);
   const [layerError, setLayerError] = useState<string | null>(null);
   const isRefreshingRef = useRef(false);
   const aqPromiseRef = useRef<Promise<void> | null>(null);
@@ -202,6 +203,7 @@ function MapHome() {
           setRefreshing(false);
         }}
         onRefreshComplete={onRefreshComplete}
+        onPoiLoadingChange={setPoiLoading}
       />
 
       {/* Top bar — pill compatte */}
@@ -217,7 +219,12 @@ function MapHome() {
         </div>
 
         <div className="pointer-events-auto inline-flex shrink-0 items-center gap-1.5 rounded-full app-glass px-2.5 py-1.5 shadow-lg">
-          {geo.position ? (
+          {geo.loading ? (
+            <>
+              <Loader2 size={10} className="animate-spin text-muted-foreground" />
+              <span className="text-[11px] text-muted-foreground">Live…</span>
+            </>
+          ) : geo.position ? (
             <>
               <span
                 className={`inline-block size-1.5 rounded-full ring-2 ${MODE_RING[liveMode]}/30`}
@@ -318,8 +325,14 @@ function MapHome() {
         style={{ bottom: "calc(275px + env(safe-area-inset-bottom, 0px))" }}
         aria-label="Punti d'interesse"
       >
-        {layersOpen ? <X size={18} strokeWidth={2.4} /> : <Layers size={18} strokeWidth={2.4} />}
-        {poiCategories.length > 0 && !layersOpen && (
+        {poiLoading ? (
+          <Loader2 size={18} strokeWidth={2.4} className="animate-spin text-cicla" />
+        ) : layersOpen ? (
+          <X size={18} strokeWidth={2.4} />
+        ) : (
+          <Layers size={18} strokeWidth={2.4} />
+        )}
+        {poiCategories.length > 0 && !layersOpen && !poiLoading && (
           <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-cicla text-[9px] font-bold text-cicla-foreground">
             {poiCategories.length}
           </span>
@@ -387,7 +400,7 @@ function MapHome() {
         caloriesPerMin={caloriesPerMin}
         mode={liveMode}
         aq={aqQuery.data}
-        aqLoading={aqQuery.isLoading}
+        aqLoading={aqQuery.isFetching}
         livePoints={
           trip.recording
             ? Math.floor(
@@ -529,7 +542,11 @@ function BottomTrio({
             }`}
             aria-label="Qualità dell'aria"
           >
-            <Wind size={18} className="text-info" />
+            {aqLoading ? (
+              <Loader2 size={18} className="animate-spin text-info" />
+            ) : (
+              <Wind size={18} className="text-info" />
+            )}
             <span
               className={`mt-0.5 max-w-[3.5rem] truncate px-1 text-center font-display font-bold leading-none ${
                 aqiLabel.length > 3 ? "text-[10px]" : "text-[13px]"

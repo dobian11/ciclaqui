@@ -118,6 +118,7 @@ export function GoogleMapView({
   refreshKey = 0,
   onRefreshError,
   onRefreshComplete,
+  onPoiLoadingChange,
 }: {
   position: [number, number] | null;
   mode: TripMode;
@@ -127,6 +128,7 @@ export function GoogleMapView({
   refreshKey?: number;
   onRefreshError?: (message: string) => void;
   onRefreshComplete?: () => void;
+  onPoiLoadingChange?: (loading: boolean) => void;
 }) {
 
   const ref = useRef<HTMLDivElement | null>(null);
@@ -368,6 +370,7 @@ export function GoogleMapView({
       poiAbortRef.current?.abort();
       const ctrl = new AbortController();
       poiAbortRef.current = ctrl;
+      onPoiLoadingChange?.(true);
       fetchPois([sw.lat(), sw.lng(), ne.lat(), ne.lng()], poiCategories, ctrl.signal)
         .then((pois) => {
           console.info("[pois] caricati", pois.length, "per", poiCategories.join(","));
@@ -380,6 +383,7 @@ export function GoogleMapView({
           }
         })
         .finally(() => {
+          onPoiLoadingChange?.(false);
           onRefreshComplete?.();
         });
     };
