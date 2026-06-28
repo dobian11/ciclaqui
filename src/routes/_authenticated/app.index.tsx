@@ -101,7 +101,7 @@ function MapHome() {
       });
       setSelectedPoi(null);
       // Avvia automaticamente il tracking del tragitto: niente bottone manuale
-      if (!trip.isRecording) trip.start();
+      if (!trip.recording) trip.start();
       toast.success("Percorso pronto · tracking avviato");
     },
     onError: (e: any) => {
