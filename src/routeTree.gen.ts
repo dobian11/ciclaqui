@@ -21,6 +21,7 @@ import { Route as AuthenticatedAziendaIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAziendaOnboardingRouteImport } from './routes/_authenticated/azienda.onboarding'
+import { Route as AuthenticatedAppSfideRouteImport } from './routes/_authenticated/app.sfide'
 import { Route as AuthenticatedAppPuntiRouteImport } from './routes/_authenticated/app.punti'
 import { Route as AuthenticatedAppProfiloRouteImport } from './routes/_authenticated/app.profilo'
 import { Route as AuthenticatedAppBiciRouteImport } from './routes/_authenticated/app.bici'
@@ -86,6 +87,11 @@ const AuthenticatedAziendaOnboardingRoute =
     path: '/onboarding',
     getParentRoute: () => AuthenticatedAziendaRoute,
   } as any)
+const AuthenticatedAppSfideRoute = AuthenticatedAppSfideRouteImport.update({
+  id: '/sfide',
+  path: '/sfide',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
 const AuthenticatedAppPuntiRoute = AuthenticatedAppPuntiRouteImport.update({
   id: '/punti',
   path: '/punti',
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/app/bici': typeof AuthenticatedAppBiciRoute
   '/app/profilo': typeof AuthenticatedAppProfiloRoute
   '/app/punti': typeof AuthenticatedAppPuntiRoute
+  '/app/sfide': typeof AuthenticatedAppSfideRoute
   '/azienda/onboarding': typeof AuthenticatedAziendaOnboardingRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/app/bici': typeof AuthenticatedAppBiciRoute
   '/app/profilo': typeof AuthenticatedAppProfiloRoute
   '/app/punti': typeof AuthenticatedAppPuntiRoute
+  '/app/sfide': typeof AuthenticatedAppSfideRoute
   '/azienda/onboarding': typeof AuthenticatedAziendaOnboardingRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
@@ -144,6 +152,7 @@ export interface FileRoutesById {
   '/_authenticated/app/bici': typeof AuthenticatedAppBiciRoute
   '/_authenticated/app/profilo': typeof AuthenticatedAppProfiloRoute
   '/_authenticated/app/punti': typeof AuthenticatedAppPuntiRoute
+  '/_authenticated/app/sfide': typeof AuthenticatedAppSfideRoute
   '/_authenticated/azienda/onboarding': typeof AuthenticatedAziendaOnboardingRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
@@ -162,6 +171,7 @@ export interface FileRouteTypes {
     | '/app/bici'
     | '/app/profilo'
     | '/app/punti'
+    | '/app/sfide'
     | '/azienda/onboarding'
     | '/admin/'
     | '/app/'
@@ -175,6 +185,7 @@ export interface FileRouteTypes {
     | '/app/bici'
     | '/app/profilo'
     | '/app/punti'
+    | '/app/sfide'
     | '/azienda/onboarding'
     | '/admin'
     | '/app'
@@ -192,6 +203,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/bici'
     | '/_authenticated/app/profilo'
     | '/_authenticated/app/punti'
+    | '/_authenticated/app/sfide'
     | '/_authenticated/azienda/onboarding'
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
@@ -292,6 +304,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAziendaOnboardingRouteImport
       parentRoute: typeof AuthenticatedAziendaRoute
     }
+    '/_authenticated/app/sfide': {
+      id: '/_authenticated/app/sfide'
+      path: '/sfide'
+      fullPath: '/app/sfide'
+      preLoaderRoute: typeof AuthenticatedAppSfideRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/punti': {
       id: '/_authenticated/app/punti'
       path: '/punti'
@@ -331,6 +350,7 @@ interface AuthenticatedAppRouteChildren {
   AuthenticatedAppBiciRoute: typeof AuthenticatedAppBiciRoute
   AuthenticatedAppProfiloRoute: typeof AuthenticatedAppProfiloRoute
   AuthenticatedAppPuntiRoute: typeof AuthenticatedAppPuntiRoute
+  AuthenticatedAppSfideRoute: typeof AuthenticatedAppSfideRoute
   AuthenticatedAppIndexRoute: typeof AuthenticatedAppIndexRoute
 }
 
@@ -338,6 +358,7 @@ const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppBiciRoute: AuthenticatedAppBiciRoute,
   AuthenticatedAppProfiloRoute: AuthenticatedAppProfiloRoute,
   AuthenticatedAppPuntiRoute: AuthenticatedAppPuntiRoute,
+  AuthenticatedAppSfideRoute: AuthenticatedAppSfideRoute,
   AuthenticatedAppIndexRoute: AuthenticatedAppIndexRoute,
 }
 

@@ -664,6 +664,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_trip_to_challenges: {
+        Args: {
+          _company_id: string
+          _distance_km: number
+          _mode: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
+      bump_streak: {
+        Args: { _mode: string; _user_id: string }
+        Returns: undefined
+      }
+      company_leaderboard: {
+        Args: { _company_id: string }
+        Returns: {
+          current_streak: number
+          full_name: string
+          lifetime_km: number
+          lifetime_points: number
+          user_id: string
+        }[]
+      }
       generate_company_code: { Args: { _name: string }; Returns: string }
       has_role: {
         Args: {

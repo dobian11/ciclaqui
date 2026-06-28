@@ -117,30 +117,25 @@ function MapHome() {
     <div className="absolute inset-0 overflow-hidden bg-background">
       <GoogleMapView position={geo.position} mode={liveMode} follow={follow} path={polylinePath} poiCategories={poiCategories} />
 
-      {/* Top bar */}
+      {/* Top bar — compatto */}
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-[1000] flex flex-col gap-3 px-4 pt-4"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 16px)" }}
+        className="pointer-events-none absolute inset-x-0 top-0 z-[1000] flex items-center gap-2 px-3 pt-2"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 8px)" }}
       >
-        <div className="pointer-events-auto flex items-center gap-3 rounded-3xl app-glass p-2.5 shadow-xl">
-          <div className="grid size-10 shrink-0 place-items-center rounded-full bg-cicla text-cicla-foreground shadow-cicla">
-            <Search size={18} strokeWidth={2.5} />
+        <div className="pointer-events-auto flex flex-1 items-center gap-2 rounded-full app-glass px-2.5 py-1.5 shadow-lg">
+          <div className="grid size-6 shrink-0 place-items-center rounded-full bg-cicla text-cicla-foreground">
+            <Search size={12} strokeWidth={2.8} />
           </div>
-          <div className="flex flex-col leading-tight">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              Destinazione
-            </span>
-            <span className="text-sm font-medium text-foreground/90">
-              Cerca percorsi ciclabili…
-            </span>
-          </div>
+          <span className="truncate text-[11px] font-medium text-foreground/80">
+            Cerca percorsi…
+          </span>
         </div>
 
-        <div className="pointer-events-auto inline-flex self-start items-center gap-2 rounded-full app-glass px-3 py-1.5 shadow-lg">
+        <div className="pointer-events-auto inline-flex shrink-0 items-center gap-1.5 rounded-full app-glass px-2.5 py-1.5 shadow-lg">
           {geo.position ? (
             <>
               <span
-                className={`inline-block size-2 rounded-full ring-2 ${MODE_RING[liveMode]}/30`}
+                className={`inline-block size-1.5 rounded-full ring-2 ${MODE_RING[liveMode]}/30`}
                 style={{
                   background:
                     liveMode === "bike"
@@ -150,27 +145,28 @@ function MapHome() {
                       : "var(--mode-car)",
                 }}
               />
-              <span className="text-xs font-semibold">{MODE_LABEL[liveMode]}</span>
-              <span className="text-[10px] text-muted-foreground">
-                {geo.speedKmh.toFixed(1)} km/h
+              <span className="text-[11px] font-semibold leading-none">{MODE_LABEL[liveMode]}</span>
+              <span className="text-[10px] leading-none text-muted-foreground">
+                {geo.speedKmh.toFixed(0)} km/h
               </span>
             </>
           ) : geo.error ? (
-            <span className="text-xs text-destructive">Posizione non disponibile</span>
+            <span className="text-[11px] text-destructive">No GPS</span>
           ) : (
             <>
-              <Loader2 size={12} className="animate-spin text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">GPS…</span>
+              <Loader2 size={10} className="animate-spin text-muted-foreground" />
+              <span className="text-[11px] text-muted-foreground">GPS…</span>
             </>
           )}
         </div>
       </div>
 
+
       {/* Trip recording badge */}
       {trip.recording && (
         <div
           className="pointer-events-none absolute inset-x-0 z-[1000] flex justify-center"
-          style={{ top: "calc(env(safe-area-inset-top, 0px) + 130px)" }}
+          style={{ top: "calc(env(safe-area-inset-top, 0px) + 56px)" }}
         >
           <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-cicla/95 px-4 py-2 text-cicla-foreground shadow-cicla">
             <span className="relative flex size-2.5">
