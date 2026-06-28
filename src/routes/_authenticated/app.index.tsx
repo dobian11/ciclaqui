@@ -400,7 +400,7 @@ function MapHome() {
         caloriesPerMin={caloriesPerMin}
         mode={liveMode}
         aq={aqQuery.data}
-        aqLoading={aqQuery.isLoading}
+        aqLoading={aqQuery.isFetching}
         livePoints={
           trip.recording
             ? Math.floor(
