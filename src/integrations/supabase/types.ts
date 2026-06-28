@@ -264,6 +264,9 @@ export type Database = {
           status: Database["public"]["Enums"]["company_status"]
           stripe_customer_id: string | null
           subscription_status: Database["public"]["Enums"]["subscription_status"]
+          tracking_days: number[] | null
+          tracking_end: string | null
+          tracking_start: string | null
           updated_at: string
           vat: string | null
         }
@@ -284,6 +287,9 @@ export type Database = {
           status?: Database["public"]["Enums"]["company_status"]
           stripe_customer_id?: string | null
           subscription_status?: Database["public"]["Enums"]["subscription_status"]
+          tracking_days?: number[] | null
+          tracking_end?: string | null
+          tracking_start?: string | null
           updated_at?: string
           vat?: string | null
         }
@@ -304,6 +310,9 @@ export type Database = {
           status?: Database["public"]["Enums"]["company_status"]
           stripe_customer_id?: string | null
           subscription_status?: Database["public"]["Enums"]["subscription_status"]
+          tracking_days?: number[] | null
+          tracking_end?: string | null
+          tracking_start?: string | null
           updated_at?: string
           vat?: string | null
         }
