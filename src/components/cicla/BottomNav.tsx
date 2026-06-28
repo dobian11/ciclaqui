@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Map, Bike, Coins, User, AlertTriangle } from "lucide-react";
+import { Map, Bike, Coins, Trophy, AlertTriangle } from "lucide-react";
 
 const SOS_URL = "https://www.db360app.it";
 
@@ -9,9 +9,10 @@ const left = [
 ] as const;
 
 const right = [
+  { to: "/app/sfide", label: "Sfide", icon: Trophy, exact: false },
   { to: "/app/punti", label: "Punti", icon: Coins, exact: false },
-  { to: "/app/profilo", label: "Profilo", icon: User, exact: false },
 ] as const;
+
 
 export function BottomNav() {
   return (
