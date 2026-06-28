@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { MapView } from "@/components/cicla/MapView";
 import { useGeolocation } from "@/lib/use-geolocation";
-import { AlertTriangle, Wind, Flame, Locate, Loader2 } from "lucide-react";
+import { Wind, Flame, Locate, Loader2, Search } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated/app/")({
