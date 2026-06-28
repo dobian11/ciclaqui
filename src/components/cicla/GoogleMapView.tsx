@@ -190,6 +190,109 @@ export function GoogleMapView({
     }
   }, [path, mode]);
 
+  // POI layers: fetch when categories change OR after the map stops panning, debounced.
+  useEffect(() => {
+    const map = mapRef.current;
+    const google = (window as any).google;
+    if (!map || !google?.maps) return;
+
+    const clearAll = () => {
+      poiMarkersRef.current.forEach((m) => m.setMap(null));
+      poiMarkersRef.current.clear();
+    };
+
+    if (poiCategories.length === 0) {
+      clearAll();
+      return;
+    }
+
+    const poiIcon = (cat: PoiCategory) => {
+      const meta = POI_META[cat];
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
+        <defs><filter id="ps-${cat}" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="2" stdDeviation="1.6" flood-color="#000" flood-opacity="0.3"/>
+        </filter></defs>
+        <g filter="url(#ps-${cat})">
+          <path d="M16 38 C8 28 3 24 3 15 a13 13 0 1 1 26 0 c0 9 -5 13 -13 23z" fill="${meta.color}" stroke="white" stroke-width="2"/>
+          <circle cx="16" cy="15" r="8.5" fill="white"/>
+          <text x="16" y="19" text-anchor="middle" font-size="11" font-family="system-ui">${meta.emoji}</text>
+        </g>
+      </svg>`;
+      return {
+        url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+        scaledSize: new google.maps.Size(32, 40),
+        anchor: new google.maps.Point(16, 38),
+      };
+    };
+
+    const renderPois = (pois: Poi[]) => {
+      const seen = new Set<string>();
+      for (const p of pois) {
+        if (!poiCategories.includes(p.category)) continue;
+        seen.add(p.id);
+        if (poiMarkersRef.current.has(p.id)) continue;
+        const m = new google.maps.Marker({
+          map,
+          position: { lat: p.lat, lng: p.lng },
+          icon: poiIcon(p.category),
+          zIndex: 5,
+          title: p.name || POI_META[p.category].label,
+        });
+        const info = new google.maps.InfoWindow({
+          content: `<div style="font-family:system-ui;font-size:13px;color:#111;min-width:140px">
+            <div style="font-weight:700;margin-bottom:2px">${POI_META[p.category].emoji} ${p.name ?? POI_META[p.category].label}</div>
+            <div style="font-size:11px;color:#555">${POI_META[p.category].label}</div>
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}&travelmode=bicycling" target="_blank" style="display:inline-block;margin-top:6px;color:#00a35a;font-weight:600;text-decoration:none">Indicazioni →</a>
+          </div>`,
+        });
+        m.addListener("click", () => info.open({ map, anchor: m }));
+        poiMarkersRef.current.set(p.id, m);
+      }
+      // remove no-longer-visible markers
+      for (const [id, m] of poiMarkersRef.current) {
+        if (!seen.has(id)) {
+          m.setMap(null);
+          poiMarkersRef.current.delete(id);
+        }
+      }
+    };
+
+    const runFetch = () => {
+      const zoom = map.getZoom?.() ?? 0;
+      if (zoom < 13) {
+        clearAll();
+        return;
+      }
+      const b = map.getBounds?.();
+      if (!b) return;
+      const sw = b.getSouthWest();
+      const ne = b.getNorthEast();
+      poiAbortRef.current?.abort();
+      const ctrl = new AbortController();
+      poiAbortRef.current = ctrl;
+      fetchPois([sw.lat(), sw.lng(), ne.lat(), ne.lng()], poiCategories, ctrl.signal)
+        .then(renderPois)
+        .catch((e) => {
+          if (e?.name !== "AbortError") console.warn("[pois]", e);
+        });
+    };
+
+    const onIdle = () => {
+      if (poiDebounceRef.current) window.clearTimeout(poiDebounceRef.current);
+      poiDebounceRef.current = window.setTimeout(runFetch, 450);
+    };
+
+    runFetch();
+    const listener = map.addListener("idle", onIdle);
+    return () => {
+      listener?.remove?.();
+      if (poiDebounceRef.current) window.clearTimeout(poiDebounceRef.current);
+      poiAbortRef.current?.abort();
+    };
+  }, [poiCategories.join(",")]);
+
+
+
   return (
     <>
       <div ref={ref} className="absolute inset-0 h-full w-full" />
