@@ -244,7 +244,12 @@ function MapHome() {
               </span>
             </>
           ) : geo.error ? (
-            <span className="text-[11px] text-destructive">No GPS</span>
+            <SourceErrorChip
+              compact
+              label="No GPS"
+              detail={geo.error}
+              onRetry={() => geo.retry?.()}
+            />
           ) : (
             <>
               <Loader2 size={10} className="animate-spin text-muted-foreground" />
