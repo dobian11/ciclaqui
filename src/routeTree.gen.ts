@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AziendaAuthRouteImport } from './routes/azienda.auth'
 import { Route as AuthenticatedAziendaRouteImport } from './routes/_authenticated/azienda'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAziendaIndexRouteImport } from './routes/_authenticated/azienda.index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
@@ -58,6 +59,11 @@ const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   path: '/app',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAziendaIndexRoute =
   AuthenticatedAziendaIndexRouteImport.update({
     id: '/',
@@ -70,9 +76,9 @@ const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
-  id: '/admin/',
-  path: '/admin/',
-  getParentRoute: () => AuthenticatedRouteRoute,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
 const AuthenticatedAziendaOnboardingRoute =
   AuthenticatedAziendaOnboardingRouteImport.update({
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/cerca-bici': typeof CercaBiciRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/azienda': typeof AuthenticatedAziendaRouteWithChildren
   '/azienda/auth': typeof AziendaAuthRoute
@@ -130,6 +137,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/cerca-bici': typeof CercaBiciRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/azienda': typeof AuthenticatedAziendaRouteWithChildren
   '/azienda/auth': typeof AziendaAuthRoute
@@ -147,6 +155,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/cerca-bici'
+    | '/admin'
     | '/app'
     | '/azienda'
     | '/azienda/auth'
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/cerca-bici'
+    | '/_authenticated/admin'
     | '/_authenticated/app'
     | '/_authenticated/azienda'
     | '/azienda/auth'
@@ -247,6 +257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/azienda/': {
       id: '/_authenticated/azienda/'
       path: '/'
@@ -263,10 +280,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
-      path: '/admin'
+      path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/azienda/onboarding': {
       id: '/_authenticated/azienda/onboarding'
@@ -299,6 +316,17 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppBiciRoute: typeof AuthenticatedAppBiciRoute
   AuthenticatedAppProfiloRoute: typeof AuthenticatedAppProfiloRoute
@@ -330,15 +358,15 @@ const AuthenticatedAziendaRouteWithChildren =
   AuthenticatedAziendaRoute._addFileChildren(AuthenticatedAziendaRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
   AuthenticatedAziendaRoute: typeof AuthenticatedAziendaRouteWithChildren
-  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
   AuthenticatedAziendaRoute: AuthenticatedAziendaRouteWithChildren,
-  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
