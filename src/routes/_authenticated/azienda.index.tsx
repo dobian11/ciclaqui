@@ -97,6 +97,8 @@ function CompanyDashboard() {
 
   const subStatus = company.subscription?.status ?? "inactive";
   const subActive = subStatus === "active" || subStatus === "trial";
+  const isMuni = company.kind === "municipality";
+  const memberLabel = isMuni ? "Cittadini" : "Dipendenti";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-secondary/40 to-background pb-12">
@@ -110,15 +112,16 @@ function CompanyDashboard() {
 
         <div className="mt-6 flex items-center gap-2">
           <Badge variant="secondary" className="bg-cicla/10 text-cicla">
-            <Building2 className="mr-1 size-3" /> Pannello azienda
+            {isMuni ? <Landmark className="mr-1 size-3" /> : <Building2 className="mr-1 size-3" />}
+            Pannello {isMuni ? "Comune" : "azienda"}
           </Badge>
         </div>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">{company.name}</h1>
 
-        {/* Codice azienda */}
+        {/* Codice */}
         <Card className="mt-6 border-cicla/30 bg-cicla/5 p-5 shadow-cicla">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-cicla">
-            Codice azienda
+            Codice {isMuni ? "Comune" : "azienda"}
           </div>
           <div className="mt-2 flex items-center justify-between gap-3">
             <div className="font-display text-3xl font-bold tracking-wider">{company.code}</div>
@@ -127,8 +130,8 @@ function CompanyDashboard() {
             </Button>
           </div>
           <p className="mt-3 text-[12px] leading-snug text-muted-foreground">
-            Condividi questo codice con i tuoi dipendenti: lo inseriranno in fase di registrazione
-            per essere associati alla tua azienda.
+            Condividi questo codice con i tuoi {isMuni ? "cittadini" : "dipendenti"}: lo inseriranno
+            in fase di registrazione per essere associati e ricevere i premi.
           </p>
           <Button onClick={shareInvite} className="mt-4 w-full" variant="secondary">
             <Share2 className="mr-2 size-4" /> Condividi invito
@@ -140,7 +143,7 @@ function CompanyDashboard() {
           <Card className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Users className="size-4" />
-              <span className="text-[11px] uppercase tracking-wider">Dipendenti</span>
+              <span className="text-[11px] uppercase tracking-wider">{memberLabel}</span>
             </div>
             <div className="mt-2 font-display text-2xl font-bold">{company.employees_count}</div>
           </Card>
