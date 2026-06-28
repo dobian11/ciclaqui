@@ -9,8 +9,6 @@ export const Route = createFileRoute("/_authenticated/app/")({
   component: MapHome,
 });
 
-const SOS_URL = "https://www.db360app.it";
-
 const MODE_LABEL: Record<"foot" | "bike" | "car", string> = {
   foot: "A piedi",
   bike: "In bici",
