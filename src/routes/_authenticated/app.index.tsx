@@ -8,7 +8,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAirQuality } from "@/lib/air-quality.functions";
 import { endTrip } from "@/lib/trips.functions";
+import { getMyTrackingWindow } from "@/lib/companies.functions";
 import { POI_META, type PoiCategory } from "@/lib/pois";
+import { supabase } from "@/integrations/supabase/client";
+
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/")({
