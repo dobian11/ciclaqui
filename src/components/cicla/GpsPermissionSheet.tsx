@@ -35,8 +35,7 @@ export function GpsPermissionSheet({ error, loading, hasPosition, onRetry }: Pro
     (async () => {
       try {
         if (typeof navigator === "undefined" || !navigator.permissions?.query) return;
-        // @ts-expect-error name geolocation
-        permStatus = await navigator.permissions.query({ name: "geolocation" });
+        permStatus = await navigator.permissions.query({ name: "geolocation" as PermissionName });
         if (cancelled) return;
         setPerm(permStatus!.state as PermState);
         permStatus!.addEventListener("change", handler);
