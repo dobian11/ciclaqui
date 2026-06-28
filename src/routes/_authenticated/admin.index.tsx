@@ -7,6 +7,8 @@ import {
   adminStats,
   adminListPayouts,
   adminDecidePayout,
+  adminListPendingCompanies,
+  adminDecideCompany,
   isAdmin,
 } from "@/lib/admin.functions";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
