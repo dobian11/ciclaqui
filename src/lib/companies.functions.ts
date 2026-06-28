@@ -67,6 +67,27 @@ export const createCompany = createServerFn({ method: "POST" })
     // company in queries that filter by company_id).
     await supabase.from("profiles").update({ company_id: company.id }).eq("id", userId);
 
+    // Create the initial review record + admin notification
+    const { data: review } = await supabaseAdmin
+      .from("company_reviews")
+      .insert({
+        company_id: company.id,
+        kind: "initial",
+        status: "pending",
+        submitted_by: userId,
+        notes: "Registrazione iniziale",
+      })
+      .select("id")
+      .single();
+
+    await supabaseAdmin.from("admin_notifications").insert({
+      type: "company_review_submitted",
+      title: `Nuova richiesta di approvazione (${company.kind === "municipality" ? "Comune" : "Azienda"})`,
+      body: `${company.name} ha inviato la richiesta di registrazione.`,
+      company_id: company.id,
+      payload: { review_id: review?.id ?? null, kind: "initial" },
+    });
+
     return { id: company.id, code: company.code, name: company.name, kind: company.kind };
   });
 
@@ -195,3 +216,127 @@ export const getMyTrackingWindow = createServerFn({ method: "GET" })
     return company ?? null;
   });
 
+
+// ---------------- Reviews / Resubmission ----------------
+
+const documentSchema = z.object({
+  name: z.string().min(1).max(200),
+  path: z.string().min(1).max(500),
+  size: z.number().int().nonnegative().optional(),
+  content_type: z.string().max(120).optional(),
+});
+
+const requestReviewSchema = z.object({
+  notes: z.string().trim().max(1000).optional(),
+  documents: z.array(documentSchema).max(20).default([]),
+});
+
+/**
+ * Il manager invia una richiesta di nuova revisione (dopo un rifiuto o
+ * volontariamente). Crea un record `company_reviews` in stato `pending`,
+ * riporta `companies.status` a `pending`, e crea una notifica per l'admin.
+ */
+export const requestCompanyReview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => requestReviewSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: profile } = await supabase
+      .from("profiles").select("company_id").eq("id", userId).maybeSingle();
+    if (!profile?.company_id) throw new Error("Nessuna azienda associata");
+
+    const { data: roles } = await supabase
+      .from("user_roles").select("role").eq("user_id", userId);
+    if (!roles?.some((r) => r.role === "company_manager")) {
+      throw new Error("Solo i gestori dell'ente possono inviare richieste");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: company } = await supabaseAdmin
+      .from("companies")
+      .select("id, name, kind, status")
+      .eq("id", profile.company_id)
+      .maybeSingle();
+    if (!company) throw new Error("Ente non trovato");
+
+    // Insert review
+    const { data: review, error: revErr } = await supabaseAdmin
+      .from("company_reviews")
+      .insert({
+        company_id: company.id,
+        kind: "resubmission",
+        status: "pending",
+        submitted_by: userId,
+        notes: data.notes ?? null,
+        documents: data.documents,
+      })
+      .select("id, submitted_at")
+      .single();
+    if (revErr || !review) throw new Error("Impossibile inviare la richiesta");
+
+    // Move company back to pending + clear rejection reason
+    await supabaseAdmin
+      .from("companies")
+      .update({ status: "pending", rejection_reason: null })
+      .eq("id", company.id);
+
+    // Notify admin
+    await supabaseAdmin.from("admin_notifications").insert({
+      type: "company_review_resubmitted",
+      title: `Nuova revisione richiesta (${company.kind === "municipality" ? "Comune" : "Azienda"})`,
+      body: `${company.name} ha inviato ${data.documents.length} documento/i per una nuova revisione.`,
+      company_id: company.id,
+      payload: { review_id: review.id, kind: "resubmission", doc_count: data.documents.length },
+    });
+
+    return { ok: true, review_id: review.id };
+  });
+
+/**
+ * Storico delle revisioni dell'ente del manager corrente.
+ */
+export const listMyCompanyReviews = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: profile } = await supabase
+      .from("profiles").select("company_id").eq("id", userId).maybeSingle();
+    if (!profile?.company_id) return [];
+    const { data } = await supabase
+      .from("company_reviews")
+      .select("id, kind, status, reason, notes, documents, submitted_at, reviewed_at")
+      .eq("company_id", profile.company_id)
+      .order("submitted_at", { ascending: false });
+    return data ?? [];
+  });
+
+/**
+ * Restituisce una URL firmata temporanea per scaricare un documento di un
+ * ente. Accesso consentito al manager dell'ente o agli admin.
+ */
+export const getCompanyDocUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ path: z.string().min(1) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: roles } = await supabase
+      .from("user_roles").select("role").eq("user_id", userId);
+    const isAdmin = roles?.some((r) => r.role === "admin");
+
+    if (!isAdmin) {
+      // Manager: deve appartenere alla company indicata dal primo segmento del path
+      const companyId = data.path.split("/")[0];
+      const { data: profile } = await supabase
+        .from("profiles").select("company_id").eq("id", userId).maybeSingle();
+      if (profile?.company_id !== companyId) throw new Error("Accesso negato");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: signed, error } = await supabaseAdmin.storage
+      .from("company-docs")
+      .createSignedUrl(data.path, 60 * 10);
+    if (error || !signed) throw new Error("Impossibile generare il link");
+    return { url: signed.signedUrl };
+  });

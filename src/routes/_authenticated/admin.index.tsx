@@ -9,15 +9,19 @@ import {
   adminDecidePayout,
   adminListPendingCompanies,
   adminDecideCompany,
+  adminListNotifications,
+  adminMarkNotificationRead,
+  adminListCompanyReviews,
   isAdmin,
 } from "@/lib/admin.functions";
+import { getCompanyDocUrl } from "@/lib/companies.functions";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Loader2, Users, Building2, Bike, Wallet, CreditCard, Shield, Check, X, Banknote,
+  Loader2, Users, Building2, Bike, Wallet, CreditCard, Shield, Check, X, Banknote, Bell, FileText, History, Download,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
@@ -59,11 +63,33 @@ function AdminDashboard() {
 
   const listPendingCompanies = useServerFn(adminListPendingCompanies);
   const decideCompanyFn = useServerFn(adminDecideCompany);
+  const listNotifications = useServerFn(adminListNotifications);
+  const markRead = useServerFn(adminMarkNotificationRead);
+  const listCompanyReviews = useServerFn(adminListCompanyReviews);
+  const getDocUrl = useServerFn(getCompanyDocUrl);
+  const [expandedCompanyId, setExpandedCompanyId] = useState<string | null>(null);
+
   const { data: companies } = useQuery({
     queryKey: ["admin-companies"],
     queryFn: () => listPendingCompanies({}),
     enabled: adminCheck?.admin === true,
+    refetchInterval: 30000,
   });
+
+  const { data: notifications } = useQuery({
+    queryKey: ["admin-notifications"],
+    queryFn: () => listNotifications({}),
+    enabled: adminCheck?.admin === true,
+    refetchInterval: 20000,
+  });
+
+  const { data: companyReviews } = useQuery({
+    queryKey: ["admin-company-reviews", expandedCompanyId],
+    queryFn: () => listCompanyReviews({ data: { company_id: expandedCompanyId! } }),
+    enabled: adminCheck?.admin === true && !!expandedCompanyId,
+  });
+
+  const unreadCount = notifications?.filter((n) => !n.read_at).length ?? 0;
 
   async function handleDecide(id: string, decision: "approved" | "rejected" | "paid") {
     try {
@@ -81,15 +107,33 @@ function AdminDashboard() {
   async function handleCompanyDecide(id: string, decision: "approved" | "rejected") {
     try {
       const reason = decision === "rejected"
-        ? (window.prompt("Motivo del rifiuto (opzionale):") ?? undefined)
+        ? (window.prompt("Motivo del rifiuto (verrà mostrato all'ente):") ?? undefined)
         : undefined;
       await decideCompanyFn({ data: { company_id: id, decision, reason } });
       toast.success(decision === "approved" ? "Ente approvato" : "Ente rifiutato");
-      await qc.invalidateQueries({ queryKey: ["admin-companies"] });
-      await qc.invalidateQueries({ queryKey: ["admin-stats"] });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["admin-companies"] }),
+        qc.invalidateQueries({ queryKey: ["admin-stats"] }),
+        qc.invalidateQueries({ queryKey: ["admin-notifications"] }),
+        qc.invalidateQueries({ queryKey: ["admin-company-reviews"] }),
+      ]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Errore");
     }
+  }
+
+  async function handleOpenDoc(path: string) {
+    try {
+      const { url } = await getDocUrl({ data: { path } });
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Impossibile aprire il documento");
+    }
+  }
+
+  async function markAllRead() {
+    await markRead({ data: { all: true } });
+    await qc.invalidateQueries({ queryKey: ["admin-notifications"] });
   }
 
   if (hasSession === false) {
@@ -130,9 +174,16 @@ function AdminDashboard() {
       <div className="mx-auto max-w-2xl px-5 py-6">
         <div className="flex items-center justify-between">
           <CiclaLogo size="md" />
-          <Badge variant="secondary" className="bg-destructive/10 text-destructive">
-            <Shield className="mr-1 size-3" /> Admin
-          </Badge>
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <Badge variant="secondary" className="bg-warning/15 text-warning">
+                <Bell className="mr-1 size-3" /> {unreadCount}
+              </Badge>
+            )}
+            <Badge variant="secondary" className="bg-destructive/10 text-destructive">
+              <Shield className="mr-1 size-3" /> Admin
+            </Badge>
+          </div>
         </div>
 
         <h1 className="mt-6 text-2xl font-bold tracking-tight">Pannello amministratore</h1>
@@ -145,6 +196,38 @@ function AdminDashboard() {
           <Stat icon={<CreditCard className="size-4" />} label="Abb. attivi" value={stats?.active_subscriptions} />
           <Stat icon={<Wallet className="size-4" />} label="Prelievi pending" value={stats?.pending_payouts} highlight />
         </div>
+
+        {/* Notifiche admin */}
+        {notifications && notifications.length > 0 && (
+          <Card className="mt-6 p-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Bell className="size-4" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider">Notifiche</span>
+                {unreadCount > 0 && <Badge variant="secondary" className="bg-warning/15 text-warning text-[10px]">{unreadCount} nuove</Badge>}
+              </div>
+              {unreadCount > 0 && (
+                <Button size="sm" variant="ghost" onClick={markAllRead}>Segna tutte lette</Button>
+              )}
+            </div>
+            <ul className="mt-3 space-y-2">
+              {notifications.slice(0, 8).map((n) => (
+                <li
+                  key={n.id}
+                  className={`rounded-md border border-border/50 p-2.5 text-[12px] ${!n.read_at ? "bg-warning/5" : ""}`}
+                  onClick={() => n.company_id && setExpandedCompanyId(n.company_id)}
+                  role="button"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{n.title}</span>
+                    <span className="text-[10px] text-muted-foreground">{new Date(n.created_at).toLocaleString("it-IT")}</span>
+                  </div>
+                  {n.body && <div className="mt-0.5 text-[11px] text-muted-foreground">{n.body}</div>}
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
 
         {/* Enti (aziende/comuni) da approvare */}
         <Card className="mt-6 p-5">
@@ -190,6 +273,56 @@ function AdminDashboard() {
                       <Button size="sm" variant="outline" className="flex-1" onClick={() => handleCompanyDecide(c.id, "rejected")}>
                         <X className="mr-1 size-3.5" /> Rifiuta
                       </Button>
+                    </div>
+                  )}
+                  <div className="mt-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-[11px]"
+                      onClick={() => setExpandedCompanyId(expandedCompanyId === c.id ? null : c.id)}
+                    >
+                      <History className="mr-1 size-3" />
+                      {expandedCompanyId === c.id ? "Nascondi storico" : "Vedi storico & documenti"}
+                    </Button>
+                  </div>
+                  {expandedCompanyId === c.id && (
+                    <div className="mt-2 space-y-2 rounded-md border border-border/50 bg-secondary/30 p-2">
+                      {!companyReviews || companyReviews.length === 0 ? (
+                        <p className="text-[11px] text-muted-foreground">Nessuna revisione registrata.</p>
+                      ) : (
+                        companyReviews.map((r) => {
+                          const docs = Array.isArray(r.documents) ? (r.documents as Array<{ name: string; path: string }>) : [];
+                          return (
+                            <div key={r.id} className="rounded border border-border/40 bg-background/60 p-2 text-[11px]">
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">{r.kind === "initial" ? "Iniziale" : "Nuova revisione"}</span>
+                                <Badge variant="secondary" className="text-[10px]">{r.status}</Badge>
+                              </div>
+                              <div className="text-[10px] text-muted-foreground">
+                                {new Date(r.submitted_at).toLocaleString("it-IT")}
+                              </div>
+                              {r.notes && <div className="mt-1">{r.notes}</div>}
+                              {r.reason && <div className="mt-1 text-destructive">Motivo: {r.reason}</div>}
+                              {docs.length > 0 && (
+                                <div className="mt-1.5 flex flex-wrap gap-1">
+                                  {docs.map((d) => (
+                                    <Button
+                                      key={d.path}
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-6 px-1.5 text-[10px]"
+                                      onClick={() => handleOpenDoc(d.path)}
+                                    >
+                                      <Download className="mr-1 size-3" /> {d.name}
+                                    </Button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
                   )}
                 </li>

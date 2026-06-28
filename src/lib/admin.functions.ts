@@ -233,12 +233,13 @@ export const adminDecideCompany = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const nowIso = new Date().toISOString();
     const patch =
       data.decision === "approved"
         ? {
             status: "approved" as const,
             rejection_reason: null,
-            approved_at: new Date().toISOString(),
+            approved_at: nowIso,
             approved_by: context.userId,
           }
         : {
@@ -247,5 +248,79 @@ export const adminDecideCompany = createServerFn({ method: "POST" })
           };
     const { error } = await supabaseAdmin.from("companies").update(patch).eq("id", data.company_id);
     if (error) throw new Error("Aggiornamento fallito");
+
+    // Aggiorna la review pending più recente con esito + motivo
+    const { data: latest } = await supabaseAdmin
+      .from("company_reviews")
+      .select("id")
+      .eq("company_id", data.company_id)
+      .eq("status", "pending")
+      .order("submitted_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (latest) {
+      await supabaseAdmin
+        .from("company_reviews")
+        .update({
+          status: data.decision,
+          reason: data.decision === "rejected" ? (data.reason ?? null) : null,
+          reviewed_by: context.userId,
+          reviewed_at: nowIso,
+        })
+        .eq("id", latest.id);
+    }
+
+    // Marca come lette le notifiche legate a questo ente
+    await supabaseAdmin
+      .from("admin_notifications")
+      .update({ read_at: nowIso })
+      .is("read_at", null)
+      .eq("company_id", data.company_id);
+
     return { ok: true };
+  });
+
+// ---------- Notifiche admin ----------
+
+export const adminListNotifications = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("admin_notifications")
+      .select("id, type, title, body, payload, company_id, read_at, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    return data ?? [];
+  });
+
+export const adminMarkNotificationRead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ id: z.string().uuid().optional(), all: z.boolean().optional() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const nowIso = new Date().toISOString();
+    let q = supabaseAdmin.from("admin_notifications").update({ read_at: nowIso }).is("read_at", null);
+    if (!data.all && data.id) q = q.eq("id", data.id);
+    const { error } = await q;
+    if (error) throw new Error("Aggiornamento fallito");
+    return { ok: true };
+  });
+
+export const adminListCompanyReviews = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ company_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await supabaseAdmin
+      .from("company_reviews")
+      .select("id, kind, status, reason, notes, documents, submitted_at, reviewed_at")
+      .eq("company_id", data.company_id)
+      .order("submitted_at", { ascending: false });
+    return rows ?? [];
   });
