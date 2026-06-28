@@ -115,12 +115,14 @@ export function GoogleMapView({
   follow = true,
   path,
   poiCategories = [],
+  refreshKey = 0,
 }: {
   position: [number, number] | null;
   mode: TripMode;
   follow?: boolean;
   path?: TripPathPoint[];
   poiCategories?: PoiCategory[];
+  refreshKey?: number;
 }) {
 
   const ref = useRef<HTMLDivElement | null>(null);
@@ -385,7 +387,7 @@ export function GoogleMapView({
       if (poiDebounceRef.current) window.clearTimeout(poiDebounceRef.current);
       poiAbortRef.current?.abort();
     };
-  }, [poiCategories.join(",")]);
+  }, [poiCategories.join(","), refreshKey]);
 
 
 
