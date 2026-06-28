@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { getMyCompany } from "@/lib/companies.functions";
+import { getMyCompany, updateTrackingWindow } from "@/lib/companies.functions";
 import { startCompanySubscription } from "@/lib/payments.functions";
+
 import { listMyEmployees } from "@/lib/admin.functions";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { Button } from "@/components/ui/button";
@@ -12,8 +13,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Loader2, Copy, Check, Users, CreditCard, Share2, LogOut, Building2, Landmark, Mail, Hash, Download, Bike,
+  Loader2, Copy, Check, Users, CreditCard, Share2, LogOut, Building2, Landmark, Mail, Hash, Download, Bike, Clock,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/_authenticated/azienda/")({
   ssr: false,
@@ -198,6 +200,16 @@ function CompanyDashboard() {
         {/* Dipendenti */}
         <EmployeesSection />
 
+        {/* Orario tracking */}
+        <TrackingWindowSection
+          initial={{
+            tracking_start: company.tracking_start ?? null,
+            tracking_end: company.tracking_end ?? null,
+            tracking_days: (company.tracking_days as number[] | null) ?? [1,2,3,4,5],
+          }}
+          isMuni={isMuni}
+        />
+
         {/* Dati azienda */}
         <Card className="mt-4 p-5">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -299,3 +311,119 @@ function EmployeesSection() {
     </Card>
   );
 }
+
+const DAY_LABELS = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
+
+function TrackingWindowSection({
+  initial,
+  isMuni,
+}: {
+  initial: { tracking_start: string | null; tracking_end: string | null; tracking_days: number[] };
+  isMuni: boolean;
+}) {
+  const qc = useQueryClient();
+  const update = useServerFn(updateTrackingWindow);
+  const [start, setStart] = useState(initial.tracking_start?.slice(0, 5) ?? "08:00");
+  const [end, setEnd] = useState(initial.tracking_end?.slice(0, 5) ?? "19:00");
+  const [days, setDays] = useState<number[]>(initial.tracking_days);
+  const [alwaysOn, setAlwaysOn] = useState(!initial.tracking_start && !initial.tracking_end);
+  const [saving, setSaving] = useState(false);
+
+  const toggleDay = (d: number) =>
+    setDays((p) => (p.includes(d) ? p.filter((x) => x !== d) : [...p, d].sort()));
+
+  async function save() {
+    setSaving(true);
+    try {
+      await update({
+        data: {
+          tracking_start: alwaysOn ? null : `${start}:00`,
+          tracking_end: alwaysOn ? null : `${end}:00`,
+          tracking_days: days,
+        },
+      });
+      toast.success("Orario tracking aggiornato");
+      qc.invalidateQueries({ queryKey: ["my-company"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Errore");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card className="mt-4 p-5">
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <Clock className="size-4" />
+        <span className="text-[11px] font-semibold uppercase tracking-wider">
+          Orario tracking {isMuni ? "cittadini" : "dipendenti"}
+        </span>
+      </div>
+      <p className="mt-2 text-[12px] leading-snug text-muted-foreground">
+        I viaggi vengono registrati e premiati <strong>solo in questa finestra oraria</strong> e nei
+        giorni selezionati (es. tragitto casa–lavoro). Fuori da qui il tracking è disattivato.
+      </p>
+
+      <label className="mt-3 flex items-center gap-2 text-[12px]">
+        <input
+          type="checkbox"
+          checked={alwaysOn}
+          onChange={(e) => setAlwaysOn(e.target.checked)}
+          className="size-4 accent-cicla"
+        />
+        Tracking sempre attivo (24/7)
+      </label>
+
+      {!alwaysOn && (
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <label className="text-[11px] font-medium text-muted-foreground">
+            Inizio
+            <input
+              type="time"
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+              className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums"
+            />
+          </label>
+          <label className="text-[11px] font-medium text-muted-foreground">
+            Fine
+            <input
+              type="time"
+              value={end}
+              onChange={(e) => setEnd(e.target.value)}
+              className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm tabular-nums"
+            />
+          </label>
+        </div>
+      )}
+
+      <div className="mt-3">
+        <div className="text-[11px] font-medium text-muted-foreground">Giorni attivi</div>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {DAY_LABELS.map((lbl, i) => {
+            const active = days.includes(i);
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => toggleDay(i)}
+                className={`h-8 min-w-10 rounded-full px-2.5 text-[11px] font-semibold transition-colors ${
+                  active
+                    ? "bg-cicla text-cicla-foreground"
+                    : "border border-border bg-background text-muted-foreground"
+                }`}
+              >
+                {lbl}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <Button onClick={save} disabled={saving} className="mt-4 w-full">
+        {saving ? <Loader2 className="size-4 animate-spin" /> : "Salva orario"}
+      </Button>
+    </Card>
+  );
+}
+

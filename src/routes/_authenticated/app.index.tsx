@@ -8,7 +8,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAirQuality } from "@/lib/air-quality.functions";
 import { endTrip } from "@/lib/trips.functions";
+import { getMyTrackingWindow } from "@/lib/companies.functions";
 import { POI_META, type PoiCategory } from "@/lib/pois";
+import { supabase } from "@/integrations/supabase/client";
+
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/")({
@@ -32,6 +35,23 @@ const MOVE_START_KMH = 2.5;       // movimento per avviare il viaggio
 const IDLE_STOP_MS = 3 * 60_000;  // 3 min fermi → stop automatico
 const MIN_DURATION_S = 30;        // viaggi < 30 s scartati
 
+function isWithinWindow(win: { tracking_start: string | null; tracking_end: string | null; tracking_days: number[] | null } | null | undefined): boolean {
+  if (!win) return true; // nessun ente collegato → sempre attivo
+  const now = new Date();
+  const day = now.getDay(); // 0=Dom..6=Sab
+  const days = win.tracking_days && win.tracking_days.length > 0 ? win.tracking_days : null;
+  if (days && !days.includes(day)) return false;
+  if (!win.tracking_start || !win.tracking_end) return true;
+  const [sh, sm] = win.tracking_start.split(":").map(Number);
+  const [eh, em] = win.tracking_end.split(":").map(Number);
+  const mins = now.getHours() * 60 + now.getMinutes();
+  const startMins = sh * 60 + sm;
+  const endMins = eh * 60 + em;
+  return endMins >= startMins
+    ? mins >= startMins && mins <= endMins
+    : mins >= startMins || mins <= endMins; // finestra a cavallo della mezzanotte
+}
+
 function MapHome() {
   const geo = useGeolocation(true);
   const [follow, setFollow] = useState(true);
@@ -39,8 +59,24 @@ function MapHome() {
   const qc = useQueryClient();
   const [poiCategories, setPoiCategories] = useState<PoiCategory[]>([]);
   const [layersOpen, setLayersOpen] = useState(false);
+  const [authed, setAuthed] = useState(false);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setAuthed(!!s));
+    return () => sub.subscription.unsubscribe();
+  }, []);
   const togglePoi = (cat: PoiCategory) =>
     setPoiCategories((prev) => (prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]));
+
+  const fetchWindow = useServerFn(getMyTrackingWindow);
+  const winQuery = useQuery({
+    queryKey: ["my-tracking-window"],
+    queryFn: () => fetchWindow({}),
+    enabled: authed,
+    staleTime: 5 * 60_000,
+  });
+  const inWindow = isWithinWindow(winQuery.data as any);
+
 
   const liveMode = trip.recording ? trip.dominantMode : geo.mode;
 
@@ -98,15 +134,15 @@ function MapHome() {
     const moving = geo.speedKmh >= MOVE_START_KMH;
     if (moving) lastMoveAtRef.current = Date.now();
 
-    // auto-start
-    if (!trip.recording && moving) {
+    // auto-start solo dentro la finestra oraria impostata dall'ente
+    if (!trip.recording && moving && inWindow) {
       trip.start();
       toast.message("Viaggio in corso · rilevato in automatico", { duration: 2200 });
       return;
     }
 
-    // auto-stop dopo inattività
-    if (trip.recording && Date.now() - lastMoveAtRef.current > IDLE_STOP_MS) {
+    // auto-stop: se esci dalla finestra o se sei fermo da troppo
+    if (trip.recording && (!inWindow || Date.now() - lastMoveAtRef.current > IDLE_STOP_MS)) {
       trip.stop();
       if (trip.path.length >= 2 && trip.durationS >= MIN_DURATION_S) {
         stopMutation.mutate();
@@ -115,7 +151,8 @@ function MapHome() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geo.position, geo.speedKmh, trip.recording]);
+  }, [geo.position, geo.speedKmh, trip.recording, inWindow]);
+
 
   const fmtDuration = (s: number) => {
     const m = Math.floor(s / 60);
@@ -184,6 +221,23 @@ function MapHome() {
             <span className="font-mono text-[10px]">{fmtDuration(trip.durationS)}</span>
             <span className="text-[10px] opacity-80">·</span>
             <span className="text-[10px] font-bold uppercase tracking-wider">Auto</span>
+          </div>
+        </div>
+      )}
+
+      {/* Badge fuori finestra oraria */}
+      {authed && !trip.recording && !inWindow && winQuery.data && (
+        <div
+          className="pointer-events-none absolute inset-x-0 z-[1000] flex justify-center"
+          style={{ top: "calc(env(safe-area-inset-top, 0px) + 50px)" }}
+        >
+          <div className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-muted/90 px-2.5 py-1 text-foreground/80 shadow-lg backdrop-blur">
+            <span className="text-[10px] font-semibold uppercase tracking-wider">Fuori orario tracking</span>
+            {winQuery.data.tracking_start && winQuery.data.tracking_end && (
+              <span className="text-[10px] tabular-nums text-muted-foreground">
+                {winQuery.data.tracking_start.slice(0,5)}–{winQuery.data.tracking_end.slice(0,5)}
+              </span>
+            )}
           </div>
         </div>
       )}
