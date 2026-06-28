@@ -179,6 +179,24 @@ export const endTrip = createServerFn({ method: "POST" })
         .eq("user_id", userId);
     }
 
+    // ── Gamification: streak + sfide attive ────────────────
+    try {
+      await supabaseAdmin.rpc("bump_streak", { _user_id: userId, _mode: data.mode });
+      const { data: prof } = await supabaseAdmin
+        .from("profiles")
+        .select("company_id")
+        .eq("id", userId)
+        .maybeSingle();
+      await supabaseAdmin.rpc("apply_trip_to_challenges", {
+        _user_id: userId,
+        _mode: data.mode,
+        _distance_km: distance,
+        _company_id: prof?.company_id ?? null,
+      });
+    } catch (e) {
+      console.error("[endTrip] gamification rpc failed", e);
+    }
+
     return {
       id: trip.id,
       distance_km: trip.distance_km,
@@ -189,6 +207,7 @@ export const endTrip = createServerFn({ method: "POST" })
       anomaly_reason: anomalyReason,
     };
   });
+
 
 /** Lista viaggi recenti dell'utente (per la sezione punti). */
 export const listMyTrips = createServerFn({ method: "GET" })
