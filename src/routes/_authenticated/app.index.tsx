@@ -348,11 +348,12 @@ function MapHome() {
         ) : (
           <Layers size={18} strokeWidth={2.4} />
         )}
-        {poiCategories.length > 0 && !layersOpen && !poiLoading && (
+        {poiCategories.length > 0 && !layersOpen && !poiLoading && !layerError && (
           <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-cicla text-[9px] font-bold text-cicla-foreground">
             {poiCategories.length}
           </span>
         )}
+        {layerError && !poiLoading && <ErrorDot title={layerError} />}
       </button>
 
       {/* Refresh layers FAB */}
