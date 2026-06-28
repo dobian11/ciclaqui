@@ -43,10 +43,10 @@ export const getGoogleWalletLink = createServerFn({ method: "POST" })
       genericType: "GENERIC_TYPE_UNSPECIFIED",
       cardTitle: { defaultValue: { language: "it-IT", value: "Cicla Qui" } },
       header: { defaultValue: { language: "it-IT", value: "Passaporto bici" } },
-      subheader: { defaultValue: { language: "it-IT", value: `${bike.brand} ${bike.model}` } },
+      subheader: { defaultValue: { language: "it-IT", value: `${bike.marca} ${bike.modello ?? ""}`.trim() } },
       textModulesData: [
         { id: "frame", header: "Telaio", body: bike.frame_number },
-        { id: "color", header: "Colore", body: bike.color ?? "—" },
+        { id: "color", header: "Colore", body: bike.colore ?? "—" },
       ],
       barcode: { type: "QR_CODE", value: bike.frame_number, alternateText: bike.frame_number },
     };
