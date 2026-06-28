@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { BottomNav } from "@/components/cicla/BottomNav";
+import { PermissionsOnboarding } from "@/components/cicla/PermissionsOnboarding";
 
 export const Route = createFileRoute("/_authenticated/app")({
   component: AppLayout,
@@ -15,6 +16,7 @@ function AppLayout() {
         <Outlet />
       </main>
       <BottomNav />
+      <PermissionsOnboarding />
     </div>
   );
 }
