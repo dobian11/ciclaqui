@@ -542,7 +542,11 @@ function BottomTrio({
             }`}
             aria-label="Qualità dell'aria"
           >
-            <Wind size={18} className="text-info" />
+            {aqLoading ? (
+              <Loader2 size={18} className="animate-spin text-info" />
+            ) : (
+              <Wind size={18} className="text-info" />
+            )}
             <span
               className={`mt-0.5 max-w-[3.5rem] truncate px-1 text-center font-display font-bold leading-none ${
                 aqiLabel.length > 3 ? "text-[10px]" : "text-[13px]"
