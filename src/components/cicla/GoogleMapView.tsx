@@ -119,6 +119,9 @@ export function GoogleMapView({
   onRefreshError,
   onRefreshComplete,
   onPoiLoadingChange,
+  onPoiSelect,
+  selectedPoiId,
+  routePath,
 }: {
   position: [number, number] | null;
   mode: TripMode;
@@ -129,7 +132,11 @@ export function GoogleMapView({
   onRefreshError?: (message: string) => void;
   onRefreshComplete?: (result: { ok: boolean; error?: string; count?: number }) => void;
   onPoiLoadingChange?: (loading: boolean) => void;
+  onPoiSelect?: (poi: Poi) => void;
+  selectedPoiId?: string | null;
+  routePath?: TripPathPoint[] | null;
 }) {
+
 
   const ref = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
