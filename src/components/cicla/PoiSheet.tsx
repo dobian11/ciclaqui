@@ -151,11 +151,19 @@ export function PoiSheet({
 export function NavigationBanner({
   distanceMeters,
   durationSec,
+  recalculating,
   onStop,
+  onRefresh,
+  onArrived,
+  onRecalc,
 }: {
   distanceMeters: number;
   durationSec: number;
+  recalculating?: boolean;
   onStop: () => void;
+  onRefresh?: () => void;
+  onArrived?: () => void;
+  onRecalc?: () => void;
 }) {
   const km = distanceMeters / 1000;
   const distLabel = km < 1 ? `${Math.round(distanceMeters)} m` : `${km.toFixed(km < 10 ? 2 : 1)} km`;
@@ -165,15 +173,54 @@ export function NavigationBanner({
       className="pointer-events-none absolute inset-x-0 z-[1050] flex justify-center px-3"
       style={{ top: "calc(env(safe-area-inset-top, 0px) + 50px)" }}
     >
-      <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-cicla/95 px-3 py-1.5 text-cicla-foreground shadow-cicla">
-        <Navigation size={12} strokeWidth={2.8} />
+      <div className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-cicla/95 px-2.5 py-1.5 text-cicla-foreground shadow-cicla">
+        {recalculating ? (
+          <Loader2 size={12} className="animate-spin" />
+        ) : (
+          <Navigation size={12} strokeWidth={2.8} />
+        )}
         <span className="font-display text-[11px] font-bold tabular-nums">{distLabel}</span>
-        <span className="text-[10px] opacity-80">·</span>
-        <span className="text-[10px] font-mono tabular-nums">{mins} min</span>
+        <span className="text-[10px] opacity-70">·</span>
+        <span className="text-[10px] font-mono tabular-nums">{mins}′</span>
+
+        {onRefresh && (
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="ml-1 grid size-6 place-items-center rounded-full bg-black/20 text-white active:scale-95"
+            aria-label="Aggiorna posizione GPS"
+            title="Aggiorna posizione"
+          >
+            <Locate size={11} strokeWidth={2.8} />
+          </button>
+        )}
+        {onRecalc && (
+          <button
+            type="button"
+            onClick={onRecalc}
+            disabled={recalculating}
+            className="grid size-6 place-items-center rounded-full bg-black/20 text-white active:scale-95 disabled:opacity-50"
+            aria-label="Ricalcola percorso"
+            title="Ricalcola"
+          >
+            <RotateCw size={11} strokeWidth={2.8} />
+          </button>
+        )}
+        {onArrived && (
+          <button
+            type="button"
+            onClick={onArrived}
+            className="grid size-6 place-items-center rounded-full bg-white text-cicla active:scale-95"
+            aria-label="Sono arrivato"
+            title="Sono arrivato"
+          >
+            <Flag size={11} strokeWidth={2.8} />
+          </button>
+        )}
         <button
           type="button"
           onClick={onStop}
-          className="ml-1 grid size-5 place-items-center rounded-full bg-black/25 text-white"
+          className="ml-0.5 grid size-5 place-items-center rounded-full bg-black/25 text-white"
           aria-label="Termina navigazione"
         >
           <X size={11} strokeWidth={3} />
