@@ -78,10 +78,11 @@ export function useGeolocation(enabled = true): GeoState {
           mode: nextMode,
           accuracy: pos.coords.accuracy ?? null,
           error: null,
+          loading: false,
         }));
       },
       (err) => {
-        setState((s) => ({ ...s, error: err.message }));
+        setState((s) => ({ ...s, error: err.message, loading: false }));
       },
       {
         enableHighAccuracy: true,
