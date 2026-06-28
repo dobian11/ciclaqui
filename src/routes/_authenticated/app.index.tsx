@@ -199,6 +199,69 @@ function MapHome() {
         <Locate size={20} strokeWidth={2.4} />
       </button>
 
+      {/* Layers FAB + panel */}
+      <button
+        type="button"
+        onClick={() => setLayersOpen((o) => !o)}
+        className={`absolute right-4 z-[1000] grid size-12 place-items-center rounded-full app-glass-strong shadow-xl transition-colors ${
+          poiCategories.length > 0 ? "text-cicla" : "text-muted-foreground"
+        }`}
+        style={{ bottom: "calc(340px + env(safe-area-inset-bottom, 0px))" }}
+        aria-label="Punti d'interesse"
+      >
+        {layersOpen ? <X size={20} strokeWidth={2.4} /> : <Layers size={20} strokeWidth={2.4} />}
+        {poiCategories.length > 0 && !layersOpen && (
+          <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-cicla text-[10px] font-bold text-cicla-foreground">
+            {poiCategories.length}
+          </span>
+        )}
+      </button>
+
+      {layersOpen && (
+        <div
+          className="absolute right-4 z-[1000] w-64 rounded-3xl app-glass-strong p-3 shadow-2xl"
+          style={{ bottom: "calc(400px + env(safe-area-inset-bottom, 0px))" }}
+        >
+          <div className="mb-2 px-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            Punti d'interesse
+          </div>
+          {(Object.keys(POI_META) as PoiCategory[]).map((cat) => {
+            const meta = POI_META[cat];
+            const active = poiCategories.includes(cat);
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => togglePoi(cat)}
+                className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors ${
+                  active ? "bg-cicla/15 text-foreground" : "hover:bg-white/5 text-foreground/80"
+                }`}
+              >
+                <span
+                  className="grid size-9 shrink-0 place-items-center rounded-full text-base"
+                  style={{ background: meta.color + "22", color: meta.color }}
+                >
+                  {meta.emoji}
+                </span>
+                <span className="flex-1 text-sm font-medium">{meta.label}</span>
+                <span
+                  className={`grid size-5 place-items-center rounded-full border-2 transition-colors ${
+                    active ? "border-cicla bg-cicla" : "border-muted-foreground/40"
+                  }`}
+                >
+                  {active && <span className="size-2 rounded-full bg-cicla-foreground" />}
+                </span>
+              </button>
+            );
+          })}
+          <div className="mt-2 px-2 text-[10px] text-muted-foreground">
+            Dati © OpenStreetMap. Zoom ≥ 13 per vedere i punti.
+          </div>
+        </div>
+      )}
+
+
+
       {/* Start / Stop trip FAB */}
       <button
         type="button"
