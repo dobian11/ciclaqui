@@ -4,6 +4,7 @@ import { GoogleMapView } from "@/components/cicla/GoogleMapView";
 import { PoiSheet, NavigationBanner } from "@/components/cicla/PoiSheet";
 import { SourceErrorChip, ErrorDot } from "@/components/cicla/SourceErrorChip";
 import { GpsPermissionSheet } from "@/components/cicla/GpsPermissionSheet";
+import { TripSummarySheet, type TripSummary } from "@/components/cicla/TripSummarySheet";
 import { useGeolocation } from "@/lib/use-geolocation";
 import { useTripRecorder } from "@/lib/use-trip-recorder";
 import { Wind, Flame, Locate, Loader2, Search, Layers, X, Radio, AlertTriangle, RefreshCw, RotateCw } from "lucide-react";
@@ -71,6 +72,7 @@ function MapHome() {
   const [refreshing, setRefreshing] = useState(false);
   const [poiLoading, setPoiLoading] = useState(false);
   const [layerError, setLayerError] = useState<string | null>(null);
+  const [lastSummary, setLastSummary] = useState<TripSummary | null>(null);
 
   // POI selection + in-app navigation
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
@@ -280,13 +282,25 @@ function MapHome() {
   const stopMutation = useMutation({
     mutationFn: async () => {
       const startedAt = new Date(trip.startedAt!).toISOString();
-      const endedAt = new Date().toISOString();
+      const endedAtMs = Date.now();
+      const endedAt = new Date(endedAtMs).toISOString();
       const path = trip.path.map((p) => ({ lat: p.lat, lng: p.lng, t: p.t, s: p.s }));
-      return endTripFn({
+      // snapshot del tragitto PRIMA della chiamata: serve per il riepilogo
+      // anche se reset() svuota lo stato
+      const snapshot = {
+        startedAt: trip.startedAt!,
+        endedAt: endedAtMs,
+        durationS: trip.durationS,
+        distanceKm: trip.distanceKm,
+        mode: trip.dominantMode,
+        path: trip.path.slice(),
+      };
+      const res = await endTripFn({
         data: { started_at: startedAt, ended_at: endedAt, mode: trip.dominantMode, path },
       });
+      return { res, snapshot };
     },
-    onSuccess: (res) => {
+    onSuccess: ({ res, snapshot }) => {
       if (res.anomaly) {
         toast.warning(`Viaggio sospetto: ${res.anomaly_reason ?? ""}`);
       } else if (res.points_earned > 0) {
@@ -294,6 +308,14 @@ function MapHome() {
       } else {
         toast.message(`Viaggio salvato: ${res.distance_km.toFixed(2)} km`);
       }
+      // mostra il riepilogo condivisibile (preferisci dati server)
+      setLastSummary({
+        ...snapshot,
+        distanceKm: res.distance_km ?? snapshot.distanceKm,
+        pointsEarned: res.points_earned ?? 0,
+        anomaly: !!res.anomaly,
+        anomalyReason: res.anomaly_reason ?? null,
+      });
       trip.reset();
       qc.invalidateQueries({ queryKey: ["wallet"] });
       qc.invalidateQueries({ queryKey: ["my-trips"] });
@@ -366,6 +388,10 @@ function MapHome() {
         hasPosition={!!geo.position}
         onRetry={() => geo.retry()}
       />
+
+      {lastSummary && (
+        <TripSummarySheet summary={lastSummary} onClose={() => setLastSummary(null)} />
+      )}
 
 
       {routeData && (
