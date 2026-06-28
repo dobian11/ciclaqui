@@ -118,6 +118,7 @@ export function GoogleMapView({
   refreshKey = 0,
   onRefreshError,
   onRefreshComplete,
+  onPoiLoadingChange,
 }: {
   position: [number, number] | null;
   mode: TripMode;
@@ -127,6 +128,7 @@ export function GoogleMapView({
   refreshKey?: number;
   onRefreshError?: (message: string) => void;
   onRefreshComplete?: () => void;
+  onPoiLoadingChange?: (loading: boolean) => void;
 }) {
 
   const ref = useRef<HTMLDivElement | null>(null);
