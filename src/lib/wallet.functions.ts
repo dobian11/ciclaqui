@@ -18,7 +18,7 @@ export const getGoogleWalletLink = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: bike, error } = await context.supabase
       .from("bikes")
-      .select("id, brand, model, color, frame_number, user_id")
+      .select("id, marca, modello, colore, frame_number, user_id")
       .eq("id", data.bike_id)
       .single();
     if (error || !bike) throw new Error("Bici non trovata");
