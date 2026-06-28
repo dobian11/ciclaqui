@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyCompany } from "@/lib/companies.functions";
+import { startCompanySubscription } from "@/lib/payments.functions";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -21,8 +22,11 @@ export const Route = createFileRoute("/_authenticated/azienda/")({
 function CompanyDashboard() {
   const navigate = useNavigate();
   const router = useRouter();
+  const qc = useQueryClient();
   const getMine = useServerFn(getMyCompany);
+  const startSub = useServerFn(startCompanySubscription);
   const [copied, setCopied] = useState(false);
+  const [subLoading, setSubLoading] = useState(false);
   const [hasSession, setHasSession] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -159,11 +163,29 @@ function CompanyDashboard() {
           <Card className="mt-4 border-warning/40 bg-warning/5 p-5">
             <div className="text-sm font-semibold">Attiva l'abbonamento</div>
             <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
-              Per pagare i punti accumulati dai tuoi dipendenti devi attivare un abbonamento
-              mensile via Stripe.
+              Per pagare i punti accumulati dai tuoi dipendenti serve un abbonamento
+              mensile. Stripe non è ancora collegato: puoi avviare un <strong>trial 14 giorni</strong>
+              {" "}per testare il pannello.
             </p>
-            <Button className="mt-3 w-full" disabled>
-              <CreditCard className="mr-2 size-4" /> Attiva (prossimamente)
+            <Button
+              className="mt-3 w-full"
+              disabled={subLoading}
+              onClick={async () => {
+                setSubLoading(true);
+                try {
+                  const res = await startSub({});
+                  toast.success(res.message);
+                  await qc.invalidateQueries({ queryKey: ["my-company"] });
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Errore");
+                } finally {
+                  setSubLoading(false);
+                }
+              }}
+            >
+              {subLoading ? <Loader2 className="size-4 animate-spin" /> : (
+                <><CreditCard className="mr-2 size-4" /> Avvia trial (stub)</>
+              )}
             </Button>
           </Card>
         )}

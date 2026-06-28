@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { listMyTrips } from "@/lib/trips.functions";
-import { Bike, Car, Coins, Footprints, TrendingUp, Wallet } from "lucide-react";
+import { listMyPayouts, requestPayout } from "@/lib/payments.functions";
+import { Bike, Car, Coins, Footprints, TrendingUp, Wallet, ArrowDownToLine, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/app/punti")({
   component: PuntiPage,
@@ -12,6 +15,7 @@ export const Route = createFileRoute("/_authenticated/app/punti")({
 
 function PuntiPage() {
   const [hasSession, setHasSession] = useState<boolean | null>(null);
+  const [open, setOpen] = useState(false);
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setHasSession(!!data.session));
   }, []);
@@ -39,6 +43,13 @@ function PuntiPage() {
     queryFn: () => fetchTrips(),
   });
 
+  const fetchPayouts = useServerFn(listMyPayouts);
+  const payoutsQ = useQuery({
+    queryKey: ["my-payouts"],
+    enabled: hasSession === true,
+    queryFn: () => fetchPayouts(),
+  });
+
   const balance = walletQ.data;
 
   return (
@@ -57,8 +68,20 @@ function PuntiPage() {
             {balance?.points_balance ?? 0}
           </div>
           <div className="mt-1 text-sm opacity-90">
-            equivalente: € {(balance?.eur_balance ?? 0).toFixed(2)}
+            equivalente: € {Number(balance?.eur_balance ?? 0).toFixed(2)}
           </div>
+          <Button
+            onClick={() => setOpen(true)}
+            disabled={!hasSession || (balance?.points_balance ?? 0) < 50}
+            className="mt-4 w-full bg-white text-cicla hover:bg-white/90"
+          >
+            <ArrowDownToLine size={16} className="mr-2" /> Preleva
+          </Button>
+          {hasSession && (balance?.points_balance ?? 0) < 50 && (
+            <div className="mt-2 text-[11px] opacity-80">
+              Servono almeno 50 punti (0,50 €) per prelevare.
+            </div>
+          )}
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
@@ -76,11 +99,42 @@ function PuntiPage() {
               <Wallet size={12} /> Km percorsi
             </div>
             <div className="mt-1 font-display text-2xl font-bold tabular-nums">
-              {(balance?.lifetime_km ?? 0).toFixed(1)}
+              {Number(balance?.lifetime_km ?? 0).toFixed(1)}
             </div>
             <div className="text-xs text-muted-foreground">totali</div>
           </div>
         </div>
+
+        {payoutsQ.data && payoutsQ.data.length > 0 && (
+          <>
+            <h2 className="mt-8 text-sm font-bold uppercase tracking-widest text-muted-foreground">
+              Prelievi
+            </h2>
+            <div className="mt-3 space-y-2">
+              {payoutsQ.data.map((p) => (
+                <div key={p.id} className="flex items-center gap-3 rounded-2xl border bg-card p-3">
+                  <div className="grid size-10 place-items-center rounded-xl bg-muted text-cicla">
+                    <ArrowDownToLine size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-display text-sm font-bold tabular-nums">
+                      € {Number(p.amount_eur).toFixed(2)}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {new Date(p.created_at).toLocaleString("it-IT", {
+                        day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+                      })}
+                      {" · "}{p.iban_snapshot?.slice(0, 4)}…{p.iban_snapshot?.slice(-4)}
+                    </div>
+                  </div>
+                  <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] uppercase tracking-wider">
+                    {p.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
         <h2 className="mt-8 text-sm font-bold uppercase tracking-widest text-muted-foreground">
           Ultimi viaggi
@@ -106,40 +160,117 @@ function PuntiPage() {
             const color =
               t.mode === "bike" ? "text-cicla" : t.mode === "foot" ? "text-warning" : "text-destructive";
             return (
-              <div
-                key={t.id}
-                className="flex items-center gap-3 rounded-2xl border bg-card p-3"
-              >
+              <div key={t.id} className="flex items-center gap-3 rounded-2xl border bg-card p-3">
                 <div className={`grid size-10 place-items-center rounded-xl bg-muted ${color}`}>
                   <Icon size={18} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-display text-sm font-bold tabular-nums">
-                    {t.distance_km.toFixed(2)} km
+                    {Number(t.distance_km).toFixed(2)} km
                   </div>
                   <div className="text-[11px] text-muted-foreground">
                     {new Date(t.started_at).toLocaleString("it-IT", {
-                      day: "2-digit",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
+                      day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
                     })}
                     {t.anomaly_flag ? " · sospetto" : ""}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-display text-base font-bold text-cicla">
-                    +{t.points_earned}
-                  </div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    punti
-                  </div>
+                  <div className="font-display text-base font-bold text-cicla">+{t.points_earned}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">punti</div>
                 </div>
               </div>
             );
           })}
         </div>
       </div>
+
+      {open && (
+        <PayoutModal
+          max={balance?.points_balance ?? 0}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function PayoutModal({ max, onClose }: { max: number; onClose: () => void }) {
+  const qc = useQueryClient();
+  const submit = useServerFn(requestPayout);
+  const [points, setPoints] = useState(Math.min(max, 100));
+  const [iban, setIban] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await submit({ data: { points, iban } });
+      toast.success(`Richiesta inviata: € ${res.amount_eur.toFixed(2)}`);
+      await qc.invalidateQueries({ queryKey: ["wallet"] });
+      await qc.invalidateQueries({ queryKey: ["my-payouts"] });
+      onClose();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Errore");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-end bg-black/60 backdrop-blur-sm sm:place-items-center" onClick={onClose}>
+      <form
+        onSubmit={handleSubmit}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-t-3xl border bg-card p-6 shadow-2xl sm:rounded-3xl"
+      >
+        <h3 className="font-display text-xl font-bold">Preleva punti</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Conversione 10 pt = 0,10 €. Disponibili: <strong>{max} punti</strong>.
+        </p>
+        <p className="mt-2 rounded-xl border border-warning/40 bg-warning/5 p-2.5 text-[11px] text-warning-foreground">
+          Stripe Connect in arrivo. Per ora la richiesta resta <strong>pending</strong>
+          {" "}e verrà processata manualmente.
+        </p>
+
+        <label className="mt-4 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Punti da prelevare
+        </label>
+        <input
+          type="number"
+          min={50}
+          max={max}
+          step={10}
+          value={points}
+          onChange={(e) => setPoints(Number(e.target.value))}
+          className="input-base mt-1.5"
+        />
+        <div className="mt-1 text-xs text-muted-foreground">
+          = € {(points * 0.01).toFixed(2)}
+        </div>
+
+        <label className="mt-4 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          IBAN
+        </label>
+        <input
+          type="text"
+          value={iban}
+          onChange={(e) => setIban(e.target.value.toUpperCase())}
+          placeholder="IT60X0542811101000000123456"
+          className="input-base mt-1.5 font-mono"
+          required
+        />
+
+        <div className="mt-6 flex gap-2">
+          <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+            Annulla
+          </Button>
+          <Button type="submit" disabled={loading || points < 50 || points > max} className="flex-1">
+            {loading ? <Loader2 className="size-4 animate-spin" /> : "Conferma"}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

@@ -248,6 +248,7 @@ export type Database = {
           admin_notes: string | null
           amount_eur: number
           created_at: string
+          iban_snapshot: string | null
           id: string
           points_redeemed: number
           reviewed_at: string | null
@@ -261,6 +262,7 @@ export type Database = {
           admin_notes?: string | null
           amount_eur: number
           created_at?: string
+          iban_snapshot?: string | null
           id?: string
           points_redeemed: number
           reviewed_at?: string | null
@@ -274,6 +276,7 @@ export type Database = {
           admin_notes?: string | null
           amount_eur?: number
           created_at?: string
+          iban_snapshot?: string | null
           id?: string
           points_redeemed?: number
           reviewed_at?: string | null
@@ -332,7 +335,10 @@ export type Database = {
           company_id: string | null
           created_at: string
           full_name: string | null
+          iban: string | null
           id: string
+          stripe_account_id: string | null
+          stripe_account_status: string | null
           updated_at: string
           weight_kg: number | null
         }
@@ -341,7 +347,10 @@ export type Database = {
           company_id?: string | null
           created_at?: string
           full_name?: string | null
+          iban?: string | null
           id: string
+          stripe_account_id?: string | null
+          stripe_account_status?: string | null
           updated_at?: string
           weight_kg?: number | null
         }
@@ -350,7 +359,10 @@ export type Database = {
           company_id?: string | null
           created_at?: string
           full_name?: string | null
+          iban?: string | null
           id?: string
+          stripe_account_id?: string | null
+          stripe_account_status?: string | null
           updated_at?: string
           weight_kg?: number | null
         }
