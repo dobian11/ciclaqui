@@ -64,7 +64,7 @@ function MapHome() {
   const refreshLayers = () => {
     setRefreshing(true);
     setRefreshKey((k) => k + 1);
-    aqQueryRef.current?.refetch?.();
+    qc.invalidateQueries({ queryKey: ["aq"] });
     window.setTimeout(() => setRefreshing(false), 900);
     toast.message("Layer aggiornati");
   };
@@ -171,7 +171,7 @@ function MapHome() {
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-background">
-      <GoogleMapView position={geo.position} mode={liveMode} follow={follow} path={polylinePath} poiCategories={poiCategories} />
+      <GoogleMapView position={geo.position} mode={liveMode} follow={follow} path={polylinePath} poiCategories={poiCategories} refreshKey={refreshKey} />
 
       {/* Top bar — pill compatte */}
       <div
