@@ -225,6 +225,23 @@ function MapHome() {
         </div>
       )}
 
+      {/* Badge fuori finestra oraria */}
+      {authed && !trip.recording && !inWindow && winQuery.data && (
+        <div
+          className="pointer-events-none absolute inset-x-0 z-[1000] flex justify-center"
+          style={{ top: "calc(env(safe-area-inset-top, 0px) + 50px)" }}
+        >
+          <div className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-muted/90 px-2.5 py-1 text-foreground/80 shadow-lg backdrop-blur">
+            <span className="text-[10px] font-semibold uppercase tracking-wider">Fuori orario tracking</span>
+            {winQuery.data.tracking_start && winQuery.data.tracking_end && (
+              <span className="text-[10px] tabular-nums text-muted-foreground">
+                {winQuery.data.tracking_start.slice(0,5)}–{winQuery.data.tracking_end.slice(0,5)}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Locate FAB */}
       <button
         type="button"
