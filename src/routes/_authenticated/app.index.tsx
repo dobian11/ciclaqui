@@ -123,8 +123,6 @@ function MapHome() {
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setAuthed(!!s));
     return () => sub.subscription.unsubscribe();
   }, []);
-  const togglePoi = (cat: PoiCategory) =>
-    setPoiCategories((prev) => (prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]));
 
   const fetchWindow = useServerFn(getMyTrackingWindow);
   const winQuery = useQuery({
