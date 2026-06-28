@@ -117,6 +117,7 @@ export function GoogleMapView({
   poiCategories = [],
   refreshKey = 0,
   onRefreshError,
+  onRefreshComplete,
 }: {
   position: [number, number] | null;
   mode: TripMode;
@@ -125,6 +126,7 @@ export function GoogleMapView({
   poiCategories?: PoiCategory[];
   refreshKey?: number;
   onRefreshError?: (message: string) => void;
+  onRefreshComplete?: () => void;
 }) {
 
   const ref = useRef<HTMLDivElement | null>(null);
