@@ -8,6 +8,7 @@ export interface GeoState {
   accuracy: number | null;
   error: string | null;
   loading: boolean;
+  retry: () => void;
 }
 
 /**
@@ -24,6 +25,7 @@ const BIKE_KMH = 35;
 const MODE_STABILITY = 3;
 
 export function useGeolocation(enabled = true): GeoState {
+  const [retryTick, setRetryTick] = useState(0);
   const [state, setState] = useState<GeoState>({
     position: null,
     speedKmh: 0,
@@ -31,6 +33,7 @@ export function useGeolocation(enabled = true): GeoState {
     accuracy: null,
     error: null,
     loading: true,
+    retry: () => setRetryTick((t) => t + 1),
   });
 
   const recentSpeeds = useRef<number[]>([]);
@@ -40,6 +43,7 @@ export function useGeolocation(enabled = true): GeoState {
     if (!enabled || typeof navigator === "undefined" || !navigator.geolocation) {
       return;
     }
+    setState((s) => ({ ...s, error: null, loading: true }));
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const speedMs = pos.coords.speed; // m/s, can be null
@@ -94,7 +98,7 @@ export function useGeolocation(enabled = true): GeoState {
     // We intentionally read state.mode inside the callback via closure-safe
     // setState updater, so we don't list it as a dep (would re-subscribe per fix).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled]);
+  }, [enabled, retryTick]);
 
   return state;
 }

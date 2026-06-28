@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { GoogleMapView } from "@/components/cicla/GoogleMapView";
+import { SourceErrorChip, ErrorDot } from "@/components/cicla/SourceErrorChip";
 import { useGeolocation } from "@/lib/use-geolocation";
 import { useTripRecorder } from "@/lib/use-trip-recorder";
-import { Wind, Flame, Locate, Loader2, Search, Layers, X, Radio, AlertTriangle, RefreshCw } from "lucide-react";
+import { Wind, Flame, Locate, Loader2, Search, Layers, X, Radio, AlertTriangle, RefreshCw, RotateCw } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAirQuality } from "@/lib/air-quality.functions";
@@ -243,7 +244,12 @@ function MapHome() {
               </span>
             </>
           ) : geo.error ? (
-            <span className="text-[11px] text-destructive">No GPS</span>
+            <SourceErrorChip
+              compact
+              label="No GPS"
+              detail={geo.error}
+              onRetry={() => geo.retry?.()}
+            />
           ) : (
             <>
               <Loader2 size={10} className="animate-spin text-muted-foreground" />
@@ -289,16 +295,26 @@ function MapHome() {
         </div>
       )}
 
-      {/* Banner errore refresh layer */}
-      {layerError && (
+      {/* Errori sorgenti dati (POI + Qualità Aria) */}
+      {(layerError || aqQuery.isError) && (
         <div
-          className="pointer-events-none absolute inset-x-0 z-[1000] flex justify-center"
+          className="pointer-events-none absolute inset-x-0 z-[1000] flex flex-col items-center gap-1 px-3"
           style={{ top: "calc(env(safe-area-inset-top, 0px) + 50px)" }}
         >
-          <div className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-destructive/90 px-3 py-1.5 text-destructive-foreground shadow-lg backdrop-blur">
-            <AlertTriangle size={12} />
-            <span className="text-[11px] font-semibold">{layerError}</span>
-          </div>
+          {layerError && (
+            <SourceErrorChip
+              label="Layer mappa"
+              detail={layerError}
+              onRetry={refreshLayers}
+            />
+          )}
+          {aqQuery.isError && (
+            <SourceErrorChip
+              label="Qualità aria"
+              detail="dati non disponibili"
+              onRetry={() => aqQuery.refetch()}
+            />
+          )}
         </div>
       )}
 
@@ -332,11 +348,12 @@ function MapHome() {
         ) : (
           <Layers size={18} strokeWidth={2.4} />
         )}
-        {poiCategories.length > 0 && !layersOpen && !poiLoading && (
+        {poiCategories.length > 0 && !layersOpen && !poiLoading && !layerError && (
           <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-cicla text-[9px] font-bold text-cicla-foreground">
             {poiCategories.length}
           </span>
         )}
+        {layerError && !poiLoading && <ErrorDot title={layerError} />}
       </button>
 
       {/* Refresh layers FAB */}
@@ -401,6 +418,8 @@ function MapHome() {
         mode={liveMode}
         aq={aqQuery.data}
         aqLoading={aqQuery.isFetching}
+        aqError={aqQuery.isError}
+        aqRetry={() => aqQuery.refetch()}
         livePoints={
           trip.recording
             ? Math.floor(
@@ -419,12 +438,16 @@ function BottomTrio({
   mode,
   aq,
   aqLoading,
+  aqError,
+  aqRetry,
   livePoints,
 }: {
   caloriesPerMin: number;
   mode: "foot" | "bike" | "car";
   aq: any;
   aqLoading: boolean;
+  aqError: boolean;
+  aqRetry: () => void;
   livePoints: number | null;
 }) {
   const [expanded, setExpanded] = useState<null | "kcal" | "aq">(null);
@@ -473,6 +496,25 @@ function BottomTrio({
                 <p className="pt-1 text-[10px] leading-relaxed text-muted-foreground">
                   Stima basata su peso medio 70 kg. In auto non bruci calorie attive.
                 </p>
+              </div>
+            ) : aqError ? (
+              <div className="space-y-3 text-[12px]">
+                <div className="flex items-start gap-2 rounded-2xl bg-destructive/15 p-3 ring-1 ring-destructive/40">
+                  <AlertTriangle size={14} className="mt-0.5 shrink-0 text-destructive" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-destructive">Dati non disponibili</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                      Non riesco a contattare il servizio qualità aria. Verifica la connessione e riprova.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => aqRetry()}
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-cicla px-3 py-2 text-[12px] font-bold uppercase tracking-wider text-cicla-foreground transition-transform active:scale-95"
+                >
+                  <RotateCw size={12} strokeWidth={2.8} /> Riprova
+                </button>
               </div>
             ) : (
               <div className="space-y-2 text-[12px]">
@@ -538,25 +580,27 @@ function BottomTrio({
             type="button"
             onClick={() => setExpanded((e) => (e === "aq" ? null : "aq"))}
             className={`group relative flex size-16 flex-col items-center justify-center rounded-full app-glass-strong shadow-xl transition-transform active:scale-95 ${
-              expanded === "aq" ? "ring-2 ring-info" : ""
+              expanded === "aq" ? "ring-2 ring-info" : aqError ? "ring-2 ring-destructive/60" : ""
             }`}
             aria-label="Qualità dell'aria"
           >
             {aqLoading ? (
               <Loader2 size={18} className="animate-spin text-info" />
+            ) : aqError ? (
+              <AlertTriangle size={18} className="text-destructive" />
             ) : (
               <Wind size={18} className="text-info" />
             )}
             <span
               className={`mt-0.5 max-w-[3.5rem] truncate px-1 text-center font-display font-bold leading-none ${
-                aqiLabel.length > 3 ? "text-[10px]" : "text-[13px]"
+                aqError ? "text-[10px] text-destructive" : aqiLabel.length > 3 ? "text-[10px]" : "text-[13px]"
               }`}
             >
-              {aqLoading ? "…" : aqiLabel}
+              {aqLoading ? "…" : aqError ? "Errore" : aqiLabel}
             </span>
-            <span
-              className={`absolute right-2 top-2 inline-block size-1.5 rounded-full ${aqiDot}`}
-            />
+            {!aqError && (
+              <span className={`absolute right-2 top-2 inline-block size-1.5 rounded-full ${aqiDot}`} />
+            )}
             <span className="absolute -bottom-4 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
               Qa
             </span>
