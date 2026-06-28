@@ -229,8 +229,13 @@ export function GoogleMapView({
         zIndex: 10,
         optimized: false,
       });
+      lastIconUrlRef.current = icon.url;
     } else {
-      markerRef.current.setIcon(icon);
+      // setIcon è costoso: chiamalo solo se l'icona è effettivamente cambiata
+      if (icon.url !== lastIconUrlRef.current) {
+        markerRef.current.setIcon(icon);
+        lastIconUrlRef.current = icon.url;
+      }
       // Anima la posizione dal punto precedente al nuovo per un movimento fluido
       if (animRef.current) cancelAnimationFrame(animRef.current);
       const start = markerRef.current.getPosition();
