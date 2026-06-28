@@ -203,6 +203,7 @@ function MapHome() {
           setRefreshing(false);
         }}
         onRefreshComplete={onRefreshComplete}
+        onPoiLoadingChange={setPoiLoading}
       />
 
       {/* Top bar — pill compatte */}
