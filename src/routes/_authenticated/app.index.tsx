@@ -361,9 +361,16 @@ function MapHome() {
 
       {routeData && (
         <NavigationBanner
-          distanceMeters={routeData.distanceMeters}
-          durationSec={routeData.durationSec}
+          distanceMeters={liveRouteInfo?.distanceMeters ?? routeData.distanceMeters}
+          durationSec={liveRouteInfo?.durationSec ?? routeData.durationSec}
+          recalculating={routeMutation.isPending}
           onStop={() => setRouteData(null)}
+          onRefresh={() => geo.retry()}
+          onArrived={() => {
+            toast.success("🎯 Arrivato a destinazione");
+            setRouteData(null);
+          }}
+          onRecalc={() => routeMutation.mutate(routeData.destination)}
         />
       )}
 
