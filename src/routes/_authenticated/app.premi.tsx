@@ -32,8 +32,12 @@ function PremiPage() {
     (async () => {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      const { data: w } = await supabase.from("wallets").select("points_balance").eq("user_id", user!.id).maybeSingle();
-      setBalance(w?.points_balance ?? 0);
+      if (user) {
+        const { data: w } = await supabase.from("wallets").select("points_balance").eq("user_id", user.id).maybeSingle();
+        setBalance(w?.points_balance ?? 0);
+      } else {
+        setBalance(0);
+      }
       const cat = tab === "cash" ? "cash" : tab === "donation" ? "donation" : "voucher";
       const scope = tab === "local" ? "local" : "national";
       const { data } = await supabase.from("rewards_catalog").select("*").eq("active", true).eq("category", cat).eq("scope", scope).order("points_cost");
@@ -45,6 +49,7 @@ function PremiPage() {
   async function redeem(r: Reward) {
     if (balance < r.points_cost) return toast.error("Punti insufficienti");
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return toast.error("Devi accedere per riscattare un premio");
     const code = `CQ-${Math.random().toString(36).slice(2, 8).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
     const { error } = await supabase.from("reward_redemptions").insert({
       user_id: user!.id,
