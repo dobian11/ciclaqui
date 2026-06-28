@@ -160,16 +160,29 @@ function CompanyDashboard() {
         {/* Stato approvazione */}
         {!isApproved && (
           <Card className={`mt-6 p-5 ${isRejected ? "border-destructive/40 bg-destructive/5" : "border-warning/40 bg-warning/5"}`}>
-            <div className="text-sm font-semibold">
-              {isRejected ? "Registrazione rifiutata" : "In attesa di approvazione admin"}
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-sm font-semibold">
+                {isRejected ? "Registrazione rifiutata" : "In attesa di approvazione admin"}
+              </div>
+              <Badge variant="secondary" className={isRejected ? "bg-destructive/15 text-destructive" : "bg-warning/15 text-warning"}>
+                {isRejected ? "Rifiutato" : "In revisione"}
+              </Badge>
             </div>
-            <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
-              {isRejected ? (
-                <>L'admin ha rifiutato la richiesta: <em>{(company as { rejection_reason?: string }).rejection_reason ?? "nessun motivo specificato"}</em>. Contatta il supporto per maggiori informazioni.</>
-              ) : (
-                <>Abbiamo ricevuto i tuoi dati ({isMuni ? "Comune" : "azienda"}, P.IVA/CF, email). Un amministratore li verifica entro 24–48h. Una volta approvato potrai attivare l'abbonamento e generare il codice da distribuire ai tuoi {isMuni ? "cittadini" : "dipendenti"}.</>
-              )}
-            </p>
+            {isRejected ? (
+              <div className="mt-3 rounded-md border border-destructive/30 bg-destructive/10 p-3">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-destructive">Motivo del rifiuto</div>
+                <p className="mt-1 text-[12px] leading-snug">
+                  {(company as { rejection_reason?: string | null }).rejection_reason?.trim() || "Nessun motivo specificato dall'admin."}
+                </p>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Aggiorna i tuoi dati ({isMuni ? "Comune" : "azienda"}, P.IVA/CF, email, IBAN) e contatta il supporto per richiedere una nuova revisione.
+                </p>
+              </div>
+            ) : (
+              <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
+                Abbiamo ricevuto i tuoi dati ({isMuni ? "Comune" : "azienda"}, P.IVA/CF, email). Un amministratore li verifica entro 24–48h. Una volta approvato potrai attivare l'abbonamento e generare il codice da distribuire ai tuoi {isMuni ? "cittadini" : "dipendenti"}.
+              </p>
+            )}
           </Card>
         )}
 
