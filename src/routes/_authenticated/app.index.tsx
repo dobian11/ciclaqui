@@ -282,11 +282,22 @@ function MapHome() {
         )}
       </button>
 
+      {/* Refresh layers FAB */}
+      <button
+        type="button"
+        onClick={refreshLayers}
+        className="absolute right-4 z-[1000] grid size-11 place-items-center rounded-full app-glass-strong text-muted-foreground shadow-xl transition-colors hover:text-cicla"
+        style={{ bottom: "calc(330px + env(safe-area-inset-bottom, 0px))" }}
+        aria-label="Aggiorna layer mappa"
+      >
+        <RefreshCw size={18} strokeWidth={2.4} className={refreshing ? "animate-spin text-cicla" : ""} />
+      </button>
+
       {/* Layers panel compatto */}
       {layersOpen && (
         <div
           className="absolute right-4 z-[1000] w-52 rounded-2xl app-glass-strong p-1.5 shadow-2xl"
-          style={{ bottom: "calc(330px + env(safe-area-inset-bottom, 0px))" }}
+          style={{ bottom: "calc(385px + env(safe-area-inset-bottom, 0px))" }}
         >
           <div className="px-2 pb-1 pt-1 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
             Punti d'interesse
