@@ -102,7 +102,7 @@ function MapHome() {
   };
   const onRefreshComplete = async (poiResult?: { ok: boolean; error?: string }) => {
     if (!isRefreshingRef.current) return;
-    const aqResult = await (aqPromiseRef.current ?? Promise.resolve({ ok: true } as const));
+    const aqResult: { ok: boolean; error?: string } = await (aqPromiseRef.current ?? Promise.resolve({ ok: true }));
     const totalMs = Math.round(performance.now() - refreshStartRef.current);
     const allOk = (poiResult?.ok ?? true) && aqResult.ok;
     void logTelemetry({
