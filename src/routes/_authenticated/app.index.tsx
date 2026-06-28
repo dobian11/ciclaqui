@@ -134,15 +134,15 @@ function MapHome() {
     const moving = geo.speedKmh >= MOVE_START_KMH;
     if (moving) lastMoveAtRef.current = Date.now();
 
-    // auto-start
-    if (!trip.recording && moving) {
+    // auto-start solo dentro la finestra oraria impostata dall'ente
+    if (!trip.recording && moving && inWindow) {
       trip.start();
       toast.message("Viaggio in corso · rilevato in automatico", { duration: 2200 });
       return;
     }
 
-    // auto-stop dopo inattività
-    if (trip.recording && Date.now() - lastMoveAtRef.current > IDLE_STOP_MS) {
+    // auto-stop: se esci dalla finestra o se sei fermo da troppo
+    if (trip.recording && (!inWindow || Date.now() - lastMoveAtRef.current > IDLE_STOP_MS)) {
       trip.stop();
       if (trip.path.length >= 2 && trip.durationS >= MIN_DURATION_S) {
         stopMutation.mutate();
@@ -151,7 +151,8 @@ function MapHome() {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geo.position, geo.speedKmh, trip.recording]);
+  }, [geo.position, geo.speedKmh, trip.recording, inWindow]);
+
 
   const fmtDuration = (s: number) => {
     const m = Math.floor(s / 60);
