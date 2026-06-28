@@ -437,7 +437,7 @@ function BottomTrio({
 
       <div
         className="pointer-events-none absolute inset-x-0 z-[1000] px-6"
-        style={{ bottom: "calc(86px + env(safe-area-inset-bottom, 0px))" }}
+        style={{ bottom: "calc(64px + 10mm + env(safe-area-inset-bottom, 0px))" }}
       >
         <div className="pointer-events-auto mx-auto flex max-w-md items-center justify-between">
           {/* Calorie */}
