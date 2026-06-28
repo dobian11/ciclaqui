@@ -23,16 +23,23 @@ function CompanyDashboard() {
   const router = useRouter();
   const getMine = useServerFn(getMyCompany);
   const [copied, setCopied] = useState(false);
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setHasSession(!!data.session));
+  }, []);
 
   const { data: company, isLoading } = useQuery({
     queryKey: ["my-company"],
     queryFn: () => getMine({}),
+    enabled: hasSession === true,
+    retry: false,
   });
 
-  // Se non ha azienda → onboarding
+  // Se non ha azienda → onboarding (solo se loggato)
   useEffect(() => {
-    if (!isLoading && !company) navigate({ to: "/azienda/onboarding" as never });
-  }, [company, isLoading, navigate]);
+    if (hasSession && !isLoading && !company) navigate({ to: "/azienda/onboarding" as never });
+  }, [company, isLoading, hasSession, navigate]);
 
   async function copyCode() {
     if (!company) return;
@@ -62,6 +69,17 @@ function CompanyDashboard() {
     await supabase.auth.signOut();
     await router.invalidate();
     navigate({ to: "/" as never });
+  }
+
+  if (hasSession === false) {
+    return (
+      <div className="grid min-h-screen place-items-center p-6 text-center">
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">Anteprima pannello azienda — accedi per vedere i tuoi dati.</p>
+          <Button onClick={() => navigate({ to: "/azienda/auth" as never })}>Accedi come azienda</Button>
+        </div>
+      </div>
+    );
   }
 
   if (isLoading || !company) {
