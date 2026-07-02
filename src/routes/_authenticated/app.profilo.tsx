@@ -97,18 +97,16 @@ function ProfiloPage() {
     toast.message("Foto pronta — premi Salva per confermare");
   }
 
-  function validIban(v: string) {
-    if (!v) return true;
-    return /^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/i.test(v.replace(/\s+/g, ""));
-  }
+  const ibanCheck = validateIban(iban);
+  const ibanDirty = iban.trim().length > 0;
 
   async function saveProfile() {
     if (!profileQ.data?.userId) return;
-    const ibanClean = iban.replace(/\s+/g, "").toUpperCase();
-    if (ibanClean && !validIban(ibanClean)) {
-      toast.error("IBAN non valido");
+    if (ibanDirty && !ibanCheck.ok) {
+      toast.error(`IBAN: ${ibanCheck.reason}`);
       return;
     }
+    const ibanClean = ibanCheck.ok ? ibanCheck.iban : null;
     setSaving(true);
     try {
       const { error } = await supabase
@@ -116,7 +114,7 @@ function ProfiloPage() {
         .update({
           full_name: fullName || null,
           weight_kg: weight ? Number(weight) : null,
-          iban: ibanClean || null,
+          iban: ibanClean,
           avatar_url: avatar,
         })
         .eq("id", profileQ.data.userId);
@@ -129,6 +127,7 @@ function ProfiloPage() {
       setSaving(false);
     }
   }
+
 
   async function changePassword() {
     if (pwd.length < 8) {
