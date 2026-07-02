@@ -8,6 +8,8 @@ import { listMyPayouts, requestPayout } from "@/lib/payments.functions";
 import { Bike, Car, Coins, Footprints, TrendingUp, Wallet, ArrowDownToLine, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { validateIban, formatIban } from "@/lib/iban";
+
 
 export const Route = createFileRoute("/_authenticated/app/punti")({
   component: PuntiPage,
@@ -205,9 +207,14 @@ function PayoutModal({ max, onClose }: { max: number; onClose: () => void }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const check = validateIban(iban);
+    if (!check.ok) {
+      toast.error(`IBAN: ${check.reason}`);
+      return;
+    }
     setLoading(true);
     try {
-      const res = await submit({ data: { points, iban } });
+      const res = await submit({ data: { points, iban: check.iban } });
       toast.success(`Richiesta inviata: € ${res.amount_eur.toFixed(2)}`);
       await qc.invalidateQueries({ queryKey: ["wallet"] });
       await qc.invalidateQueries({ queryKey: ["my-payouts"] });
@@ -218,6 +225,7 @@ function PayoutModal({ max, onClose }: { max: number; onClose: () => void }) {
       setLoading(false);
     }
   }
+
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-end bg-black/60 backdrop-blur-sm sm:place-items-center" onClick={onClose}>
