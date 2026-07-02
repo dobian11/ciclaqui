@@ -245,10 +245,36 @@ function ProfiloPage() {
           </p>
           <Input
             value={iban}
-            onChange={(e) => setIban(e.target.value.toUpperCase())}
+            onChange={(e) => setIban(formatIban(e.target.value))}
+            onBlur={() => ibanCheck.ok && setIban(ibanCheck.formatted)}
             placeholder="IT60 X054 2811 1010 0000 0123 456"
-            className="mt-3 font-mono uppercase"
+            maxLength={42}
+            inputMode="text"
+            autoComplete="off"
+            spellCheck={false}
+            aria-invalid={ibanDirty && !ibanCheck.ok}
+            aria-describedby="iban-help"
+            className={`mt-3 font-mono uppercase ${
+              ibanDirty && !ibanCheck.ok ? "border-destructive focus-visible:ring-destructive" : ""
+            }`}
           />
+          <p
+            id="iban-help"
+            className={`mt-2 text-[11px] ${
+              ibanDirty
+                ? ibanCheck.ok
+                  ? "text-cicla"
+                  : "text-destructive"
+                : "text-muted-foreground"
+            }`}
+          >
+            {!ibanDirty
+              ? "Lascia vuoto se non hai un IBAN. Sono supportati IBAN italiani ed europei."
+              : ibanCheck.ok
+                ? `✓ IBAN ${ibanCheck.country} valido`
+                : `⚠ ${ibanCheck.reason}`}
+          </p>
+
         </Card>
 
         <Button
