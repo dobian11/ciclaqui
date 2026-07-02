@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { validateIban } from "@/lib/iban";
+
 
 /**
  * STUB Stripe Connect onboarding. Quando avremo la STRIPE_SECRET_KEY questa
@@ -35,9 +37,13 @@ const payoutSchema = z.object({
     .string()
     .trim()
     .min(15, "IBAN troppo corto")
-    .max(34, "IBAN troppo lungo")
-    .regex(/^[A-Z]{2}[0-9A-Z]+$/i, "IBAN non valido"),
+    .max(42, "IBAN troppo lungo")
+    .transform((v) => v.replace(/\s+/g, "").toUpperCase())
+    .refine((v) => validateIban(v).ok, (v) => ({
+      message: (validateIban(v) as { ok: false; reason: string }).reason,
+    })),
 });
+
 
 export const requestPayout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -57,10 +63,11 @@ export const requestPayout = createServerFn({ method: "POST" })
     }
 
     const amountEur = Number((data.points * 0.01).toFixed(2));
-    const iban = data.iban.toUpperCase().replace(/\s+/g, "");
+    const iban = data.iban; // già normalizzato + validato dallo schema
 
     // Salva IBAN sul profilo per riuso futuro
     await supabase.from("profiles").update({ iban }).eq("id", userId);
+
 
     // Scala punti dal wallet (lifetime restano per storico)
     const newPoints = wallet.points_balance - data.points;
