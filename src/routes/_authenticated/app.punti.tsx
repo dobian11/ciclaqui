@@ -8,6 +8,8 @@ import { listMyPayouts, requestPayout } from "@/lib/payments.functions";
 import { Bike, Car, Coins, Footprints, TrendingUp, Wallet, ArrowDownToLine, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { validateIban, formatIban } from "@/lib/iban";
+
 
 export const Route = createFileRoute("/_authenticated/app/punti")({
   component: PuntiPage,
@@ -205,9 +207,14 @@ function PayoutModal({ max, onClose }: { max: number; onClose: () => void }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const check = validateIban(iban);
+    if (!check.ok) {
+      toast.error(`IBAN: ${check.reason}`);
+      return;
+    }
     setLoading(true);
     try {
-      const res = await submit({ data: { points, iban } });
+      const res = await submit({ data: { points, iban: check.iban } });
       toast.success(`Richiesta inviata: € ${res.amount_eur.toFixed(2)}`);
       await qc.invalidateQueries({ queryKey: ["wallet"] });
       await qc.invalidateQueries({ queryKey: ["my-payouts"] });
@@ -218,6 +225,7 @@ function PayoutModal({ max, onClose }: { max: number; onClose: () => void }) {
       setLoading(false);
     }
   }
+
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-end bg-black/60 backdrop-blur-sm sm:place-items-center" onClick={onClose}>
@@ -257,11 +265,23 @@ function PayoutModal({ max, onClose }: { max: number; onClose: () => void }) {
         <input
           type="text"
           value={iban}
-          onChange={(e) => setIban(e.target.value.toUpperCase())}
-          placeholder="IT60X0542811101000000123456"
-          className="input-base mt-1.5 font-mono"
+          onChange={(e) => setIban(formatIban(e.target.value))}
+          placeholder="IT60 X054 2811 1010 0000 0123 456"
+          className={`input-base mt-1.5 font-mono ${
+            iban && !validateIban(iban).ok ? "border-destructive" : ""
+          }`}
+          maxLength={42}
+          autoComplete="off"
+          spellCheck={false}
+          aria-invalid={!!iban && !validateIban(iban).ok}
           required
         />
+        {iban && !validateIban(iban).ok && (
+          <p className="mt-1 text-[11px] text-destructive">
+            ⚠ {validateIban(iban).ok ? "" : (validateIban(iban) as { ok: false; reason: string }).reason}
+          </p>
+        )}
+
 
         <div className="mt-6 flex gap-2">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">

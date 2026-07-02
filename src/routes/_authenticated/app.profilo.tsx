@@ -20,6 +20,8 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { validateIban, formatIban } from "@/lib/iban";
+
 
 export const Route = createFileRoute("/_authenticated/app/profilo")({
   component: ProfiloPage,
@@ -97,18 +99,16 @@ function ProfiloPage() {
     toast.message("Foto pronta — premi Salva per confermare");
   }
 
-  function validIban(v: string) {
-    if (!v) return true;
-    return /^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/i.test(v.replace(/\s+/g, ""));
-  }
+  const ibanCheck = validateIban(iban);
+  const ibanDirty = iban.trim().length > 0;
 
   async function saveProfile() {
     if (!profileQ.data?.userId) return;
-    const ibanClean = iban.replace(/\s+/g, "").toUpperCase();
-    if (ibanClean && !validIban(ibanClean)) {
-      toast.error("IBAN non valido");
+    if (ibanDirty && !ibanCheck.ok) {
+      toast.error(`IBAN: ${ibanCheck.reason}`);
       return;
     }
+    const ibanClean = ibanCheck.ok ? ibanCheck.iban : null;
     setSaving(true);
     try {
       const { error } = await supabase
@@ -116,7 +116,7 @@ function ProfiloPage() {
         .update({
           full_name: fullName || null,
           weight_kg: weight ? Number(weight) : null,
-          iban: ibanClean || null,
+          iban: ibanClean,
           avatar_url: avatar,
         })
         .eq("id", profileQ.data.userId);
@@ -129,6 +129,7 @@ function ProfiloPage() {
       setSaving(false);
     }
   }
+
 
   async function changePassword() {
     if (pwd.length < 8) {
@@ -244,10 +245,36 @@ function ProfiloPage() {
           </p>
           <Input
             value={iban}
-            onChange={(e) => setIban(e.target.value.toUpperCase())}
+            onChange={(e) => setIban(formatIban(e.target.value))}
+            onBlur={() => ibanCheck.ok && setIban(ibanCheck.formatted)}
             placeholder="IT60 X054 2811 1010 0000 0123 456"
-            className="mt-3 font-mono uppercase"
+            maxLength={42}
+            inputMode="text"
+            autoComplete="off"
+            spellCheck={false}
+            aria-invalid={ibanDirty && !ibanCheck.ok}
+            aria-describedby="iban-help"
+            className={`mt-3 font-mono uppercase ${
+              ibanDirty && !ibanCheck.ok ? "border-destructive focus-visible:ring-destructive" : ""
+            }`}
           />
+          <p
+            id="iban-help"
+            className={`mt-2 text-[11px] ${
+              ibanDirty
+                ? ibanCheck.ok
+                  ? "text-cicla"
+                  : "text-destructive"
+                : "text-muted-foreground"
+            }`}
+          >
+            {!ibanDirty
+              ? "Lascia vuoto se non hai un IBAN. Sono supportati IBAN italiani ed europei."
+              : ibanCheck.ok
+                ? `✓ IBAN ${ibanCheck.country} valido`
+                : `⚠ ${ibanCheck.reason}`}
+          </p>
+
         </Card>
 
         <Button
