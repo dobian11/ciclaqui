@@ -23,7 +23,7 @@ function OnboardingPage() {
   const getMine = useServerFn(getMyCompany);
   const create = useServerFn(createCompany);
   const [loading, setLoading] = useState(false);
-  const [hasSession, setHasSession] = useState<boolean | null>(null);
+  const [hasSession, setHasSession] = useState<boolean | null>(true);
   const [kind, setKind] = useState<"company" | "municipality">("company");
 
   useEffect(() => {

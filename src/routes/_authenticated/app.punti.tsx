@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/app/punti")({
 });
 
 function PuntiPage() {
-  const [hasSession, setHasSession] = useState<boolean | null>(null);
+  const [hasSession, setHasSession] = useState<boolean | null>(true);
   const [open, setOpen] = useState(false);
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setHasSession(!!data.session));
