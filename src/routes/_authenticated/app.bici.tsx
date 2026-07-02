@@ -23,7 +23,7 @@ type BikeRow = Awaited<ReturnType<typeof listMyBikes>>[number];
 function BiciPage() {
   const qc = useQueryClient();
   const listFn = useServerFn(listMyBikes);
-  const [hasSession, setHasSession] = useState<boolean | null>(null);
+  const [hasSession, setHasSession] = useState<boolean | null>(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setHasSession(!!data.session));

@@ -32,7 +32,7 @@ function CompanyDashboard() {
   const listReviews = useServerFn(listMyCompanyReviews);
   const [copied, setCopied] = useState(false);
   const [subLoading, setSubLoading] = useState(false);
-  const [hasSession, setHasSession] = useState<boolean | null>(null);
+  const [hasSession, setHasSession] = useState<boolean | null>(true);
   const [reviewOpen, setReviewOpen] = useState(false);
 
   useEffect(() => {

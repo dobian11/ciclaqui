@@ -36,7 +36,7 @@ function AdminDashboard() {
   const getStats = useServerFn(adminStats);
   const listPayouts = useServerFn(adminListPayouts);
   const decide = useServerFn(adminDecidePayout);
-  const [hasSession, setHasSession] = useState<boolean | null>(null);
+  const [hasSession, setHasSession] = useState<boolean | null>(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setHasSession(!!data.session));
