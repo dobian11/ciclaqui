@@ -265,11 +265,23 @@ function PayoutModal({ max, onClose }: { max: number; onClose: () => void }) {
         <input
           type="text"
           value={iban}
-          onChange={(e) => setIban(e.target.value.toUpperCase())}
-          placeholder="IT60X0542811101000000123456"
-          className="input-base mt-1.5 font-mono"
+          onChange={(e) => setIban(formatIban(e.target.value))}
+          placeholder="IT60 X054 2811 1010 0000 0123 456"
+          className={`input-base mt-1.5 font-mono ${
+            iban && !validateIban(iban).ok ? "border-destructive" : ""
+          }`}
+          maxLength={42}
+          autoComplete="off"
+          spellCheck={false}
+          aria-invalid={!!iban && !validateIban(iban).ok}
           required
         />
+        {iban && !validateIban(iban).ok && (
+          <p className="mt-1 text-[11px] text-destructive">
+            ⚠ {validateIban(iban).ok ? "" : (validateIban(iban) as { ok: false; reason: string }).reason}
+          </p>
+        )}
+
 
         <div className="mt-6 flex gap-2">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1">
