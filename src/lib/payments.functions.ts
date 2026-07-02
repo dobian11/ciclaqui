@@ -31,18 +31,19 @@ export const startConnectOnboarding = createServerFn({ method: "POST" })
  * - Atomica: scala punti dal wallet e crea payout_request "pending"
  * - Anti-frode base: minimo 50 punti, IBAN obbligatorio
  */
-const payoutSchema = z.object({
-  points: z.number().int().min(50, "Minimo 50 punti per prelevare (0,50 €)"),
-  iban: z
-    .string()
-    .trim()
-    .min(15, "IBAN troppo corto")
-    .max(42, "IBAN troppo lungo")
-    .transform((v) => v.replace(/\s+/g, "").toUpperCase())
-    .refine((v) => validateIban(v).ok, (v) => ({
-      message: (validateIban(v) as { ok: false; reason: string }).reason,
-    })),
-});
+const payoutSchema = z
+  .object({
+    points: z.number().int().min(50, "Minimo 50 punti per prelevare (0,50 €)"),
+    iban: z.string().trim().min(15, "IBAN troppo corto").max(42, "IBAN troppo lungo"),
+  })
+  .transform((d) => ({ ...d, iban: d.iban.replace(/\s+/g, "").toUpperCase() }))
+  .superRefine((d, ctx) => {
+    const r = validateIban(d.iban);
+    if (!r.ok) {
+      ctx.addIssue({ code: "custom", path: ["iban"], message: r.reason });
+    }
+  });
+
 
 
 export const requestPayout = createServerFn({ method: "POST" })
