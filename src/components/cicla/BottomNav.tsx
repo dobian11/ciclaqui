@@ -1,5 +1,6 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { Map, Bike, Coins, Trophy, User } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 const items = [
   { to: "/app", label: "Mappa", icon: Map, exact: true },
@@ -10,6 +11,19 @@ const items = [
 ] as const;
 
 export function BottomNav() {
+  // Profiler navigazione: misura il tempo dal click al pathname change.
+  const pendingRef = useRef<{ to: string; t: number } | null>(null);
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useEffect(() => {
+    const p = pendingRef.current;
+    if (p && (pathname === p.to || pathname.startsWith(p.to + "/"))) {
+      const ms = Math.round(performance.now() - p.t);
+      // eslint-disable-next-line no-console
+      console.info(`[nav] ${p.to} · ${ms}ms`);
+      pendingRef.current = null;
+    }
+  }, [pathname]);
+
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-[1100] px-4 pb-3"
@@ -17,7 +31,13 @@ export function BottomNav() {
     >
       <div className="relative mx-auto flex h-[62px] max-w-md items-center justify-around rounded-[26px] app-glass-strong px-2 shadow-2xl">
         {items.map((it) => (
-          <NavItem key={it.to} {...it} />
+          <NavItem
+            key={it.to}
+            {...it}
+            onNavStart={(to) => {
+              pendingRef.current = { to, t: performance.now() };
+            }}
+          />
         ))}
       </div>
     </nav>
@@ -29,17 +49,22 @@ function NavItem({
   label,
   icon: Icon,
   exact,
+  onNavStart,
 }: {
   to: string;
   label: string;
   icon: typeof Map;
   exact: boolean;
+  onNavStart: (to: string) => void;
 }) {
   return (
     <Link
       to={to}
-      preload="intent"
+      // "render": scarica il chunk della sezione appena la nav è visibile,
+      // così il click non paga il round-trip di rete su mobile.
+      preload="render"
       activeOptions={{ exact }}
+      onClick={() => onNavStart(to)}
       className="group flex flex-col items-center gap-1 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors data-[status=active]:text-cicla"
     >
       <span className="grid size-10 place-items-center rounded-2xl transition-colors group-data-[status=active]:bg-cicla group-data-[status=active]:text-cicla-foreground group-data-[status=active]:shadow-[0_8px_20px_-6px_var(--cicla)]">
