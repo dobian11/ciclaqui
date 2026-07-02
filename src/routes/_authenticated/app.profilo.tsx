@@ -20,6 +20,8 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { validateIban, formatIban } from "@/lib/iban";
+
 
 export const Route = createFileRoute("/_authenticated/app/profilo")({
   component: ProfiloPage,
