@@ -525,6 +525,7 @@ function AdminVerificationsPage() {
         {/* Registro di audit */}
         {tab === "audit" && (
           <>
+            <EmailLogSection showCompanyName title="Log email di decisione" />
             <Card className="mt-4 p-4">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <ScrollText className="size-4" />
