@@ -343,6 +343,18 @@ export const getCompanyDocUrl = createServerFn({ method: "POST" })
       .from("company-docs")
       .createSignedUrl(data.path, 60 * 10);
     if (error || !signed) throw new Error("Impossibile generare il link");
+
+    // Audit: chi ha visualizzato il documento
+    const { logCompanyAudit } = await import("@/lib/audit.server");
+    await logCompanyAudit({
+      company_id: data.path.split("/")[0],
+      action: "document_viewed",
+      actor_id: userId,
+      actor_role: isAdmin ? "admin" : "company_manager",
+      document_path: data.path,
+      document_name: data.path.split("/").pop() ?? data.path,
+    });
+
     return { url: signed.signedUrl };
   });
 
