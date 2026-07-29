@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as CercaBiciRouteImport } from './routes/cerca-bici'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -41,6 +42,11 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/public/cron/maintenance'
 
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CercaBiciRoute = CercaBiciRouteImport.update({
   id: '/cerca-bici',
   path: '/cerca-bici',
@@ -206,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/cerca-bici': typeof CercaBiciRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/azienda': typeof AuthenticatedAziendaRouteWithChildren
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/cerca-bici': typeof CercaBiciRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/collega': typeof AuthenticatedCollegaRoute
   '/azienda/auth': typeof AziendaAuthRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -269,6 +277,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/cerca-bici': typeof CercaBiciRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/azienda': typeof AuthenticatedAziendaRouteWithChildren
@@ -303,6 +312,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/cerca-bici'
+    | '/unsubscribe'
     | '/admin'
     | '/app'
     | '/azienda'
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/cerca-bici'
+    | '/unsubscribe'
     | '/collega'
     | '/azienda/auth'
     | '/email/unsubscribe'
@@ -365,6 +376,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/cerca-bici'
+    | '/unsubscribe'
     | '/_authenticated/admin'
     | '/_authenticated/app'
     | '/_authenticated/azienda'
@@ -399,6 +411,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   CercaBiciRoute: typeof CercaBiciRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
   AziendaAuthRoute: typeof AziendaAuthRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   LegalCookieRoute: typeof LegalCookieRoute
@@ -416,6 +429,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cerca-bici': {
       id: '/cerca-bici'
       path: '/cerca-bici'
@@ -705,6 +725,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   CercaBiciRoute: CercaBiciRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
   AziendaAuthRoute: AziendaAuthRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   LegalCookieRoute: LegalCookieRoute,
