@@ -11,13 +11,16 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, User } from "lucide-react";
 import { getPostLoginRedirect } from "@/lib/auth-redirect";
+import { requestManagerRole } from "@/lib/companies.functions";
+import { GoogleSignInButton, AuthDivider } from "@/components/cicla/GoogleSignInButton";
 
-type Search = { mode?: "login" | "signup" };
+type Search = { mode?: "login" | "signup"; manager?: boolean };
 
 export const Route = createFileRoute("/azienda/auth")({
   ssr: false,
   validateSearch: (s: Record<string, unknown>): Search => ({
     mode: s.mode === "signup" || s.mode === "login" ? s.mode : undefined,
+    manager: s.manager === true || s.manager === "1" || s.manager === "true" ? true : undefined,
   }),
   head: () => ({
     meta: [
@@ -34,15 +37,23 @@ function CompanyAuthPage() {
   const search = useSearch({ from: "/azienda/auth" });
   const [loading, setLoading] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
-      if (data.user) {
-        const dest = await getPostLoginRedirect();
-        navigate({ to: dest as never });
+      if (!data.user) return;
+      // Ritorno dal login Google dall'area enti: attiva il ruolo referente.
+      if (search.manager) {
+        try {
+          await requestManagerRole();
+        } catch {
+          toast.error("Impossibile attivare l'area enti per questo account");
+        }
       }
+      const dest = await getPostLoginRedirect();
+      navigate({ to: dest as never });
     });
-  }, [navigate]);
+  }, [navigate, search.manager]);
 
   async function redirectAfter() {
     await router.invalidate();
@@ -77,7 +88,7 @@ function CompanyAuthPage() {
     if (password.length < 8) return toast.error("Password almeno 8 caratteri");
 
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -89,12 +100,12 @@ function CompanyAuthPage() {
       setLoading(false);
       return toast.error(error.message);
     }
-    // Forza sessione se email-confirm disabilitata
-    const { data: ud } = await supabase.auth.getUser();
-    if (!ud.user) {
-      await supabase.auth.signInWithPassword({ email, password });
-    }
     setLoading(false);
+    if (!signUpData.session) {
+      setPendingEmail(email);
+      toast.success("Ti abbiamo inviato una email di conferma");
+      return;
+    }
     toast.success("Account creato! Completa l'onboarding della tua azienda.");
     await redirectAfter();
   }
@@ -127,6 +138,19 @@ function CompanyAuthPage() {
         </div>
 
         <Card className="border-border/60 p-6 shadow-cicla">
+          {pendingEmail && (
+            <div className="mb-5 rounded-xl border border-cicla/30 bg-cicla/10 p-4">
+              <p className="text-sm font-semibold">Conferma la tua email</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Abbiamo inviato un link di conferma a <strong>{pendingEmail}</strong>.
+                Aprilo per attivare l'account e completare la registrazione dell'ente.
+              </p>
+            </div>
+          )}
+
+          <GoogleSignInButton redirectPath="/azienda/auth?manager=1" />
+          <AuthDivider />
+
           <Tabs defaultValue={defaultTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Accedi</TabsTrigger>

@@ -30,5 +30,14 @@ export async function getPostLoginRedirect(): Promise<string> {
     return "/azienda";
   }
 
+  // Utente semplice: se non è ancora collegato a un ente (tipico dopo il
+  // login con Google, dove non si può passare il codice) chiediamo il codice.
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("company_id")
+    .eq("id", userData.user.id)
+    .maybeSingle();
+  if (!profile?.company_id) return "/collega";
+
   return "/app";
 }

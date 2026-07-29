@@ -345,3 +345,87 @@ export const getCompanyDocUrl = createServerFn({ method: "POST" })
     if (error || !signed) throw new Error("Impossibile generare il link");
     return { url: signed.signedUrl };
   });
+
+/**
+ * Collega l'utente autenticato a un ente tramite codice. Usato dopo il login
+ * social (Google), dove il codice non può essere passato al signup.
+ */
+export const joinCompanyByCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => validateCodeSchema.parse(data))
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: company } = await supabaseAdmin
+      .from("companies")
+      .select("id, name, status")
+      .eq("code", data.code.toUpperCase())
+      .maybeSingle();
+    if (!company) return { ok: false as const, reason: "not_found" as const };
+    if (company.status !== "approved") {
+      return { ok: false as const, reason: "not_approved" as const };
+    }
+
+    const { data: sub } = await supabaseAdmin
+      .from("company_subscriptions")
+      .select("status")
+      .eq("company_id", company.id)
+      .maybeSingle();
+    if (!sub || !["active", "trial"].includes(sub.status)) {
+      return { ok: false as const, reason: "no_subscription" as const };
+    }
+
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("company_id")
+      .eq("id", userId)
+      .maybeSingle();
+    if (profile?.company_id) {
+      return { ok: false as const, reason: "already_linked" as const };
+    }
+
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({ company_id: company.id })
+      .eq("id", userId);
+    if (error) throw new Error("Impossibile collegare l'account all'ente");
+
+    return { ok: true as const, name: company.name };
+  });
+
+/**
+ * Promuove l'utente autenticato a `company_manager` quando entra dall'area
+ * Aziende/Comuni con Google. Consentito solo se non è già collegato a un ente
+ * e non ha già un ruolo elevato: la creazione dell'ente resta soggetta ad
+ * approvazione admin.
+ */
+export const requestManagerRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    if (roles?.some((r) => r.role === "admin" || r.role === "company_manager")) {
+      return { ok: true as const, alreadyManager: true };
+    }
+
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("company_id")
+      .eq("id", userId)
+      .maybeSingle();
+    if (profile?.company_id) {
+      return { ok: false as const, reason: "already_member" as const };
+    }
+
+    const { error } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: userId, role: "company_manager" });
+    if (error) throw new Error("Impossibile attivare l'area enti");
+    return { ok: true as const, alreadyManager: false };
+  });

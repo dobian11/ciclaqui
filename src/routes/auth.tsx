@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Loader2, Building2 } from "lucide-react";
 import { z } from "zod";
 import { getPostLoginRedirect } from "@/lib/auth-redirect";
+import { GoogleSignInButton, AuthDivider } from "@/components/cicla/GoogleSignInButton";
 
 type AuthSearch = { mode?: "login" | "signup"; code?: string };
 
@@ -44,6 +45,7 @@ function AuthPage() {
   const search = useSearch({ from: "/auth" });
   const [loading, setLoading] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -90,7 +92,7 @@ function AuthPage() {
     }
     const { full_name, email, password, company_code } = parsed.data;
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -104,6 +106,11 @@ function AuthPage() {
     });
     setLoading(false);
     if (error) return toast.error(error.message);
+    if (!signUpData.session) {
+      setPendingEmail(email);
+      toast.success("Ti abbiamo inviato una email di conferma");
+      return;
+    }
     toast.success("Account creato!");
     await redirectAfterAuth();
   }
@@ -124,6 +131,19 @@ function AuthPage() {
         </div>
 
         <Card className="border-border/60 p-6 shadow-cicla">
+          {pendingEmail && (
+            <div className="mb-5 rounded-xl border border-cicla/30 bg-cicla/10 p-4">
+              <p className="text-sm font-semibold">Conferma la tua email</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Abbiamo inviato un link di conferma a <strong>{pendingEmail}</strong>.
+                Aprilo per attivare l'account, poi torna qui e accedi.
+              </p>
+            </div>
+          )}
+
+          <GoogleSignInButton redirectPath="/auth" />
+          <AuthDivider />
+
           <Tabs defaultValue={defaultTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Accedi</TabsTrigger>
