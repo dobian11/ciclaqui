@@ -65,25 +65,17 @@ function PrivacyPage() {
           </button>
         </Card>
 
-        <Card icon={Bell} title="Notifiche push" desc="Scegli cosa vuoi ricevere.">
-          <div className="mt-2 space-y-2">
-            {([
-              ["push_streak", "Streak a rischio"],
-              ["push_challenges", "Sfide & traguardi"],
-              ["push_bike", "Bici / segnalazioni"],
-              ["push_trip_flag", "Viaggi da rivedere"],
-              ["push_rewards", "Nuovi premi"],
-            ] as const).map(([k, label]) => (
-              <label key={k} className="flex items-center justify-between rounded-xl bg-card/50 px-3 py-2">
-                <span className="text-xs">{label}</span>
-                <input type="checkbox" checked={prefs[k]} onChange={(e) => savePrefs({ ...prefs, [k]: e.target.checked })} className="size-4 accent-cicla" />
-              </label>
-            ))}
+        <Card icon={Bell} title="Notifiche" desc="Scegli cosa ricevere dentro l'app e via email, categoria per categoria.">
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <Link to="/app/notifiche" preload="intent" className="rounded-full bg-cicla px-4 py-2 text-xs font-bold text-cicla-foreground">
+              Gestisci notifiche
+            </Link>
+            <button onClick={() => push.register()} className="rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold">
+              {push.status === "registered" ? "Push attive ✓" : push.status === "unsupported" ? "Disponibile solo su app nativa" : "Attiva push su questo dispositivo"}
+            </button>
           </div>
-          <button onClick={() => push.register()} className="mt-3 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold">
-            {push.status === "registered" ? "Push attive ✓" : push.status === "unsupported" ? "Disponibile solo su app nativa" : "Attiva push su questo dispositivo"}
-          </button>
         </Card>
+
 
         <Card icon={ShieldAlert} title="Cancella account" desc="Periodo di ripensamento di 30 giorni. Puoi annullare in qualsiasi momento prima della scadenza.">
           {deletion && !deletion.cancelled_at ? (
