@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.owns_company(uuid) FROM PUBLIC, anon;
