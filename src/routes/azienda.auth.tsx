@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { Loader2, User } from "lucide-react";
 import { getPostLoginRedirect } from "@/lib/auth-redirect";
 import { requestManagerRole } from "@/lib/companies.functions";
-import { GoogleSignInButton, AuthDivider } from "@/components/cicla/GoogleSignInButton";
+import { GoogleSignInButton, AppleSignInButton, AuthDivider } from "@/components/cicla/GoogleSignInButton";
 
 type Search = { mode?: "login" | "signup"; manager?: boolean };
 
