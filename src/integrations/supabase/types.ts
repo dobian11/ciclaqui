@@ -718,6 +718,19 @@ export type Database = {
       }
       notification_preferences: {
         Row: {
+          email_bike: boolean
+          email_challenges: boolean
+          email_company: boolean
+          email_product: boolean
+          email_rewards: boolean
+          email_streak: boolean
+          email_trip_flag: boolean
+          inapp_bike: boolean
+          inapp_challenges: boolean
+          inapp_company: boolean
+          inapp_rewards: boolean
+          inapp_streak: boolean
+          inapp_trip_flag: boolean
           push_bike: boolean
           push_challenges: boolean
           push_rewards: boolean
@@ -727,6 +740,19 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          email_bike?: boolean
+          email_challenges?: boolean
+          email_company?: boolean
+          email_product?: boolean
+          email_rewards?: boolean
+          email_streak?: boolean
+          email_trip_flag?: boolean
+          inapp_bike?: boolean
+          inapp_challenges?: boolean
+          inapp_company?: boolean
+          inapp_rewards?: boolean
+          inapp_streak?: boolean
+          inapp_trip_flag?: boolean
           push_bike?: boolean
           push_challenges?: boolean
           push_rewards?: boolean
@@ -736,6 +762,19 @@ export type Database = {
           user_id: string
         }
         Update: {
+          email_bike?: boolean
+          email_challenges?: boolean
+          email_company?: boolean
+          email_product?: boolean
+          email_rewards?: boolean
+          email_streak?: boolean
+          email_trip_flag?: boolean
+          inapp_bike?: boolean
+          inapp_challenges?: boolean
+          inapp_company?: boolean
+          inapp_rewards?: boolean
+          inapp_streak?: boolean
+          inapp_trip_flag?: boolean
           push_bike?: boolean
           push_challenges?: boolean
           push_rewards?: boolean

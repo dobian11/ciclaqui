@@ -34,6 +34,7 @@ import { Route as AuthenticatedAppPuntiRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAppProfiloRouteImport } from './routes/_authenticated/app.profilo'
 import { Route as AuthenticatedAppPrivacyRouteImport } from './routes/_authenticated/app.privacy'
 import { Route as AuthenticatedAppPremiRouteImport } from './routes/_authenticated/app.premi'
+import { Route as AuthenticatedAppNotificheRouteImport } from './routes/_authenticated/app.notifiche'
 import { Route as AuthenticatedAppBiciRouteImport } from './routes/_authenticated/app.bici'
 import { Route as AuthenticatedAdminVerificheRouteImport } from './routes/_authenticated/admin.verifiche'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
@@ -169,6 +170,12 @@ const AuthenticatedAppPremiRoute = AuthenticatedAppPremiRouteImport.update({
   path: '/premi',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAppNotificheRoute =
+  AuthenticatedAppNotificheRouteImport.update({
+    id: '/notifiche',
+    path: '/notifiche',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
 const AuthenticatedAppBiciRoute = AuthenticatedAppBiciRouteImport.update({
   id: '/bici',
   path: '/bici',
@@ -232,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/legal/terms': typeof LegalTermsRoute
   '/admin/verifiche': typeof AuthenticatedAdminVerificheRoute
   '/app/bici': typeof AuthenticatedAppBiciRoute
+  '/app/notifiche': typeof AuthenticatedAppNotificheRoute
   '/app/premi': typeof AuthenticatedAppPremiRoute
   '/app/privacy': typeof AuthenticatedAppPrivacyRoute
   '/app/profilo': typeof AuthenticatedAppProfiloRoute
@@ -263,6 +271,7 @@ export interface FileRoutesByTo {
   '/legal/terms': typeof LegalTermsRoute
   '/admin/verifiche': typeof AuthenticatedAdminVerificheRoute
   '/app/bici': typeof AuthenticatedAppBiciRoute
+  '/app/notifiche': typeof AuthenticatedAppNotificheRoute
   '/app/premi': typeof AuthenticatedAppPremiRoute
   '/app/privacy': typeof AuthenticatedAppPrivacyRoute
   '/app/profilo': typeof AuthenticatedAppProfiloRoute
@@ -299,6 +308,7 @@ export interface FileRoutesById {
   '/legal/terms': typeof LegalTermsRoute
   '/_authenticated/admin/verifiche': typeof AuthenticatedAdminVerificheRoute
   '/_authenticated/app/bici': typeof AuthenticatedAppBiciRoute
+  '/_authenticated/app/notifiche': typeof AuthenticatedAppNotificheRoute
   '/_authenticated/app/premi': typeof AuthenticatedAppPremiRoute
   '/_authenticated/app/privacy': typeof AuthenticatedAppPrivacyRoute
   '/_authenticated/app/profilo': typeof AuthenticatedAppProfiloRoute
@@ -335,6 +345,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/admin/verifiche'
     | '/app/bici'
+    | '/app/notifiche'
     | '/app/premi'
     | '/app/privacy'
     | '/app/profilo'
@@ -366,6 +377,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/admin/verifiche'
     | '/app/bici'
+    | '/app/notifiche'
     | '/app/premi'
     | '/app/privacy'
     | '/app/profilo'
@@ -401,6 +413,7 @@ export interface FileRouteTypes {
     | '/legal/terms'
     | '/_authenticated/admin/verifiche'
     | '/_authenticated/app/bici'
+    | '/_authenticated/app/notifiche'
     | '/_authenticated/app/premi'
     | '/_authenticated/app/privacy'
     | '/_authenticated/app/profilo'
@@ -617,6 +630,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppPremiRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/app/notifiche': {
+      id: '/_authenticated/app/notifiche'
+      path: '/notifiche'
+      fullPath: '/app/notifiche'
+      preLoaderRoute: typeof AuthenticatedAppNotificheRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
     '/_authenticated/app/bici': {
       id: '/_authenticated/app/bici'
       path: '/bici'
@@ -691,6 +711,7 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedAppRouteChildren {
   AuthenticatedAppBiciRoute: typeof AuthenticatedAppBiciRoute
+  AuthenticatedAppNotificheRoute: typeof AuthenticatedAppNotificheRoute
   AuthenticatedAppPremiRoute: typeof AuthenticatedAppPremiRoute
   AuthenticatedAppPrivacyRoute: typeof AuthenticatedAppPrivacyRoute
   AuthenticatedAppProfiloRoute: typeof AuthenticatedAppProfiloRoute
@@ -701,6 +722,7 @@ interface AuthenticatedAppRouteChildren {
 
 const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
   AuthenticatedAppBiciRoute: AuthenticatedAppBiciRoute,
+  AuthenticatedAppNotificheRoute: AuthenticatedAppNotificheRoute,
   AuthenticatedAppPremiRoute: AuthenticatedAppPremiRoute,
   AuthenticatedAppPrivacyRoute: AuthenticatedAppPrivacyRoute,
   AuthenticatedAppProfiloRoute: AuthenticatedAppProfiloRoute,
