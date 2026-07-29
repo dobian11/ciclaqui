@@ -156,6 +156,8 @@ function CompanyDashboard() {
             </Button>
           </div>
 
+          <NotificationsSection />
+
           <div className="mt-6">
             <PendingCompanyDashboard
               company={company as never}
@@ -163,6 +165,7 @@ function CompanyDashboard() {
               onRequestReview={() => setReviewOpen(true)}
             />
           </div>
+
 
           <CompanyReviewDialog
             companyId={company.id}
