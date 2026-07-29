@@ -194,17 +194,18 @@ export function NavigationBanner({
     >
       <div className="pointer-events-auto w-full max-w-md rounded-2xl bg-cicla/95 px-3 py-2 text-cicla-foreground shadow-cicla backdrop-blur-md">
         {/* riga 1 — metriche live */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
           {recalculating ? (
-            <Loader2 size={12} className="animate-spin" />
+            <Loader2 size={12} className="shrink-0 animate-spin" />
           ) : (
-            <Navigation size={12} strokeWidth={2.8} />
+            <Navigation size={12} strokeWidth={2.8} className="shrink-0" />
           )}
           <span className="font-display text-[12px] font-bold tabular-nums">{distLabel}</span>
           <span className="text-[10px] opacity-70">·</span>
           <span className="text-[11px] font-mono tabular-nums">{mins}′</span>
           <span className="text-[10px] opacity-70">·</span>
-          <span className="text-[10px] font-mono tabular-nums opacity-90">ETA {etaLabel}</span>
+          <span className="whitespace-nowrap text-[10px] font-mono tabular-nums opacity-90">ETA {etaLabel}</span>
+
           <span className="ml-auto flex items-center gap-1">
             {tracking !== undefined && (
               <span
