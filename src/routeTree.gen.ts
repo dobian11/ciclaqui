@@ -24,6 +24,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAziendaIndexRouteImport } from './routes/_authenticated/azienda.index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as ApiPublicMapscheckRouteImport } from './routes/api/public/mapscheck'
 import { Route as AuthenticatedAziendaOnboardingRouteImport } from './routes/_authenticated/azienda.onboarding'
 import { Route as AuthenticatedAppSfideRouteImport } from './routes/_authenticated/app.sfide'
 import { Route as AuthenticatedAppPuntiRouteImport } from './routes/_authenticated/app.punti'
@@ -108,6 +109,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const ApiPublicMapscheckRoute = ApiPublicMapscheckRouteImport.update({
+  id: '/api/public/mapscheck',
+  path: '/api/public/mapscheck',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAziendaOnboardingRoute =
   AuthenticatedAziendaOnboardingRouteImport.update({
     id: '/onboarding',
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/app/punti': typeof AuthenticatedAppPuntiRoute
   '/app/sfide': typeof AuthenticatedAppSfideRoute
   '/azienda/onboarding': typeof AuthenticatedAziendaOnboardingRoute
+  '/api/public/mapscheck': typeof ApiPublicMapscheckRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/azienda/': typeof AuthenticatedAziendaIndexRoute
@@ -191,6 +198,7 @@ export interface FileRoutesByTo {
   '/app/punti': typeof AuthenticatedAppPuntiRoute
   '/app/sfide': typeof AuthenticatedAppSfideRoute
   '/azienda/onboarding': typeof AuthenticatedAziendaOnboardingRoute
+  '/api/public/mapscheck': typeof ApiPublicMapscheckRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/azienda': typeof AuthenticatedAziendaIndexRoute
@@ -217,6 +225,7 @@ export interface FileRoutesById {
   '/_authenticated/app/punti': typeof AuthenticatedAppPuntiRoute
   '/_authenticated/app/sfide': typeof AuthenticatedAppSfideRoute
   '/_authenticated/azienda/onboarding': typeof AuthenticatedAziendaOnboardingRoute
+  '/api/public/mapscheck': typeof ApiPublicMapscheckRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/azienda/': typeof AuthenticatedAziendaIndexRoute
@@ -243,6 +252,7 @@ export interface FileRouteTypes {
     | '/app/punti'
     | '/app/sfide'
     | '/azienda/onboarding'
+    | '/api/public/mapscheck'
     | '/admin/'
     | '/app/'
     | '/azienda/'
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
     | '/app/punti'
     | '/app/sfide'
     | '/azienda/onboarding'
+    | '/api/public/mapscheck'
     | '/admin'
     | '/app'
     | '/azienda'
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/punti'
     | '/_authenticated/app/sfide'
     | '/_authenticated/azienda/onboarding'
+    | '/api/public/mapscheck'
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
     | '/_authenticated/azienda/'
@@ -305,6 +317,7 @@ export interface RootRouteChildren {
   LegalPermessiRoute: typeof LegalPermessiRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
   LegalTermsRoute: typeof LegalTermsRoute
+  ApiPublicMapscheckRoute: typeof ApiPublicMapscheckRoute
   ApiPublicCronMaintenanceRoute: typeof ApiPublicCronMaintenanceRoute
 }
 
@@ -414,6 +427,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/api/public/mapscheck': {
+      id: '/api/public/mapscheck'
+      path: '/api/public/mapscheck'
+      fullPath: '/api/public/mapscheck'
+      preLoaderRoute: typeof ApiPublicMapscheckRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/azienda/onboarding': {
       id: '/_authenticated/azienda/onboarding'
@@ -546,8 +566,19 @@ const rootRouteChildren: RootRouteChildren = {
   LegalPermessiRoute: LegalPermessiRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
   LegalTermsRoute: LegalTermsRoute,
+  ApiPublicMapscheckRoute: ApiPublicMapscheckRoute,
   ApiPublicCronMaintenanceRoute: ApiPublicCronMaintenanceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
