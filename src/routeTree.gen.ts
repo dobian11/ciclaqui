@@ -18,6 +18,7 @@ import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as LegalPermessiRouteImport } from './routes/legal.permessi'
 import { Route as LegalCookieRouteImport } from './routes/legal.cookie'
 import { Route as AziendaAuthRouteImport } from './routes/azienda.auth'
+import { Route as AuthenticatedCollegaRouteImport } from './routes/_authenticated/collega'
 import { Route as AuthenticatedAziendaRouteImport } from './routes/_authenticated/azienda'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -76,6 +77,11 @@ const AziendaAuthRoute = AziendaAuthRouteImport.update({
   id: '/azienda/auth',
   path: '/azienda/auth',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedCollegaRoute = AuthenticatedCollegaRouteImport.update({
+  id: '/collega',
+  path: '/collega',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAziendaRoute = AuthenticatedAziendaRouteImport.update({
   id: '/azienda',
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/azienda': typeof AuthenticatedAziendaRouteWithChildren
+  '/collega': typeof AuthenticatedCollegaRoute
   '/azienda/auth': typeof AziendaAuthRoute
   '/legal/cookie': typeof LegalCookieRoute
   '/legal/permessi': typeof LegalPermessiRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/cerca-bici': typeof CercaBiciRoute
+  '/collega': typeof AuthenticatedCollegaRoute
   '/azienda/auth': typeof AziendaAuthRoute
   '/legal/cookie': typeof LegalCookieRoute
   '/legal/permessi': typeof LegalPermessiRoute
@@ -205,6 +213,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/azienda': typeof AuthenticatedAziendaRouteWithChildren
+  '/_authenticated/collega': typeof AuthenticatedCollegaRoute
   '/azienda/auth': typeof AziendaAuthRoute
   '/legal/cookie': typeof LegalCookieRoute
   '/legal/permessi': typeof LegalPermessiRoute
@@ -231,6 +240,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/azienda'
+    | '/collega'
     | '/azienda/auth'
     | '/legal/cookie'
     | '/legal/permessi'
@@ -252,6 +262,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/cerca-bici'
+    | '/collega'
     | '/azienda/auth'
     | '/legal/cookie'
     | '/legal/permessi'
@@ -277,6 +288,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/app'
     | '/_authenticated/azienda'
+    | '/_authenticated/collega'
     | '/azienda/auth'
     | '/legal/cookie'
     | '/legal/permessi'
@@ -372,6 +384,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/azienda/auth'
       preLoaderRoute: typeof AziendaAuthRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/collega': {
+      id: '/_authenticated/collega'
+      path: '/collega'
+      fullPath: '/collega'
+      preLoaderRoute: typeof AuthenticatedCollegaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/azienda': {
       id: '/_authenticated/azienda'
@@ -525,12 +544,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
   AuthenticatedAziendaRoute: typeof AuthenticatedAziendaRouteWithChildren
+  AuthenticatedCollegaRoute: typeof AuthenticatedCollegaRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
   AuthenticatedAziendaRoute: AuthenticatedAziendaRouteWithChildren,
+  AuthenticatedCollegaRoute: AuthenticatedCollegaRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
