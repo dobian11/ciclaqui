@@ -20,14 +20,11 @@ function PrivacyPage() {
 
   const [exporting, setExporting] = useState(false);
   const [deletion, setDeletion] = useState<{ scheduled_for: string; cancelled_at: string | null } | null>(null);
-  const [prefs, setPrefs] = useState({ push_streak: true, push_challenges: true, push_bike: true, push_trip_flag: true, push_rewards: true });
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase.from("account_deletion_requests").select("scheduled_for, cancelled_at").maybeSingle();
       setDeletion(data ?? null);
-      const { data: p } = await supabase.from("notification_preferences").select("*").maybeSingle();
-      if (p) setPrefs({ push_streak: p.push_streak, push_challenges: p.push_challenges, push_bike: p.push_bike, push_trip_flag: p.push_trip_flag, push_rewards: p.push_rewards });
     })();
   }, []);
 
@@ -42,13 +39,6 @@ function PrivacyPage() {
       URL.revokeObjectURL(url);
       toast.success("Export completato");
     } catch (e) { toast.error(String(e)); } finally { setExporting(false); }
-  }
-
-  async function savePrefs(next: typeof prefs) {
-    setPrefs(next);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    await supabase.from("notification_preferences").upsert({ user_id: user.id, ...next });
   }
 
   return (
