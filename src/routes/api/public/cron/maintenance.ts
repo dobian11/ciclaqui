@@ -97,8 +97,25 @@ export const Route = createFileRoute("/api/public/cron/maintenance")({
             );
         }
 
+        // 4. Cancellazioni account programmate e scadute
+        const { data: deletions } = await supabaseAdmin
+          .from("account_deletion_requests")
+          .select("id, user_id")
+          .is("cancelled_at", null)
+          .lt("scheduled_for", nowIso);
+
+        let deleted = 0;
+        for (const d of deletions ?? []) {
+          const { error } = await supabaseAdmin.auth.admin.deleteUser(d.user_id);
+          if (!error) {
+            await supabaseAdmin.from("account_deletion_requests").delete().eq("id", d.id);
+            deleted += 1;
+          }
+        }
+
         return Response.json({
           ok: true,
+          accounts_deleted: deleted,
           challenges_closed: closed,
           challenges_recreated: recreated,
           streaks_reset: broken?.length ?? 0,
