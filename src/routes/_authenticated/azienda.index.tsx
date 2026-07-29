@@ -11,6 +11,7 @@ import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { CompanyReviewDialog } from "@/components/cicla/CompanyReviewDialog";
 import { PendingCompanyDashboard } from "@/components/cicla/PendingCompanyDashboard";
 import { CompanyRewardsSection } from "@/components/cicla/CompanyRewardsSection";
+import { NotificationsSection } from "@/components/cicla/NotificationsSection";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -156,6 +157,8 @@ function CompanyDashboard() {
             </Button>
           </div>
 
+          <NotificationsSection />
+
           <div className="mt-6">
             <PendingCompanyDashboard
               company={company as never}
@@ -163,6 +166,7 @@ function CompanyDashboard() {
               onRequestReview={() => setReviewOpen(true)}
             />
           </div>
+
 
           <CompanyReviewDialog
             companyId={company.id}
@@ -192,8 +196,8 @@ function CompanyDashboard() {
         </div>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">{company.name}</h1>
 
+        <NotificationsSection />
 
-        {/* Storico revisioni */}
         {reviews && reviews.length > 0 && (
           <Card className="mt-4 p-5">
             <div className="flex items-center gap-2 text-muted-foreground">

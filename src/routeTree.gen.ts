@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as CercaBiciRouteImport } from './routes/cerca-bici'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -17,6 +18,7 @@ import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
 import { Route as LegalPermessiRouteImport } from './routes/legal.permessi'
 import { Route as LegalCookieRouteImport } from './routes/legal.cookie'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AziendaAuthRouteImport } from './routes/azienda.auth'
 import { Route as AuthenticatedCollegaRouteImport } from './routes/_authenticated/collega'
 import { Route as AuthenticatedAziendaRouteImport } from './routes/_authenticated/azienda'
@@ -25,6 +27,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAziendaIndexRouteImport } from './routes/_authenticated/azienda.index'
 import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedAziendaOnboardingRouteImport } from './routes/_authenticated/azienda.onboarding'
 import { Route as AuthenticatedAppSfideRouteImport } from './routes/_authenticated/app.sfide'
 import { Route as AuthenticatedAppPuntiRouteImport } from './routes/_authenticated/app.punti'
@@ -32,11 +35,18 @@ import { Route as AuthenticatedAppProfiloRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppPrivacyRouteImport } from './routes/_authenticated/app.privacy'
 import { Route as AuthenticatedAppPremiRouteImport } from './routes/_authenticated/app.premi'
 import { Route as AuthenticatedAppBiciRouteImport } from './routes/_authenticated/app.bici'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/public/cron/maintenance'
 
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CercaBiciRoute = CercaBiciRouteImport.update({
   id: '/cerca-bici',
   path: '/cerca-bici',
@@ -74,6 +84,11 @@ const LegalPermessiRoute = LegalPermessiRouteImport.update({
 const LegalCookieRoute = LegalCookieRouteImport.update({
   id: '/legal/cookie',
   path: '/legal/cookie',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AziendaAuthRoute = AziendaAuthRouteImport.update({
@@ -117,6 +132,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAziendaOnboardingRoute =
   AuthenticatedAziendaOnboardingRouteImport.update({
     id: '/onboarding',
@@ -153,6 +173,18 @@ const AuthenticatedAppBiciRoute = AuthenticatedAppBiciRouteImport.update({
   path: '/bici',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -180,11 +212,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/cerca-bici': typeof CercaBiciRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/azienda': typeof AuthenticatedAziendaRouteWithChildren
   '/collega': typeof AuthenticatedCollegaRoute
   '/azienda/auth': typeof AziendaAuthRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/legal/cookie': typeof LegalCookieRoute
   '/legal/permessi': typeof LegalPermessiRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -196,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/app/punti': typeof AuthenticatedAppPuntiRoute
   '/app/sfide': typeof AuthenticatedAppSfideRoute
   '/azienda/onboarding': typeof AuthenticatedAziendaOnboardingRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/azienda/': typeof AuthenticatedAziendaIndexRoute
@@ -203,13 +238,17 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/cerca-bici': typeof CercaBiciRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/collega': typeof AuthenticatedCollegaRoute
   '/azienda/auth': typeof AziendaAuthRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/legal/cookie': typeof LegalCookieRoute
   '/legal/permessi': typeof LegalPermessiRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -221,6 +260,7 @@ export interface FileRoutesByTo {
   '/app/punti': typeof AuthenticatedAppPuntiRoute
   '/app/sfide': typeof AuthenticatedAppSfideRoute
   '/azienda/onboarding': typeof AuthenticatedAziendaOnboardingRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/azienda': typeof AuthenticatedAziendaIndexRoute
@@ -228,6 +268,8 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -235,11 +277,13 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/cerca-bici': typeof CercaBiciRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/azienda': typeof AuthenticatedAziendaRouteWithChildren
   '/_authenticated/collega': typeof AuthenticatedCollegaRoute
   '/azienda/auth': typeof AziendaAuthRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/legal/cookie': typeof LegalCookieRoute
   '/legal/permessi': typeof LegalPermessiRoute
   '/legal/privacy': typeof LegalPrivacyRoute
@@ -251,6 +295,7 @@ export interface FileRoutesById {
   '/_authenticated/app/punti': typeof AuthenticatedAppPuntiRoute
   '/_authenticated/app/sfide': typeof AuthenticatedAppSfideRoute
   '/_authenticated/azienda/onboarding': typeof AuthenticatedAziendaOnboardingRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/azienda/': typeof AuthenticatedAziendaIndexRoute
@@ -258,6 +303,8 @@ export interface FileRoutesById {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -265,11 +312,13 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/cerca-bici'
+    | '/unsubscribe'
     | '/admin'
     | '/app'
     | '/azienda'
     | '/collega'
     | '/azienda/auth'
+    | '/email/unsubscribe'
     | '/legal/cookie'
     | '/legal/permessi'
     | '/legal/privacy'
@@ -281,6 +330,7 @@ export interface FileRouteTypes {
     | '/app/punti'
     | '/app/sfide'
     | '/azienda/onboarding'
+    | '/lovable/email/suppression'
     | '/admin/'
     | '/app/'
     | '/azienda/'
@@ -288,13 +338,17 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/cerca-bici'
+    | '/unsubscribe'
     | '/collega'
     | '/azienda/auth'
+    | '/email/unsubscribe'
     | '/legal/cookie'
     | '/legal/permessi'
     | '/legal/privacy'
@@ -306,6 +360,7 @@ export interface FileRouteTypes {
     | '/app/punti'
     | '/app/sfide'
     | '/azienda/onboarding'
+    | '/lovable/email/suppression'
     | '/admin'
     | '/app'
     | '/azienda'
@@ -313,17 +368,21 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
     | '/cerca-bici'
+    | '/unsubscribe'
     | '/_authenticated/admin'
     | '/_authenticated/app'
     | '/_authenticated/azienda'
     | '/_authenticated/collega'
     | '/azienda/auth'
+    | '/email/unsubscribe'
     | '/legal/cookie'
     | '/legal/permessi'
     | '/legal/privacy'
@@ -335,6 +394,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/punti'
     | '/_authenticated/app/sfide'
     | '/_authenticated/azienda/onboarding'
+    | '/lovable/email/suppression'
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
     | '/_authenticated/azienda/'
@@ -342,6 +402,8 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -349,19 +411,31 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   CercaBiciRoute: typeof CercaBiciRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
   AziendaAuthRoute: typeof AziendaAuthRoute
+  EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   LegalCookieRoute: typeof LegalCookieRoute
   LegalPermessiRoute: typeof LegalPermessiRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
   LegalTermsRoute: typeof LegalTermsRoute
+  LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicCronMaintenanceRoute: typeof ApiPublicCronMaintenanceRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
+  LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/cerca-bici': {
       id: '/cerca-bici'
       path: '/cerca-bici'
@@ -416,6 +490,13 @@ declare module '@tanstack/react-router' {
       path: '/legal/cookie'
       fullPath: '/legal/cookie'
       preLoaderRoute: typeof LegalCookieRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/azienda/auth': {
@@ -474,6 +555,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/azienda/onboarding': {
       id: '/_authenticated/azienda/onboarding'
       path: '/onboarding'
@@ -522,6 +610,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/bici'
       preLoaderRoute: typeof AuthenticatedAppBiciRouteImport
       parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
@@ -623,15 +725,20 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   CercaBiciRoute: CercaBiciRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
   AziendaAuthRoute: AziendaAuthRoute,
+  EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   LegalCookieRoute: LegalCookieRoute,
   LegalPermessiRoute: LegalPermessiRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
   LegalTermsRoute: LegalTermsRoute,
+  LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicCronMaintenanceRoute: ApiPublicCronMaintenanceRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
+  LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
