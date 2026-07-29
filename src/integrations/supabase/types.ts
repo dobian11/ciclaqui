@@ -386,6 +386,59 @@ export type Database = {
         }
         Relationships: []
       }
+      company_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_name: string | null
+          actor_role: string | null
+          company_id: string
+          created_at: string
+          details: Json
+          document_name: string | null
+          document_path: string | null
+          id: string
+          reason: string | null
+          review_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_name?: string | null
+          actor_role?: string | null
+          company_id: string
+          created_at?: string
+          details?: Json
+          document_name?: string | null
+          document_path?: string | null
+          id?: string
+          reason?: string | null
+          review_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_name?: string | null
+          actor_role?: string | null
+          company_id?: string
+          created_at?: string
+          details?: Json
+          document_name?: string | null
+          document_path?: string | null
+          id?: string
+          reason?: string | null
+          review_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_audit_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_reviews: {
         Row: {
           company_id: string

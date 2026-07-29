@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { isAdmin, adminListVerifications, adminDecideCompany } from "@/lib/admin.functions";
+import { isAdmin, adminListVerifications, adminDecideCompany, adminListAuditLog } from "@/lib/admin.functions";
 import { getCompanyDocUrl } from "@/lib/companies.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
@@ -18,7 +18,7 @@ import {
 import { toast } from "sonner";
 import {
   Loader2, ShieldCheck, Search, FileText, Download, Check, X, History,
-  Building2, Landmark, ChevronDown, ChevronRight, ArrowLeft, Clock, AlertTriangle,
+  Building2, Landmark, ChevronDown, ChevronRight, ArrowLeft, Clock, AlertTriangle, Eye, ScrollText,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/verifiche")({
@@ -70,6 +70,7 @@ function AdminVerificationsPage() {
   const checkAdmin = useServerFn(isAdmin);
   const listVerifications = useServerFn(adminListVerifications);
   const decideCompanyFn = useServerFn(adminDecideCompany);
+  const listAudit = useServerFn(adminListAuditLog);
   const getDocUrl = useServerFn(getCompanyDocUrl);
 
   const [hasSession, setHasSession] = useState<boolean | null>(true);
@@ -77,7 +78,8 @@ function AdminVerificationsPage() {
   const [kind, setKind] = useState<KindFilter>("all");
   const [q, setQ] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [tab, setTab] = useState<"queue" | "history">("queue");
+  const [tab, setTab] = useState<"queue" | "history" | "audit">("queue");
+  const [auditAction, setAuditAction] = useState<"all" | "document_viewed" | "company_approved" | "company_rejected">("all");
   const [rejectFor, setRejectFor] = useState<{ id: string; name: string } | null>(null);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
@@ -101,6 +103,13 @@ function AdminVerificationsPage() {
     queryKey: ["admin-verifications"],
     queryFn: () => listVerifications({}),
     enabled: adminCheck?.admin === true,
+  });
+
+  const { data: auditRows, isLoading: auditLoading } = useQuery({
+    queryKey: ["admin-audit-log", auditAction],
+    queryFn: () =>
+      listAudit({ data: auditAction === "all" ? {} : { action: auditAction } }),
+    enabled: adminCheck?.admin === true && tab === "audit",
   });
 
   const filtered = useMemo(() => {
@@ -180,6 +189,7 @@ function AdminVerificationsPage() {
         qc.invalidateQueries({ queryKey: ["admin-companies"] }),
         qc.invalidateQueries({ queryKey: ["admin-stats"] }),
         qc.invalidateQueries({ queryKey: ["admin-notifications"] }),
+        qc.invalidateQueries({ queryKey: ["admin-audit-log"] }),
       ]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Errore");
@@ -228,8 +238,8 @@ function AdminVerificationsPage() {
         </p>
 
         {/* Tabs */}
-        <div className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-secondary/60 p-1">
-          {(["queue", "history"] as const).map((t) => (
+        <div className="mt-4 grid grid-cols-3 gap-1 rounded-lg bg-secondary/60 p-1">
+          {(["queue", "history", "audit"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -237,12 +247,13 @@ function AdminVerificationsPage() {
                 tab === t ? "bg-background shadow-sm" : "text-muted-foreground"
               }`}
             >
-              {t === "queue" ? "Coda verifiche" : "Cronologia azioni"}
+              {t === "queue" ? "Coda" : t === "history" ? "Cronologia" : "Audit"}
             </button>
           ))}
         </div>
 
         {/* Filtri */}
+        {tab !== "audit" && (
         <Card className="mt-4 space-y-3 p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -288,8 +299,9 @@ function AdminVerificationsPage() {
             ))}
           </div>
         </Card>
+        )}
 
-        {isLoading && (
+        {isLoading && tab !== "audit" && (
           <div className="mt-6 flex justify-center">
             <Loader2 className="size-5 animate-spin text-muted-foreground" />
           </div>
@@ -486,6 +498,102 @@ function AdminVerificationsPage() {
               </ul>
             )}
           </Card>
+        )}
+
+        {/* Registro di audit */}
+        {tab === "audit" && (
+          <>
+            <Card className="mt-4 p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <ScrollText className="size-4" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider">Registro accessi e decisioni</span>
+              </div>
+              <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
+                Ogni apertura di un documento e ogni cambio di stato di verifica viene registrato in modo
+                permanente con autore, data e ora.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {(
+                  [
+                    ["all", "Tutto"],
+                    ["document_viewed", "Documenti visti"],
+                    ["company_approved", "Approvazioni"],
+                    ["company_rejected", "Rifiuti"],
+                  ] as [typeof auditAction, string][]
+                ).map(([a, label]) => (
+                  <button
+                    key={a}
+                    onClick={() => setAuditAction(a)}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
+                      auditAction === a ? "bg-cicla text-cicla-foreground" : "bg-secondary text-muted-foreground"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </Card>
+
+            {auditLoading && (
+              <div className="mt-6 flex justify-center">
+                <Loader2 className="size-5 animate-spin text-muted-foreground" />
+              </div>
+            )}
+
+            {!auditLoading && (auditRows?.length ?? 0) === 0 && (
+              <Card className="mt-3 p-6 text-center text-sm text-muted-foreground">
+                Nessuna voce registrata con questo filtro.
+              </Card>
+            )}
+
+            <ul className="mt-3 space-y-2">
+              {(auditRows ?? []).map((r) => {
+                const viewed = r.action === "document_viewed";
+                const rejected = r.action === "company_rejected";
+                return (
+                  <li key={r.id} className="rounded-md border border-border/60 bg-card p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        {viewed ? (
+                          <Eye className="size-3.5 shrink-0 text-muted-foreground" />
+                        ) : rejected ? (
+                          <X className="size-3.5 shrink-0 text-destructive" />
+                        ) : (
+                          <Check className="size-3.5 shrink-0 text-cicla" />
+                        )}
+                        <span className="truncate text-[12px] font-semibold">{r.company_name}</span>
+                      </span>
+                      <Badge
+                        variant="secondary"
+                        className={`shrink-0 text-[10px] ${
+                          viewed
+                            ? "bg-secondary text-muted-foreground"
+                            : rejected
+                              ? "bg-destructive/15 text-destructive"
+                              : "bg-cicla/15 text-cicla"
+                        }`}
+                      >
+                        {viewed ? "Documento visto" : rejected ? "Rifiutato" : "Approvato"}
+                      </Badge>
+                    </div>
+
+                    <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <Clock className="size-3" /> {fmt(r.created_at)} · {r.actor_name ?? "—"}
+                      {r.actor_role ? ` (${r.actor_role === "admin" ? "admin" : "referente ente"})` : ""}
+                    </div>
+
+                    {r.document_name && (
+                      <div className="mt-1 flex items-center gap-1.5 text-[11px]">
+                        <FileText className="size-3 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{r.document_name}</span>
+                      </div>
+                    )}
+                    {r.reason && <p className="mt-1 text-[11px] text-destructive">Motivo: {r.reason}</p>}
+                  </li>
+                );
+              })}
+            </ul>
+          </>
         )}
       </div>
 

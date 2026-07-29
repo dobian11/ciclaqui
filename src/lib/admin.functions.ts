@@ -276,6 +276,20 @@ export const adminDecideCompany = createServerFn({ method: "POST" })
         .eq("id", latest.id);
     }
 
+    // Audit: chi ha modificato lo stato di verifica dell'ente
+    {
+      const { logCompanyAudit } = await import("@/lib/audit.server");
+      await logCompanyAudit({
+        company_id: data.company_id,
+        action: data.decision === "approved" ? "company_approved" : "company_rejected",
+        actor_id: context.userId,
+        actor_role: "admin",
+        review_id: latest?.id ?? null,
+        reason: data.decision === "rejected" ? (data.reason ?? null) : null,
+        details: { company_name: company?.name ?? null, code: company?.code ?? null },
+      });
+    }
+
     // Marca come lette le notifiche legate a questo ente
     await supabaseAdmin
       .from("admin_notifications")
@@ -567,4 +581,49 @@ export const adminListVerifications = createServerFn({ method: "GET" })
         last_submitted_at: enriched[0]?.submitted_at ?? c.created_at,
       };
     });
+  });
+
+/**
+ * Registro di audit consultabile: chi ha visto i documenti e chi ha
+ * modificato lo stato di verifica degli enti.
+ */
+export const adminListAuditLog = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        company_id: z.string().uuid().optional(),
+        action: z
+          .enum(["document_viewed", "company_approved", "company_rejected", "review_submitted"])
+          .optional(),
+        limit: z.number().int().min(1).max(500).optional(),
+      })
+      .parse(d ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    let q = supabaseAdmin
+      .from("company_audit_log")
+      .select(
+        "id, company_id, action, actor_id, actor_name, actor_role, document_name, document_path, review_id, reason, details, created_at",
+      )
+      .order("created_at", { ascending: false })
+      .limit(data.limit ?? 200);
+    if (data.company_id) q = q.eq("company_id", data.company_id);
+    if (data.action) q = q.eq("action", data.action);
+
+    const { data: rows } = await q;
+    const ids = [...new Set((rows ?? []).map((r) => r.company_id))];
+    const { data: companies } = ids.length
+      ? await supabaseAdmin.from("companies").select("id, name, kind").in("id", ids)
+      : { data: [] as { id: string; name: string; kind: string }[] };
+    const byId = new Map((companies ?? []).map((c) => [c.id, c]));
+
+    return (rows ?? []).map((r) => ({
+      ...r,
+      company_name: byId.get(r.company_id)?.name ?? "—",
+      company_kind: byId.get(r.company_id)?.kind ?? null,
+    }));
   });
