@@ -35,6 +35,7 @@ import { Route as AuthenticatedAppProfiloRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppPrivacyRouteImport } from './routes/_authenticated/app.privacy'
 import { Route as AuthenticatedAppPremiRouteImport } from './routes/_authenticated/app.premi'
 import { Route as AuthenticatedAppBiciRouteImport } from './routes/_authenticated/app.bici'
+import { Route as AuthenticatedAdminVerificheRouteImport } from './routes/_authenticated/admin.verifiche'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -173,6 +174,12 @@ const AuthenticatedAppBiciRoute = AuthenticatedAppBiciRouteImport.update({
   path: '/bici',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const AuthenticatedAdminVerificheRoute =
+  AuthenticatedAdminVerificheRouteImport.update({
+    id: '/verifiche',
+    path: '/verifiche',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const LovableEmailTransactionalSendRoute =
   LovableEmailTransactionalSendRouteImport.update({
     id: '/lovable/email/transactional/send',
@@ -223,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/legal/permessi': typeof LegalPermessiRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/admin/verifiche': typeof AuthenticatedAdminVerificheRoute
   '/app/bici': typeof AuthenticatedAppBiciRoute
   '/app/premi': typeof AuthenticatedAppPremiRoute
   '/app/privacy': typeof AuthenticatedAppPrivacyRoute
@@ -253,6 +261,7 @@ export interface FileRoutesByTo {
   '/legal/permessi': typeof LegalPermessiRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/admin/verifiche': typeof AuthenticatedAdminVerificheRoute
   '/app/bici': typeof AuthenticatedAppBiciRoute
   '/app/premi': typeof AuthenticatedAppPremiRoute
   '/app/privacy': typeof AuthenticatedAppPrivacyRoute
@@ -288,6 +297,7 @@ export interface FileRoutesById {
   '/legal/permessi': typeof LegalPermessiRoute
   '/legal/privacy': typeof LegalPrivacyRoute
   '/legal/terms': typeof LegalTermsRoute
+  '/_authenticated/admin/verifiche': typeof AuthenticatedAdminVerificheRoute
   '/_authenticated/app/bici': typeof AuthenticatedAppBiciRoute
   '/_authenticated/app/premi': typeof AuthenticatedAppPremiRoute
   '/_authenticated/app/privacy': typeof AuthenticatedAppPrivacyRoute
@@ -323,6 +333,7 @@ export interface FileRouteTypes {
     | '/legal/permessi'
     | '/legal/privacy'
     | '/legal/terms'
+    | '/admin/verifiche'
     | '/app/bici'
     | '/app/premi'
     | '/app/privacy'
@@ -353,6 +364,7 @@ export interface FileRouteTypes {
     | '/legal/permessi'
     | '/legal/privacy'
     | '/legal/terms'
+    | '/admin/verifiche'
     | '/app/bici'
     | '/app/premi'
     | '/app/privacy'
@@ -387,6 +399,7 @@ export interface FileRouteTypes {
     | '/legal/permessi'
     | '/legal/privacy'
     | '/legal/terms'
+    | '/_authenticated/admin/verifiche'
     | '/_authenticated/app/bici'
     | '/_authenticated/app/premi'
     | '/_authenticated/app/privacy'
@@ -611,6 +624,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppBiciRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/_authenticated/admin/verifiche': {
+      id: '/_authenticated/admin/verifiche'
+      path: '/verifiche'
+      fullPath: '/admin/verifiche'
+      preLoaderRoute: typeof AuthenticatedAdminVerificheRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/lovable/email/transactional/send': {
       id: '/lovable/email/transactional/send'
       path: '/lovable/email/transactional/send'
@@ -657,10 +677,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminVerificheRoute: typeof AuthenticatedAdminVerificheRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminVerificheRoute: AuthenticatedAdminVerificheRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 
