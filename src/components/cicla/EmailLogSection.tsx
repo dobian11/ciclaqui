@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { listCompanyEmailLog } from "@/lib/email-log.functions";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MailCheck, MailX, Mail } from "lucide-react";
+import { Loader2, MailCheck, MailX, Mail, BellRing, BellOff } from "lucide-react";
 
 function fmt(d?: string | null) {
   return d ? new Date(d).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" }) : "—";
@@ -17,7 +17,7 @@ type Props = {
 };
 
 /** Log invii email di decisione (esito riuscito/fallito), visibile ad admin ed enti. */
-export function EmailLogSection({ companyId, showCompanyName = false, title = "Log invii email" }: Props) {
+export function EmailLogSection({ companyId, showCompanyName = false, title = "Log invii notifiche" }: Props) {
   const listLog = useServerFn(listCompanyEmailLog);
   const { data, isLoading } = useQuery({
     queryKey: ["company-email-log", companyId ?? "all"],
@@ -44,19 +44,26 @@ export function EmailLogSection({ companyId, showCompanyName = false, title = "L
         </div>
       ) : rows.length === 0 ? (
         <p className="mt-3 text-xs text-muted-foreground">
-          Nessuna email di decisione inviata finora.
+          Nessuna notifica di decisione inviata finora.
         </p>
       ) : (
         <ul className="mt-3 space-y-2">
           {rows.map((r) => {
             const ok = r.status === "sent";
+            const isPush = r.channel === "push";
             return (
               <li
                 key={r.id}
                 className="rounded-xl border border-border/60 bg-secondary/40 px-3 py-2.5"
               >
                 <div className="flex items-start gap-2">
-                  {ok ? (
+                  {isPush ? (
+                    ok ? (
+                      <BellRing className="mt-0.5 size-4 shrink-0 text-cicla" />
+                    ) : (
+                      <BellOff className="mt-0.5 size-4 shrink-0 text-destructive" />
+                    )
+                  ) : ok ? (
                     <MailCheck className="mt-0.5 size-4 shrink-0 text-cicla" />
                   ) : (
                     <MailX className="mt-0.5 size-4 shrink-0 text-destructive" />
@@ -66,6 +73,9 @@ export function EmailLogSection({ companyId, showCompanyName = false, title = "L
                       <span className="text-xs font-semibold">
                         {r.decision === "approved" ? "Esito: approvato" : "Esito: rifiutato"}
                       </span>
+                      <Badge variant="secondary" className="text-[10px]">
+                        {isPush ? "Push" : "Email"}
+                      </Badge>
                       <Badge
                         className={
                           ok
@@ -82,7 +92,8 @@ export function EmailLogSection({ companyId, showCompanyName = false, title = "L
                       </div>
                     )}
                     <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                      A: {r.recipient_email}
+                      {isPush ? "Dispositivi: " : "A: "}
+                      {r.recipient_email}
                     </div>
                     <div className="mt-0.5 text-[11px] text-muted-foreground">{fmt(r.created_at)}</div>
                     {!ok && r.error_message && (
