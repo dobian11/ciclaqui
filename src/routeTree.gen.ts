@@ -32,6 +32,7 @@ import { Route as AuthenticatedAppProfiloRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppPrivacyRouteImport } from './routes/_authenticated/app.privacy'
 import { Route as AuthenticatedAppPremiRouteImport } from './routes/_authenticated/app.premi'
 import { Route as AuthenticatedAppBiciRouteImport } from './routes/_authenticated/app.bici'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/public/cron/maintenance'
 
 const CercaBiciRoute = CercaBiciRouteImport.update({
@@ -150,6 +151,12 @@ const AuthenticatedAppBiciRoute = AuthenticatedAppBiciRouteImport.update({
   path: '/bici',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronMaintenanceRoute =
   ApiPublicCronMaintenanceRouteImport.update({
     id: '/api/public/cron/maintenance',
@@ -181,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/app/': typeof AuthenticatedAppIndexRoute
   '/azienda/': typeof AuthenticatedAziendaIndexRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -203,6 +211,7 @@ export interface FileRoutesByTo {
   '/app': typeof AuthenticatedAppIndexRoute
   '/azienda': typeof AuthenticatedAziendaIndexRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -230,6 +239,7 @@ export interface FileRoutesById {
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/azienda/': typeof AuthenticatedAziendaIndexRoute
   '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -257,6 +267,7 @@ export interface FileRouteTypes {
     | '/app/'
     | '/azienda/'
     | '/api/public/cron/maintenance'
+    | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -279,6 +290,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/azienda'
     | '/api/public/cron/maintenance'
+    | '/lovable/email/queue/process'
   id:
     | '__root__'
     | '/'
@@ -305,6 +317,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/'
     | '/_authenticated/azienda/'
     | '/api/public/cron/maintenance'
+    | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -318,6 +331,7 @@ export interface RootRouteChildren {
   LegalPrivacyRoute: typeof LegalPrivacyRoute
   LegalTermsRoute: typeof LegalTermsRoute
   ApiPublicCronMaintenanceRoute: typeof ApiPublicCronMaintenanceRoute
+  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -483,6 +497,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppBiciRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/maintenance': {
       id: '/api/public/cron/maintenance'
       path: '/api/public/cron/maintenance'
@@ -568,6 +589,7 @@ const rootRouteChildren: RootRouteChildren = {
   LegalPrivacyRoute: LegalPrivacyRoute,
   LegalTermsRoute: LegalTermsRoute,
   ApiPublicCronMaintenanceRoute: ApiPublicCronMaintenanceRoute,
+  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
