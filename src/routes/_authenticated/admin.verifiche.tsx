@@ -164,11 +164,13 @@ function AdminVerificationsPage() {
 
       const email = (res as { email?: Record<string, unknown> | null })?.email;
       if (email?.recipient) {
+        const idem = `company-decision-${id}-${decision}-${String(email.decidedAt ?? "")}`;
+        let sendError: string | null = null;
         try {
           await sendTransactionalEmail({
             templateName: "company-decision",
             recipientEmail: String(email.recipient),
-            idempotencyKey: `company-decision-${id}-${decision}-${String(email.decidedAt ?? "")}`,
+            idempotencyKey: idem,
             templateData: {
               companyName: email.companyName,
               kind: email.kind,
@@ -179,10 +181,26 @@ function AdminVerificationsPage() {
               appUrl: window.location.origin,
             },
           });
-        } catch {
+        } catch (err) {
+          sendError = err instanceof Error ? err.message : "Errore invio email";
           toast.warning("Decisione salvata, ma l'email all'ente non è partita");
         }
+        try {
+          await logEmailFn({
+            data: {
+              company_id: id,
+              recipient_email: String(email.recipient),
+              decision,
+              status: sendError ? "failed" : "sent",
+              error_message: sendError ? sendError.slice(0, 500) : null,
+              idempotency_key: idem,
+            },
+          });
+        } catch {
+          /* il log non deve bloccare la decisione */
+        }
       }
+
 
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["admin-verifications"] }),
