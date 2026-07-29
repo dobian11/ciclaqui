@@ -30,14 +30,7 @@ export async function getPostLoginRedirect(): Promise<string> {
     return "/azienda";
   }
 
-  // Utente semplice: se non è ancora collegato a un ente o mancano i dati
-  // anagrafici (tipico dopo il login con Google) chiediamo di completare.
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("company_id, full_name")
-    .eq("id", userData.user.id)
-    .maybeSingle();
-  if (!profile?.company_id || !profile.full_name?.trim()) return "/collega";
-
+  // Registrazione solo con email/password + codice ente verificato:
+  // l'utente entra sempre direttamente nell'app.
   return "/app";
 }

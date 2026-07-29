@@ -11,8 +11,6 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, User } from "lucide-react";
 import { getPostLoginRedirect } from "@/lib/auth-redirect";
-import { requestManagerRole } from "@/lib/companies.functions";
-import { GoogleSignInButton, AppleSignInButton, AuthDivider } from "@/components/cicla/GoogleSignInButton";
 
 type Search = { mode?: "login" | "signup"; manager?: boolean };
 
@@ -42,18 +40,10 @@ function CompanyAuthPage() {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return;
-      // Ritorno dal login Google dall'area enti: attiva il ruolo referente.
-      if (search.manager) {
-        try {
-          await requestManagerRole();
-        } catch {
-          toast.error("Impossibile attivare l'area enti per questo account");
-        }
-      }
       const dest = await getPostLoginRedirect();
       navigate({ to: dest as never });
     });
-  }, [navigate, search.manager]);
+  }, [navigate]);
 
   async function redirectAfter() {
     await router.invalidate();
@@ -80,12 +70,16 @@ function CompanyAuthPage() {
     if (!acceptTerms) return toast.error("Devi accettare i termini per continuare");
     const fd = new FormData(e.currentTarget);
     const manager_name = String(fd.get("manager_name") || "").trim();
+    const phone = String(fd.get("phone") || "").trim();
     const email = String(fd.get("email") || "").trim();
     const password = String(fd.get("password") || "");
+    const password2 = String(fd.get("password2") || "");
 
-    if (manager_name.length < 2) return toast.error("Inserisci il nome del referente");
+    if (manager_name.length < 2) return toast.error("Inserisci nome e cognome del referente");
+    if (!/^[+0-9 ().-]{6,20}$/.test(phone)) return toast.error("Inserisci un numero di telefono valido");
     if (!email) return toast.error("Inserisci l'email");
     if (password.length < 8) return toast.error("Password almeno 8 caratteri");
+    if (password !== password2) return toast.error("Le due password non coincidono");
 
     setLoading(true);
     const { data: signUpData, error } = await supabase.auth.signUp({
@@ -93,7 +87,7 @@ function CompanyAuthPage() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/azienda/onboarding`,
-        data: { full_name: manager_name, signup_kind: "company_manager" },
+        data: { full_name: manager_name, phone, signup_kind: "company_manager" },
       },
     });
     if (error) {
@@ -143,16 +137,11 @@ function CompanyAuthPage() {
               <p className="text-sm font-semibold">Conferma la tua email</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Abbiamo inviato un link di conferma a <strong>{pendingEmail}</strong>.
-                Aprilo per attivare l'account e completare la registrazione dell'ente.
+                Aprilo per attivare l'account: verrai portato al modulo di registrazione
+                dell'ente, che resterà in attesa di verifica da parte dell'admin.
               </p>
             </div>
           )}
-
-          <div className="space-y-2.5">
-            <GoogleSignInButton redirectPath="/azienda/auth?manager=1" />
-            <AppleSignInButton redirectPath="/azienda/auth?manager=1" />
-          </div>
-          <AuthDivider />
 
           <Tabs defaultValue={defaultTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -183,12 +172,20 @@ function CompanyAuthPage() {
                   <Input id="su-mname" name="manager_name" required maxLength={80} />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="su-cphone">Numero di telefono</Label>
+                  <Input id="su-cphone" name="phone" type="tel" required maxLength={20} autoComplete="tel" placeholder="+39 333 1234567" />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="su-cemail">Email referente</Label>
                   <Input id="su-cemail" name="email" type="email" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="su-cpwd">Password</Label>
-                  <Input id="su-cpwd" name="password" type="password" required minLength={8} />
+                  <Input id="su-cpwd" name="password" type="password" required minLength={8} autoComplete="new-password" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="su-cpwd2">Ripeti password</Label>
+                  <Input id="su-cpwd2" name="password2" type="password" required minLength={8} autoComplete="new-password" />
                 </div>
                 <label className="flex items-start gap-2.5 rounded-lg border border-border/60 bg-muted/30 p-3">
                   <Checkbox
