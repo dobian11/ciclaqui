@@ -50,7 +50,7 @@ export async function logCompanyAudit(entry: CompanyAuditEntry): Promise<void> {
       document_path: entry.document_path ?? null,
       review_id: entry.review_id ?? null,
       reason: entry.reason ?? null,
-      details: entry.details ?? {},
+      details: (entry.details ?? {}) as never,
     });
   } catch (e) {
     console.error("[audit] impossibile registrare la voce:", e);
