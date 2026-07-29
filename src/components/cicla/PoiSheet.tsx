@@ -235,16 +235,16 @@ export function NavigationBanner({
         </div>
 
         {/* riga 3 — azioni */}
-        <div className="mt-1.5 flex items-center justify-end gap-1">
+        <div className="mt-1.5 flex flex-wrap items-center justify-end gap-1.5">
           {onRefresh && (
             <button
               type="button"
               onClick={onRefresh}
-              className="grid size-6 place-items-center rounded-full bg-black/20 text-white active:scale-95"
+              className="grid size-7 shrink-0 place-items-center rounded-full bg-black/20 text-white active:scale-95"
               aria-label="Aggiorna posizione GPS"
               title="Aggiorna posizione"
             >
-              <Locate size={11} strokeWidth={2.8} />
+              <Locate size={12} strokeWidth={2.8} />
             </button>
           )}
           {onRecalc && (
@@ -252,22 +252,22 @@ export function NavigationBanner({
               type="button"
               onClick={onRecalc}
               disabled={recalculating}
-              className="grid size-6 place-items-center rounded-full bg-black/20 text-white active:scale-95 disabled:opacity-50"
+              className="grid size-7 shrink-0 place-items-center rounded-full bg-black/20 text-white active:scale-95 disabled:opacity-50"
               aria-label="Ricalcola percorso"
               title="Ricalcola"
             >
-              <RotateCw size={11} strokeWidth={2.8} />
+              <RotateCw size={12} strokeWidth={2.8} />
             </button>
           )}
           {onArrived && (
             <button
               type="button"
               onClick={onArrived}
-              className="grid size-6 place-items-center rounded-full bg-white text-cicla active:scale-95"
+              className="grid size-7 shrink-0 place-items-center rounded-full bg-white text-cicla active:scale-95"
               aria-label="Sono arrivato"
               title="Sono arrivato"
             >
-              <Flag size={11} strokeWidth={2.8} />
+              <Flag size={12} strokeWidth={2.8} />
             </button>
           )}
           {onCancel && (
@@ -278,24 +278,25 @@ export function NavigationBanner({
                   onCancel();
                 }
               }}
-              className="grid h-6 items-center gap-1 rounded-full bg-red-500/90 px-2 text-[10px] font-bold uppercase tracking-wider text-white active:scale-95"
+              className="inline-flex h-7 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full bg-red-500/90 px-2.5 text-[10px] font-bold uppercase leading-none tracking-wider text-white active:scale-95"
               aria-label="Annulla tragitto"
               title="Annulla tragitto (non salva)"
             >
-              <X size={11} strokeWidth={3} />
-              Annulla
+              <X size={12} strokeWidth={3} className="shrink-0" />
+              <span>Annulla</span>
             </button>
           )}
           <button
             type="button"
             onClick={onStop}
-            className="grid size-6 place-items-center rounded-full bg-black/25 text-white"
+            className="grid size-7 shrink-0 place-items-center rounded-full bg-black/25 text-white"
             aria-label="Chiudi navigazione"
             title="Chiudi navigazione"
           >
-            <X size={11} strokeWidth={3} />
+            <X size={12} strokeWidth={3} />
           </button>
         </div>
+
       </div>
     </div>
   );
