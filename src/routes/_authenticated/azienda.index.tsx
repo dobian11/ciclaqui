@@ -198,12 +198,6 @@ function CompanyDashboard() {
 
         <NotificationsSection />
 
-        {/* Storico revisioni */}
-
-
-
-
-        {/* Storico revisioni */}
         {reviews && reviews.length > 0 && (
           <Card className="mt-4 p-5">
             <div className="flex items-center gap-2 text-muted-foreground">
