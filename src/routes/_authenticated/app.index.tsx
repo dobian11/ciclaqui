@@ -937,3 +937,16 @@ function Row({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+/** Placeholder leggero mostrato mentre il chunk della mappa si scarica. */
+function MapSkeleton() {
+  return (
+    <div className="absolute inset-0 bg-background">
+      <div className="absolute inset-0 animate-pulse bg-gradient-to-b from-muted/20 via-muted/10 to-transparent" />
+      <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 items-center justify-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Caricamento mappa…
+      </div>
+    </div>
+  );
+}
