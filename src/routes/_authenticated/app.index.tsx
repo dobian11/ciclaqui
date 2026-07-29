@@ -452,27 +452,30 @@ function MapHome() {
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-background">
-      <GoogleMapView
-        position={geo.position}
-        mode={liveMode}
-        follow={follow}
-        path={polylinePath}
-        poiCategories={poiCategories}
-        refreshKey={refreshKey}
-        onRefreshError={(msg) => {
-          setLayerError(msg);
-          toast.error(msg);
-          window.setTimeout(() => setLayerError(null), 5000);
-          // sblocca il pulsante anche in caso di errore
-          isRefreshingRef.current = false;
-          setRefreshing(false);
-        }}
-        onRefreshComplete={onRefreshComplete}
-        onPoiLoadingChange={setPoiLoading}
-        onPoiSelect={(p) => setSelectedPoi(p)}
-        selectedPoiId={selectedPoi?.id ?? routeData?.destination.id ?? null}
-        routePath={routeData?.path ?? null}
-      />
+      <Suspense fallback={<MapSkeleton />}>
+        <GoogleMapView
+          position={geo.position}
+          mode={liveMode}
+          follow={follow}
+          path={polylinePath}
+          poiCategories={poiCategories}
+          refreshKey={refreshKey}
+          onRefreshError={(msg) => {
+            setLayerError(msg);
+            toast.error(msg);
+            window.setTimeout(() => setLayerError(null), 5000);
+            // sblocca il pulsante anche in caso di errore
+            isRefreshingRef.current = false;
+            setRefreshing(false);
+          }}
+          onRefreshComplete={onRefreshComplete}
+          onPoiLoadingChange={setPoiLoading}
+          onPoiSelect={(p) => setSelectedPoi(p)}
+          selectedPoiId={selectedPoi?.id ?? routeData?.destination.id ?? null}
+          routePath={routeData?.path ?? null}
+        />
+      </Suspense>
+
 
       <GpsPermissionSheet
         error={geo.error}
