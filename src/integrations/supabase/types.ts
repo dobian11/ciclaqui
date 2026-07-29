@@ -441,6 +441,7 @@ export type Database = {
       }
       company_email_log: {
         Row: {
+          channel: string
           company_id: string
           created_at: string
           decision: string | null
@@ -455,6 +456,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          channel?: string
           company_id: string
           created_at?: string
           decision?: string | null
@@ -469,6 +471,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          channel?: string
           company_id?: string
           created_at?: string
           decision?: string | null
@@ -786,6 +789,7 @@ export type Database = {
           inapp_trip_flag: boolean
           push_bike: boolean
           push_challenges: boolean
+          push_company: boolean
           push_rewards: boolean
           push_streak: boolean
           push_trip_flag: boolean
@@ -808,6 +812,7 @@ export type Database = {
           inapp_trip_flag?: boolean
           push_bike?: boolean
           push_challenges?: boolean
+          push_company?: boolean
           push_rewards?: boolean
           push_streak?: boolean
           push_trip_flag?: boolean
@@ -830,6 +835,7 @@ export type Database = {
           inapp_trip_flag?: boolean
           push_bike?: boolean
           push_challenges?: boolean
+          push_company?: boolean
           push_rewards?: boolean
           push_streak?: boolean
           push_trip_flag?: boolean
