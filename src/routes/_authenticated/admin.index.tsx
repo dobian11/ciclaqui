@@ -94,6 +94,8 @@ function AdminDashboard() {
         { event: "*", schema: "public", table: "admin_notifications" },
         (payload) => {
           qc.invalidateQueries({ queryKey: ["admin-notifications"] });
+          qc.invalidateQueries({ queryKey: ["admin-companies"] });
+          qc.invalidateQueries({ queryKey: ["admin-stats"] });
           if (payload.eventType === "INSERT") {
             const n = payload.new as { title?: string; message?: string };
             toast(n.title ?? "Nuova notifica", { description: n.message });
@@ -102,19 +104,14 @@ function AdminDashboard() {
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "companies" },
+        { event: "*", schema: "public", table: "company_reviews" },
         () => {
+          qc.invalidateQueries({ queryKey: ["admin-company-reviews"] });
           qc.invalidateQueries({ queryKey: ["admin-companies"] });
           qc.invalidateQueries({ queryKey: ["admin-stats"] });
         },
       )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "company_reviews" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["admin-company-reviews"] });
-        },
-      )
+
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
