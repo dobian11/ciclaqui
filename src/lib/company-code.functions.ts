@@ -1,7 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import type { Database } from "@/integrations/supabase/types";
 
 const schema = z.object({ code: z.string().trim().min(3).max(20) });
 
@@ -21,8 +19,6 @@ export const checkCompanyCode = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => schema.parse(input))
   .handler(async ({ data }): Promise<CompanyCodeCheck> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    void createClient<Database>;
-
     const { data: company } = await supabaseAdmin
       .from("companies")
       .select("name, kind, status")
