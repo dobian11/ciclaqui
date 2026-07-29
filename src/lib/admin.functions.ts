@@ -324,3 +324,101 @@ export const adminListCompanyReviews = createServerFn({ method: "GET" })
       .order("submitted_at", { ascending: false });
     return rows ?? [];
   });
+
+/* ─────────────────  Coda anti-frode (trip_flags)  ───────────────── */
+
+export const adminListTripFlags = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: flags } = await supabaseAdmin
+      .from("trip_flags")
+      .select("id, trip_id, user_id, score, declared_mode, predicted_mode, reason, status, created_at")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (!flags?.length) return [];
+
+    const userIds = [...new Set(flags.map((f) => f.user_id))];
+    const tripIds = [...new Set(flags.map((f) => f.trip_id))];
+    const [{ data: profiles }, { data: trips }] = await Promise.all([
+      supabaseAdmin.from("profiles").select("id, full_name").in("id", userIds),
+      supabaseAdmin.from("trips").select("id, distance_km, points_earned, started_at").in("id", tripIds),
+    ]);
+    const nameOf = new Map((profiles ?? []).map((p) => [p.id, p.full_name]));
+    const tripOf = new Map((trips ?? []).map((t) => [t.id, t]));
+
+    return flags.map((f) => ({
+      ...f,
+      user_name: nameOf.get(f.user_id) ?? "—",
+      distance_km: Number(tripOf.get(f.trip_id)?.distance_km ?? 0),
+      points_earned: tripOf.get(f.trip_id)?.points_earned ?? 0,
+      started_at: tripOf.get(f.trip_id)?.started_at ?? f.created_at,
+    }));
+  });
+
+export const adminDecideTripFlag = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({ flag_id: z.string().uuid(), decision: z.enum(["confirmed", "dismissed"]) })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: flag } = await supabaseAdmin
+      .from("trip_flags")
+      .select("id, trip_id, user_id, status")
+      .eq("id", data.flag_id)
+      .maybeSingle();
+    if (!flag) throw new Error("Segnalazione non trovata");
+    if (flag.status !== "pending") throw new Error("Segnalazione già gestita");
+
+    if (data.decision === "confirmed") {
+      // Frode confermata: revoca i punti del viaggio.
+      const { data: trip } = await supabaseAdmin
+        .from("trips")
+        .select("id, points_earned")
+        .eq("id", flag.trip_id)
+        .maybeSingle();
+      const pts = trip?.points_earned ?? 0;
+      if (pts > 0) {
+        const { data: wallet } = await supabaseAdmin
+          .from("wallets")
+          .select("points_balance, lifetime_points")
+          .eq("user_id", flag.user_id)
+          .maybeSingle();
+        await supabaseAdmin
+          .from("wallets")
+          .update({
+            points_balance: Math.max(0, (wallet?.points_balance ?? 0) - pts),
+            lifetime_points: Math.max(0, (wallet?.lifetime_points ?? 0) - pts),
+          })
+          .eq("user_id", flag.user_id);
+        await supabaseAdmin.from("point_transactions").insert({
+          user_id: flag.user_id,
+          delta_points: -pts,
+          delta_eur: 0,
+          reason: "fraud_revoke",
+          trip_id: flag.trip_id,
+        });
+        await supabaseAdmin
+          .from("trips")
+          .update({ points_earned: 0, anomaly_flag: true, anomaly_reason: "Confermato da revisione admin" })
+          .eq("id", flag.trip_id);
+      }
+    }
+
+    const { error } = await supabaseAdmin
+      .from("trip_flags")
+      .update({
+        status: data.decision,
+        reviewed_by: context.userId,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("id", flag.id);
+    if (error) throw new Error("Aggiornamento fallito");
+    return { ok: true as const };
+  });
