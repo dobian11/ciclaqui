@@ -22,6 +22,8 @@ function isLovableHost() {
   return LOVABLE_HOSTS.some((d) => h.endsWith(d)) || h === "localhost" || h === "127.0.0.1";
 }
 
+const KEY_CACHE = "cicla:gmaps-key";
+
 async function resolveKey(): Promise<string | null> {
   const managed = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY as
     | string
@@ -29,10 +31,24 @@ async function resolveKey(): Promise<string | null> {
   // Sul dominio custom la chiave gestita è bloccata dal referrer restriction:
   // usiamo la chiave Google dell'utente esposta dal server.
   if (!isLovableHost()) {
+    // Cache di sessione: evita un round-trip al server ad ogni ricarica.
+    try {
+      const cached = sessionStorage.getItem(KEY_CACHE);
+      if (cached) return cached;
+    } catch {
+      /* storage non disponibile */
+    }
     try {
       const { getMapsBrowserKey } = await import("@/lib/maps-key.functions");
       const res = await getMapsBrowserKey();
-      if (res?.key) return res.key;
+      if (res?.key) {
+        try {
+          sessionStorage.setItem(KEY_CACHE, res.key);
+        } catch {
+          /* ignore */
+        }
+        return res.key;
+      }
     } catch {
       /* fallback sotto */
     }
@@ -80,3 +96,24 @@ export function loadGoogleMaps(libraries: string[] = ["places", "geometry"]): Pr
 
   return loadPromise;
 }
+
+/**
+ * Avvia il download dell'SDK (e la risoluzione della chiave) quando il browser
+ * è inattivo, così la mappa è già pronta quando l'utente apre la scheda Mappa.
+ * Non blocca il first render: gira in idle e ignora gli errori.
+ */
+export function prefetchGoogleMaps() {
+  if (typeof window === "undefined") return;
+  if ((window as any).google?.maps || loadPromise) return;
+  const run = () => {
+    loadGoogleMaps().catch(() => {
+      /* la schermata mappa mostrerà l'errore reale */
+    });
+  };
+  const ric = (window as any).requestIdleCallback as
+    | ((cb: () => void, opts?: { timeout: number }) => number)
+    | undefined;
+  if (ric) ric(run, { timeout: 2500 });
+  else window.setTimeout(run, 400);
+}
+

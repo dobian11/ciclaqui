@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { GoogleMapView } from "@/components/cicla/GoogleMapView";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+// La mappa (componente + SDK Google) è il chunk più pesante della schermata:
+// caricandola in lazy, controlli, GPS e UI si vedono subito.
+const GoogleMapView = lazy(() =>
+  import("@/components/cicla/GoogleMapView").then((m) => ({ default: m.GoogleMapView })),
+);
+
 import { PoiSheet, NavigationBanner } from "@/components/cicla/PoiSheet";
 import { SourceErrorChip, ErrorDot } from "@/components/cicla/SourceErrorChip";
 import { GpsPermissionSheet } from "@/components/cicla/GpsPermissionSheet";
@@ -447,27 +452,30 @@ function MapHome() {
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-background">
-      <GoogleMapView
-        position={geo.position}
-        mode={liveMode}
-        follow={follow}
-        path={polylinePath}
-        poiCategories={poiCategories}
-        refreshKey={refreshKey}
-        onRefreshError={(msg) => {
-          setLayerError(msg);
-          toast.error(msg);
-          window.setTimeout(() => setLayerError(null), 5000);
-          // sblocca il pulsante anche in caso di errore
-          isRefreshingRef.current = false;
-          setRefreshing(false);
-        }}
-        onRefreshComplete={onRefreshComplete}
-        onPoiLoadingChange={setPoiLoading}
-        onPoiSelect={(p) => setSelectedPoi(p)}
-        selectedPoiId={selectedPoi?.id ?? routeData?.destination.id ?? null}
-        routePath={routeData?.path ?? null}
-      />
+      <Suspense fallback={<MapSkeleton />}>
+        <GoogleMapView
+          position={geo.position}
+          mode={liveMode}
+          follow={follow}
+          path={polylinePath}
+          poiCategories={poiCategories}
+          refreshKey={refreshKey}
+          onRefreshError={(msg) => {
+            setLayerError(msg);
+            toast.error(msg);
+            window.setTimeout(() => setLayerError(null), 5000);
+            // sblocca il pulsante anche in caso di errore
+            isRefreshingRef.current = false;
+            setRefreshing(false);
+          }}
+          onRefreshComplete={onRefreshComplete}
+          onPoiLoadingChange={setPoiLoading}
+          onPoiSelect={(p) => setSelectedPoi(p)}
+          selectedPoiId={selectedPoi?.id ?? routeData?.destination.id ?? null}
+          routePath={routeData?.path ?? null}
+        />
+      </Suspense>
+
 
       <GpsPermissionSheet
         error={geo.error}
@@ -926,6 +934,19 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between gap-3 border-b border-white/5 pb-1.5 last:border-0 last:pb-0">
       <span className="text-muted-foreground">{label}</span>
       <span className="font-display font-bold tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+/** Placeholder leggero mostrato mentre il chunk della mappa si scarica. */
+function MapSkeleton() {
+  return (
+    <div className="absolute inset-0 bg-background">
+      <div className="absolute inset-0 animate-pulse bg-gradient-to-b from-muted/20 via-muted/10 to-transparent" />
+      <div className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 items-center justify-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Caricamento mappa…
+      </div>
     </div>
   );
 }

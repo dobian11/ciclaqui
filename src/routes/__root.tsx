@@ -106,6 +106,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      // Mappa: apre in anticipo le connessioni verso Google Maps e i tile server
+      // così il primo render della mappa non paga handshake DNS/TLS.
+      { rel: "preconnect", href: "https://maps.googleapis.com", crossOrigin: "anonymous" },
+      { rel: "preconnect", href: "https://maps.gstatic.com", crossOrigin: "anonymous" },
+      { rel: "dns-prefetch", href: "https://khms0.googleapis.com" },
+      { rel: "dns-prefetch", href: "https://connector-gateway.lovable.dev" },
+
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap",
