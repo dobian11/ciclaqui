@@ -347,8 +347,46 @@ export const adminDecideCompany = createServerFn({ method: "POST" })
       );
     }
 
+    // ---- Push nativa (Android/iOS) con fallback su email + in-app ----
+    let push: { configured: boolean; sent: number; failed: number; tokens: number; error?: string } = {
+      configured: false, sent: 0, failed: 0, tokens: 0,
+    };
+    if (recipients.size > 0) {
+      try {
+        const { sendPushToUsers } = await import("@/lib/push.server");
+        push = await sendPushToUsers({
+          userIds: [...recipients],
+          title,
+          body,
+          preferenceKey: "push_company",
+          data: {
+            type: approved ? "company_approved" : "company_rejected",
+            company_id: data.company_id,
+            url: "/azienda",
+          },
+        });
+      } catch (e) {
+        push = { configured: true, sent: 0, failed: 0, tokens: 0, error: e instanceof Error ? e.message : "Errore push" };
+      }
+
+      if (push.configured && push.tokens > 0) {
+        await supabaseAdmin.from("company_email_log").insert({
+          company_id: data.company_id,
+          review_id: latest?.id ?? null,
+          template_name: "company-decision",
+          channel: "push",
+          decision: data.decision,
+          recipient_email: `${push.tokens} dispositivo/i`,
+          status: push.sent > 0 ? "sent" : "failed",
+          error_message: push.sent > 0 ? null : (push.error ?? "Nessuna push consegnata").slice(0, 500),
+          sent_by: context.userId,
+        });
+      }
+    }
+
     return {
       ok: true,
+      push,
       email: company?.contact_email
         ? {
             recipient: company.contact_email,
