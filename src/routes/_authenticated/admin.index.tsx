@@ -72,6 +72,7 @@ function AdminDashboard() {
   const markRead = useServerFn(adminMarkNotificationRead);
   const listCompanyReviews = useServerFn(adminListCompanyReviews);
   const getDocUrl = useServerFn(getCompanyDocUrl);
+  const logEmailFn = useServerFn(logCompanyDecisionEmail);
   const [expandedCompanyId, setExpandedCompanyId] = useState<string | null>(null);
 
   const { data: companies } = useQuery({
