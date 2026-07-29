@@ -1183,6 +1183,53 @@ export type Database = {
           },
         ]
       }
+      user_notifications: {
+        Row: {
+          body: string | null
+          company_id: string | null
+          created_at: string
+          id: string
+          payload: Json
+          read_at: string | null
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json
+          read_at?: string | null
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          company_id?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json
+          read_at?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notifications_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
