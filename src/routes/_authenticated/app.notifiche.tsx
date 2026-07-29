@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Bell, BellRing, ChevronLeft, Mail, Smartphone, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { usePush } from "@/hooks/use-push";
+import { NotificationsSection } from "@/components/cicla/NotificationsSection";
 
 export const Route = createFileRoute("/_authenticated/app/notifiche")({
   component: NotifichePage,
@@ -106,6 +107,8 @@ function NotifichePage() {
         <p className="text-xs text-muted-foreground">
           Scegli per ogni tipo di avviso se riceverlo dentro l'app (centro notifiche e push) oppure via email.
         </p>
+
+        <NotificationsSection alwaysShow />
 
         <div className="rounded-2xl border border-border bg-card/50 p-4">
           <div className="flex items-center gap-3">
