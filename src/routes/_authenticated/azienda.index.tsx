@@ -11,6 +11,7 @@ import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { CompanyReviewDialog } from "@/components/cicla/CompanyReviewDialog";
 import { PendingCompanyDashboard } from "@/components/cicla/PendingCompanyDashboard";
 import { CompanyRewardsSection } from "@/components/cicla/CompanyRewardsSection";
+import { NotificationsSection } from "@/components/cicla/NotificationsSection";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
