@@ -97,18 +97,20 @@ export async function sendPushToUsers(input: {
 
   // Rispetta le preferenze push dell'utente (default: attivo se non ha una riga).
   if (input.preferenceKey) {
-    const { data: prefs } = await supabaseAdmin
+    const { data: prefsRaw } = await supabaseAdmin
       .from("notification_preferences")
-      .select(`user_id, ${input.preferenceKey}`)
+      .select("*")
       .in("user_id", userIds);
+    const prefs = (prefsRaw ?? []) as unknown as Array<Record<string, unknown>>;
     const optedOut = new Set(
-      (prefs ?? [])
-        .filter((p) => (p as Record<string, unknown>)[input.preferenceKey!] === false)
-        .map((p) => (p as { user_id: string }).user_id),
+      prefs
+        .filter((p) => p[input.preferenceKey!] === false)
+        .map((p) => String(p.user_id)),
     );
     userIds = userIds.filter((id) => !optedOut.has(id));
     if (!userIds.length) return { configured: true, sent: 0, failed: 0, tokens: 0 };
   }
+
 
   const { data: tokens } = await supabaseAdmin
     .from("device_tokens")
