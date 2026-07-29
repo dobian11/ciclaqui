@@ -12,6 +12,8 @@ import {
   adminListNotifications,
   adminMarkNotificationRead,
   adminListCompanyReviews,
+  adminListTripFlags,
+  adminDecideTripFlag,
   isAdmin,
 } from "@/lib/admin.functions";
 import { getCompanyDocUrl } from "@/lib/companies.functions";
@@ -21,7 +23,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Loader2, Users, Building2, Bike, Wallet, CreditCard, Shield, Check, X, Banknote, Bell, FileText, History, Download,
+  Loader2, Users, Building2, Bike, Wallet, CreditCard, Shield, Check, X, Banknote, Bell, FileText, History, Download, AlertTriangle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
@@ -118,6 +120,25 @@ function AdminDashboard() {
       supabase.removeChannel(channel);
     };
   }, [adminCheck?.admin, qc]);
+
+  const listTripFlags = useServerFn(adminListTripFlags);
+  const decideTripFlag = useServerFn(adminDecideTripFlag);
+
+  const { data: tripFlags } = useQuery({
+    queryKey: ["admin-trip-flags"],
+    queryFn: () => listTripFlags({}),
+    enabled: adminCheck?.admin === true,
+  });
+
+  async function handleFlagDecide(id: string, decision: "confirmed" | "dismissed") {
+    try {
+      await decideTripFlag({ data: { flag_id: id, decision } });
+      toast.success(decision === "confirmed" ? "Frode confermata, punti revocati" : "Viaggio validato");
+      await qc.invalidateQueries({ queryKey: ["admin-trip-flags"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Errore");
+    }
+  }
 
   const { data: companyReviews } = useQuery({
     queryKey: ["admin-company-reviews", expandedCompanyId],
