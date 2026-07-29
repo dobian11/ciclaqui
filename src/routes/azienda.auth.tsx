@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { Loader2, User } from "lucide-react";
 import { getPostLoginRedirect } from "@/lib/auth-redirect";
 import { requestManagerRole } from "@/lib/companies.functions";
-import { GoogleSignInButton, AuthDivider } from "@/components/cicla/GoogleSignInButton";
+import { GoogleSignInButton, AppleSignInButton, AuthDivider } from "@/components/cicla/GoogleSignInButton";
 
 type Search = { mode?: "login" | "signup"; manager?: boolean };
 
@@ -148,7 +148,10 @@ function CompanyAuthPage() {
             </div>
           )}
 
-          <GoogleSignInButton redirectPath="/azienda/auth?manager=1" />
+          <div className="space-y-2.5">
+            <GoogleSignInButton redirectPath="/azienda/auth?manager=1" />
+            <AppleSignInButton redirectPath="/azienda/auth?manager=1" />
+          </div>
           <AuthDivider />
 
           <Tabs defaultValue={defaultTab} className="w-full">

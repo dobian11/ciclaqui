@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { Loader2, Building2 } from "lucide-react";
 import { z } from "zod";
 import { getPostLoginRedirect } from "@/lib/auth-redirect";
-import { GoogleSignInButton, AuthDivider } from "@/components/cicla/GoogleSignInButton";
+import { GoogleSignInButton, AppleSignInButton, AuthDivider } from "@/components/cicla/GoogleSignInButton";
 
 type AuthSearch = { mode?: "login" | "signup"; code?: string };
 
@@ -141,7 +141,10 @@ function AuthPage() {
             </div>
           )}
 
-          <GoogleSignInButton redirectPath="/auth" />
+          <div className="space-y-2.5">
+            <GoogleSignInButton redirectPath="/auth" />
+            <AppleSignInButton redirectPath="/auth" />
+          </div>
           <AuthDivider />
 
           <Tabs defaultValue={defaultTab} className="w-full">
