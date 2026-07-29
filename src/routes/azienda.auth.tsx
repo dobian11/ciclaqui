@@ -11,13 +11,16 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, User } from "lucide-react";
 import { getPostLoginRedirect } from "@/lib/auth-redirect";
+import { requestManagerRole } from "@/lib/companies.functions";
+import { GoogleSignInButton, AuthDivider } from "@/components/cicla/GoogleSignInButton";
 
-type Search = { mode?: "login" | "signup" };
+type Search = { mode?: "login" | "signup"; manager?: boolean };
 
 export const Route = createFileRoute("/azienda/auth")({
   ssr: false,
   validateSearch: (s: Record<string, unknown>): Search => ({
     mode: s.mode === "signup" || s.mode === "login" ? s.mode : undefined,
+    manager: s.manager === true || s.manager === "1" || s.manager === "true" ? true : undefined,
   }),
   head: () => ({
     meta: [
@@ -37,12 +40,19 @@ function CompanyAuthPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
-      if (data.user) {
-        const dest = await getPostLoginRedirect();
-        navigate({ to: dest as never });
+      if (!data.user) return;
+      // Ritorno dal login Google dall'area enti: attiva il ruolo referente.
+      if (search.manager) {
+        try {
+          await requestManagerRole();
+        } catch {
+          toast.error("Impossibile attivare l'area enti per questo account");
+        }
       }
+      const dest = await getPostLoginRedirect();
+      navigate({ to: dest as never });
     });
-  }, [navigate]);
+  }, [navigate, search.manager]);
 
   async function redirectAfter() {
     await router.invalidate();
@@ -127,6 +137,9 @@ function CompanyAuthPage() {
         </div>
 
         <Card className="border-border/60 p-6 shadow-cicla">
+          <GoogleSignInButton redirectPath="/azienda/auth?manager=1" />
+          <AuthDivider />
+
           <Tabs defaultValue={defaultTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Accedi</TabsTrigger>
