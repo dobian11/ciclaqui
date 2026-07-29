@@ -37,6 +37,7 @@ function CompanyAuthPage() {
   const search = useSearch({ from: "/azienda/auth" });
   const [loading, setLoading] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -87,7 +88,7 @@ function CompanyAuthPage() {
     if (password.length < 8) return toast.error("Password almeno 8 caratteri");
 
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -99,12 +100,12 @@ function CompanyAuthPage() {
       setLoading(false);
       return toast.error(error.message);
     }
-    // Forza sessione se email-confirm disabilitata
-    const { data: ud } = await supabase.auth.getUser();
-    if (!ud.user) {
-      await supabase.auth.signInWithPassword({ email, password });
-    }
     setLoading(false);
+    if (!signUpData.session) {
+      setPendingEmail(email);
+      toast.success("Ti abbiamo inviato una email di conferma");
+      return;
+    }
     toast.success("Account creato! Completa l'onboarding della tua azienda.");
     await redirectAfter();
   }
@@ -137,6 +138,16 @@ function CompanyAuthPage() {
         </div>
 
         <Card className="border-border/60 p-6 shadow-cicla">
+          {pendingEmail && (
+            <div className="mb-5 rounded-xl border border-cicla/30 bg-cicla/10 p-4">
+              <p className="text-sm font-semibold">Conferma la tua email</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Abbiamo inviato un link di conferma a <strong>{pendingEmail}</strong>.
+                Aprilo per attivare l'account e completare la registrazione dell'ente.
+              </p>
+            </div>
+          )}
+
           <GoogleSignInButton redirectPath="/azienda/auth?manager=1" />
           <AuthDivider />
 
