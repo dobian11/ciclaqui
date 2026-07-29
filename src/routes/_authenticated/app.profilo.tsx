@@ -366,12 +366,20 @@ function ProfiloPage() {
               <Gift size={16} /> Premi
             </Link>
             <Link
-              to="/app/privacy"
+              to="/app/notifiche"
               preload="intent"
               className="flex items-center gap-2 rounded-xl bg-card px-3 py-2 text-xs font-semibold"
             >
-              <ShieldCheck size={16} /> Privacy & notifiche
+              <Bell size={16} /> Notifiche
             </Link>
+            <Link
+              to="/app/privacy"
+              preload="intent"
+              className="col-span-2 flex items-center gap-2 rounded-xl bg-card px-3 py-2 text-xs font-semibold"
+            >
+              <ShieldCheck size={16} /> Privacy & dati
+            </Link>
+
           </div>
         </Card>
 
