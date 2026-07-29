@@ -141,7 +141,10 @@ function AuthPage() {
             </div>
           )}
 
-          <GoogleSignInButton redirectPath="/auth" />
+          <div className="space-y-2.5">
+            <GoogleSignInButton redirectPath="/auth" />
+            <AppleSignInButton redirectPath="/auth" />
+          </div>
           <AuthDivider />
 
           <Tabs defaultValue={defaultTab} className="w-full">
