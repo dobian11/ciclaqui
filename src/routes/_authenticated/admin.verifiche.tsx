@@ -8,6 +8,7 @@ import { getCompanyDocUrl } from "@/lib/companies.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { logCompanyDecisionEmail } from "@/lib/email-log.functions";
 import { EmailLogSection } from "@/components/cicla/EmailLogSection";
+import { DecisionEmailPreview, type DecisionPreviewTarget } from "@/components/cicla/DecisionEmailPreview";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -84,6 +85,7 @@ function AdminVerificationsPage() {
   const [tab, setTab] = useState<"queue" | "history" | "audit">("queue");
   const [auditAction, setAuditAction] = useState<"all" | "document_viewed" | "company_approved" | "company_rejected">("all");
   const [rejectFor, setRejectFor] = useState<{ id: string; name: string } | null>(null);
+  const [previewFor, setPreviewFor] = useState<DecisionPreviewTarget | null>(null);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -468,14 +470,16 @@ function AdminVerificationsPage() {
                           size="sm"
                           className="flex-1"
                           disabled={busy === c.id || c.status === "approved"}
-                          onClick={() => runDecision(c.id, "approved")}
+                          onClick={() =>
+                            setPreviewFor({ id: c.id, name: c.name, decision: "approved" })
+                          }
                         >
                           {busy === c.id ? (
                             <Loader2 className="mr-1 size-3.5 animate-spin" />
                           ) : (
                             <Check className="mr-1 size-3.5" />
                           )}
-                          Approva
+                          Anteprima e approva
                         </Button>
                         <Button
                           size="sm"
@@ -650,18 +654,34 @@ function AdminVerificationsPage() {
             <Button
               variant="destructive"
               disabled={!reason.trim() || busy === rejectFor?.id}
-              onClick={async () => {
+              onClick={() => {
                 if (!rejectFor) return;
                 const target = rejectFor;
                 setRejectFor(null);
-                await runDecision(target.id, "rejected", reason.trim());
+                setPreviewFor({
+                  id: target.id,
+                  name: target.name,
+                  decision: "rejected",
+                  reason: reason.trim(),
+                });
               }}
             >
-              Conferma rifiuto
+              Anteprima email
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Anteprima email di esito prima dell'invio */}
+      <DecisionEmailPreview
+        target={previewFor}
+        busy={!!previewFor && busy === previewFor.id}
+        onClose={() => setPreviewFor(null)}
+        onConfirm={async (t) => {
+          setPreviewFor(null);
+          await runDecision(t.id, t.decision, t.reason || undefined);
+        }}
+      />
     </div>
   );
 }
