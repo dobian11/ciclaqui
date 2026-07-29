@@ -53,6 +53,51 @@ export function GoogleSignInButton({
   );
 }
 
+function AppleGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4 fill-current" aria-hidden="true">
+      <path d="M16.365 1.43c0 1.14-.42 2.2-1.25 3.03-.9.9-2 1.42-3.09 1.33-.13-1.1.43-2.24 1.24-3.03.86-.87 2.1-1.48 3.1-1.53.02.07.02.13 0 .2zM20.4 17.1c-.55 1.27-.82 1.84-1.53 2.96-.99 1.57-2.39 3.52-4.12 3.53-1.54.02-1.94-1-4.03-.99-2.09.01-2.53 1.01-4.07.99-1.73-.01-3.05-1.77-4.04-3.34C-.2 15.9-.5 10.7 1.2 7.94c1.2-1.95 3.1-3.1 4.88-3.1 1.82 0 2.96 1.01 4.46 1.01 1.46 0 2.35-1.01 4.45-1.01 1.59 0 3.27.87 4.47 2.36-3.93 2.16-3.29 7.79.94 9.9z" />
+    </svg>
+  );
+}
+
+export function AppleSignInButton({
+  redirectPath = "/auth",
+  label = "Continua con Apple",
+}: {
+  redirectPath?: string;
+  label?: string;
+}) {
+  const [loading, setLoading] = useState(false);
+
+  async function handleClick() {
+    setLoading(true);
+    const result = await lovable.auth.signInWithOAuth("apple", {
+      redirect_uri: `${window.location.origin}${redirectPath}`,
+    });
+    if (result.error) {
+      setLoading(false);
+      toast.error("Accesso con Apple non riuscito. Riprova.");
+      return;
+    }
+    if (result.redirected) return;
+    window.location.assign(`${window.location.origin}${redirectPath}`);
+  }
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      className="w-full gap-2"
+      onClick={handleClick}
+      disabled={loading}
+    >
+      {loading ? <Loader2 className="size-4 animate-spin" /> : <AppleGlyph />}
+      {label}
+    </Button>
+  );
+}
+
 export function AuthDivider({ text = "oppure" }: { text?: string }) {
   return (
     <div className="my-5 flex items-center gap-3">
