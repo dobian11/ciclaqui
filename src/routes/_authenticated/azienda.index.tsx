@@ -12,6 +12,7 @@ import { CompanyReviewDialog } from "@/components/cicla/CompanyReviewDialog";
 import { PendingCompanyDashboard } from "@/components/cicla/PendingCompanyDashboard";
 import { CompanyRewardsSection } from "@/components/cicla/CompanyRewardsSection";
 import { NotificationsSection } from "@/components/cicla/NotificationsSection";
+import { EmailLogSection } from "@/components/cicla/EmailLogSection";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -167,6 +168,7 @@ function CompanyDashboard() {
             />
           </div>
 
+          <EmailLogSection companyId={company.id} title="Email di esito verifica" />
 
           <CompanyReviewDialog
             companyId={company.id}
@@ -197,6 +199,8 @@ function CompanyDashboard() {
         <h1 className="mt-2 text-2xl font-bold tracking-tight">{company.name}</h1>
 
         <NotificationsSection />
+
+        <EmailLogSection companyId={company.id} title="Email di esito verifica" />
 
         {reviews && reviews.length > 0 && (
           <Card className="mt-4 p-5">
