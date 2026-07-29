@@ -81,7 +81,22 @@ export async function fetchPois(
   }
 
   cache.set(cacheKey, { ts: Date.now(), data: pois });
+  for (const p of pois) knownPois.set(p.id, p);
   return pois;
+}
+
+// Store persistente di tutti i POI già scaricati nella sessione: serve a
+// mostrarli immediatamente quando si riattiva un layer, senza aspettare
+// Overpass (e a non farli "sparire" durante un refetch).
+const knownPois = new Map<string, Poi>();
+
+export function getKnownPois(categories: PoiCategory[]): Poi[] {
+  if (categories.length === 0) return [];
+  const out: Poi[] = [];
+  for (const p of knownPois.values()) {
+    if (categories.includes(p.category)) out.push(p);
+  }
+  return out;
 }
 
 export const POI_META: Record<PoiCategory, { label: string; color: string; emoji: string }> = {
