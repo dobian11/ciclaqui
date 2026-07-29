@@ -14,6 +14,32 @@ declare global {
   }
 }
 
+// I domini serviti dalla chiave gestita da Lovable.
+const LOVABLE_HOSTS = [".lovable.app", ".lovableproject.com"];
+
+function isLovableHost() {
+  const h = window.location.hostname;
+  return LOVABLE_HOSTS.some((d) => h.endsWith(d)) || h === "localhost" || h === "127.0.0.1";
+}
+
+async function resolveKey(): Promise<string | null> {
+  const managed = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY as
+    | string
+    | undefined;
+  // Sul dominio custom la chiave gestita è bloccata dal referrer restriction:
+  // usiamo la chiave Google dell'utente esposta dal server.
+  if (!isLovableHost()) {
+    try {
+      const { getMapsBrowserKey } = await import("@/lib/maps-key.functions");
+      const res = await getMapsBrowserKey();
+      if (res?.key) return res.key;
+    } catch {
+      /* fallback sotto */
+    }
+  }
+  return managed ?? null;
+}
+
 export function loadGoogleMaps(libraries: string[] = ["places", "geometry"]): Promise<typeof google> {
   if (typeof window === "undefined") {
     return Promise.reject(new Error("Google Maps requires browser"));
@@ -23,14 +49,15 @@ export function loadGoogleMaps(libraries: string[] = ["places", "geometry"]): Pr
   }
   if (loadPromise) return loadPromise;
 
-  const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
   const channel = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_TRACKING_ID;
 
-  if (!key) {
-    return Promise.reject(new Error("Missing Google Maps browser key (connector not linked?)"));
-  }
+  loadPromise = new Promise(async (resolve, reject) => {
+    const key = await resolveKey();
+    if (!key) {
+      reject(new Error("Missing Google Maps browser key (connector not linked?)"));
+      return;
+    }
 
-  loadPromise = new Promise((resolve, reject) => {
     window.__ciclaInitGoogleMaps = () => {
       resolve((window as any).google);
     };
