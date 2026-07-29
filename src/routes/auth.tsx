@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate, useRouter, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { toast } from "sonner";
 import { Loader2, Building2 } from "lucide-react";
 import { z } from "zod";
 import { getPostLoginRedirect } from "@/lib/auth-redirect";
-import { GoogleSignInButton, AppleSignInButton, AuthDivider } from "@/components/cicla/GoogleSignInButton";
+import { checkCompanyCode } from "@/lib/company-code.functions";
 
 type AuthSearch = { mode?: "login" | "signup"; code?: string };
 
@@ -31,13 +32,25 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-const signupSchema = z.object({
-  full_name: z.string().trim().min(2, "Inserisci il tuo nome").max(80),
-  email: z.string().trim().email("Email non valida").max(255),
-  password: z.string().min(8, "Almeno 8 caratteri").max(72),
-  company_code: z.string().trim().min(3, "Il codice è obbligatorio").max(20),
-  terms: z.literal(true, { message: "Devi accettare i termini per continuare" }),
-});
+const signupSchema = z
+  .object({
+    full_name: z.string().trim().min(2, "Inserisci nome e cognome").max(80),
+    phone: z
+      .string()
+      .trim()
+      .min(6, "Inserisci un numero di telefono valido")
+      .max(20)
+      .regex(/^[+0-9 ().-]+$/, "Numero di telefono non valido"),
+    email: z.string().trim().email("Email non valida").max(255),
+    password: z.string().min(8, "Almeno 8 caratteri").max(72),
+    password2: z.string(),
+    company_code: z.string().trim().min(3, "Il codice ente è obbligatorio").max(20),
+    terms: z.literal(true, { message: "Devi accettare i termini per continuare" }),
+  })
+  .refine((v) => v.password === v.password2, {
+    message: "Le due password non coincidono",
+    path: ["password2"],
+  });
 
 function AuthPage() {
   const navigate = useNavigate();
@@ -46,6 +59,8 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [companyName, setCompanyName] = useState<string | null>(null);
+  const checkCode = useServerFn(checkCompanyCode);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -81,8 +96,10 @@ function AuthPage() {
     const fd = new FormData(e.currentTarget);
     const parsed = signupSchema.safeParse({
       full_name: fd.get("full_name"),
+      phone: fd.get("phone"),
       email: fd.get("email"),
       password: fd.get("password"),
+      password2: fd.get("password2"),
       company_code: fd.get("company_code"),
       terms: acceptTerms,
     });
@@ -90,8 +107,28 @@ function AuthPage() {
       toast.error(parsed.error.issues[0]?.message ?? "Dati non validi");
       return;
     }
-    const { full_name, email, password, company_code } = parsed.data;
+    const { full_name, phone, email, password, company_code } = parsed.data;
+    const code = company_code.toUpperCase();
     setLoading(true);
+
+    // 1. Il codice ente viene verificato PRIMA di creare l'account:
+    //    se non è valido non si procede (niente secondo passaggio dopo l'email).
+    try {
+      const check = await checkCode({ data: { code } });
+      if (!check.ok) {
+        setLoading(false);
+        return toast.error(
+          check.reason === "not_approved"
+            ? `${check.name ?? "Questo ente"} è ancora in attesa di approvazione: riprova più tardi.`
+            : "Codice ente non valido. Chiedilo alla tua azienda o al tuo Comune.",
+        );
+      }
+      setCompanyName(check.name ?? null);
+    } catch {
+      setLoading(false);
+      return toast.error("Impossibile verificare il codice ente, riprova");
+    }
+
     const { data: signUpData, error } = await supabase.auth.signUp({
       email,
       password,
@@ -99,8 +136,9 @@ function AuthPage() {
         emailRedirectTo: `${window.location.origin}/app`,
         data: {
           full_name,
+          phone,
           signup_kind: "user",
-          company_code: company_code.toUpperCase(),
+          company_code: code,
         },
       },
     });
@@ -136,16 +174,11 @@ function AuthPage() {
               <p className="text-sm font-semibold">Conferma la tua email</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Abbiamo inviato un link di conferma a <strong>{pendingEmail}</strong>.
-                Aprilo per attivare l'account, poi torna qui e accedi.
+                Aprilo per attivare l'account: verrai portato direttamente nell'app
+                {companyName ? ` come membro di ${companyName}` : ""}.
               </p>
             </div>
           )}
-
-          <div className="space-y-2.5">
-            <GoogleSignInButton redirectPath="/auth" />
-            <AppleSignInButton redirectPath="/auth" />
-          </div>
-          <AuthDivider />
 
           <Tabs defaultValue={defaultTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -176,6 +209,10 @@ function AuthPage() {
                   <Input id="su-name" name="full_name" required maxLength={80} />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="su-phone">Numero di telefono</Label>
+                  <Input id="su-phone" name="phone" type="tel" required maxLength={20} autoComplete="tel" placeholder="+39 333 1234567" />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="su-email">Email</Label>
                   <Input id="su-email" name="email" type="email" required autoComplete="email" />
                 </div>
@@ -183,6 +220,10 @@ function AuthPage() {
                   <Label htmlFor="su-password">Password</Label>
                   <Input id="su-password" name="password" type="password" required minLength={8} autoComplete="new-password" />
                   <p className="text-[11px] text-muted-foreground">Almeno 8 caratteri.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="su-password2">Ripeti password</Label>
+                  <Input id="su-password2" name="password2" type="password" required minLength={8} autoComplete="new-password" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="su-code">Codice azienda o Comune</Label>
@@ -197,8 +238,8 @@ function AuthPage() {
                     className="uppercase tracking-wider"
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    Obbligatorio. Chiedi il codice al tuo datore di lavoro o al tuo Comune
-                    per essere associato e ricevere i premi sulla mobilità sostenibile.
+                    Obbligatorio e verificato subito: chiedilo al tuo datore di lavoro o al tuo
+                    Comune. Dopo la conferma dell'email entri direttamente nell'app.
                   </p>
                 </div>
                 <label className="flex items-start gap-2.5 rounded-lg border border-border/60 bg-muted/30 p-3">
