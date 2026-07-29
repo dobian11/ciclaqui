@@ -50,6 +50,30 @@ export function MapSearchBar({
     setError(null);
     debounceRef.current = window.setTimeout(async () => {
       const reqId = ++reqIdRef.current;
+
+      const serverSearch = async () => {
+        const { searchPlaces } = await import("@/lib/geosearch.functions");
+        const { results } = await searchPlaces({
+          data: origin ? { q, lat: origin[0], lng: origin[1] } : { q },
+        });
+        if (reqId !== reqIdRef.current) return;
+        setItems(
+          results.map((r) => ({
+            id: r.id,
+            primary: r.name,
+            secondary: r.address,
+            resolve: async () => ({
+              id: `place:${r.id}`,
+              category: "place" as const,
+              lat: r.lat,
+              lng: r.lng,
+              name: r.name,
+              tags: r.address ? { indirizzo: r.address } : undefined,
+            }),
+          })),
+        );
+      };
+
       try {
         await loadGoogleMaps(["places"]);
         const g = (window as any).google;
@@ -105,14 +129,21 @@ export function MapSearchBar({
               };
             }),
         );
-      } catch (e: any) {
-        if (reqId !== reqIdRef.current) return;
-        setItems([]);
-        setError(e?.message ?? "Ricerca non disponibile");
+      } catch {
+        // Places API (New) non abilitata sulla chiave o errore rete:
+        // ricerca alternativa lato server (Google Places server / OpenStreetMap).
+        try {
+          await serverSearch();
+        } catch (e2: any) {
+          if (reqId !== reqIdRef.current) return;
+          setItems([]);
+          setError(e2?.message ?? "Ricerca non disponibile");
+        }
       } finally {
         if (reqId === reqIdRef.current) setLoading(false);
       }
     }, 300);
+
 
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
