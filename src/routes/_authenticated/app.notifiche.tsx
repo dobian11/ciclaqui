@@ -23,13 +23,13 @@ export const Route = createFileRoute("/_authenticated/app/notifiche")({
 type Prefs = {
   inapp_streak: boolean; inapp_challenges: boolean; inapp_bike: boolean; inapp_trip_flag: boolean; inapp_rewards: boolean; inapp_company: boolean;
   email_streak: boolean; email_challenges: boolean; email_bike: boolean; email_trip_flag: boolean; email_rewards: boolean; email_company: boolean; email_product: boolean;
-  push_streak: boolean; push_challenges: boolean; push_bike: boolean; push_trip_flag: boolean; push_rewards: boolean;
+  push_streak: boolean; push_challenges: boolean; push_bike: boolean; push_trip_flag: boolean; push_rewards: boolean; push_company: boolean;
 };
 
 const DEFAULTS: Prefs = {
   inapp_streak: true, inapp_challenges: true, inapp_bike: true, inapp_trip_flag: true, inapp_rewards: true, inapp_company: true,
   email_streak: false, email_challenges: true, email_bike: true, email_trip_flag: true, email_rewards: false, email_company: true, email_product: false,
-  push_streak: true, push_challenges: true, push_bike: true, push_trip_flag: true, push_rewards: true,
+  push_streak: true, push_challenges: true, push_bike: true, push_trip_flag: true, push_rewards: true, push_company: true,
 };
 
 type Row = {
@@ -89,7 +89,7 @@ function NotifichePage() {
   function toggleColumn(channel: "inapp" | "email", value: boolean) {
     const patch: Partial<Prefs> = {};
     for (const r of ROWS) (patch as Record<string, boolean>)[`${channel}_${r.key}`] = value;
-    if (channel === "inapp") for (const r of ROWS) if (r.key !== "company") (patch as Record<string, boolean>)[`push_${r.key}`] = value;
+    if (channel === "inapp") for (const r of ROWS) (patch as Record<string, boolean>)[`push_${r.key}`] = value;
     update(patch);
   }
 
@@ -152,7 +152,7 @@ function NotifichePage() {
                   onChange={(e) => {
                     const v = e.target.checked;
                     const patch: Partial<Prefs> = { [`inapp_${r.key}`]: v } as Partial<Prefs>;
-                    if (r.key !== "company") (patch as Record<string, boolean>)[`push_${r.key}`] = v;
+                    (patch as Record<string, boolean>)[`push_${r.key}`] = v;
                     update(patch);
                   }}
                 />
