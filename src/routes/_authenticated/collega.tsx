@@ -218,11 +218,11 @@ function LinkCompanyPage() {
               />
               <span>
                 Accetto la{" "}
-                <a href="/privacy" className="text-primary underline">
+                <a href="/legal/privacy" className="text-primary underline">
                   Privacy Policy
                 </a>{" "}
                 e i{" "}
-                <a href="/termini" className="text-primary underline">
+                <a href="/legal/terms" className="text-primary underline">
                   Termini di servizio
                 </a>
                 .
