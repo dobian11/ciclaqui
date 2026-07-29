@@ -171,6 +171,13 @@ function AdminDashboard() {
       toast.success(decision === "approved" ? "Ente approvato" : "Ente rifiutato");
 
       // Email di notifica all'ente (data, motivazione e prossimo passo)
+      const pushRes = (res as { push?: { configured: boolean; sent: number; failed: number } | null })?.push;
+      if (pushRes?.configured && pushRes.sent > 0) {
+        toast.success(`Notifica push inviata a ${pushRes.sent} dispositivo/i`);
+      } else if (pushRes?.configured && pushRes.failed > 0) {
+        toast.warning("Push non consegnata: restano email e notifica in-app");
+      }
+
       const email = (res as { email?: Record<string, unknown> | null })?.email;
       if (email?.recipient) {
         const idem = `company-decision-${id}-${decision}-${String(email.decidedAt ?? "")}`;
