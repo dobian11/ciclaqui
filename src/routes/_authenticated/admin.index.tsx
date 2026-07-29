@@ -163,8 +163,32 @@ function AdminDashboard() {
       const reason = decision === "rejected"
         ? (window.prompt("Motivo del rifiuto (verrà mostrato all'ente):") ?? undefined)
         : undefined;
-      await decideCompanyFn({ data: { company_id: id, decision, reason } });
+      const res = await decideCompanyFn({ data: { company_id: id, decision, reason } });
       toast.success(decision === "approved" ? "Ente approvato" : "Ente rifiutato");
+
+      // Email di notifica all'ente (data, motivazione e prossimo passo)
+      const email = (res as { email?: Record<string, unknown> | null })?.email;
+      if (email?.recipient) {
+        try {
+          await sendTransactionalEmail({
+            templateName: "company-decision",
+            recipientEmail: String(email.recipient),
+            idempotencyKey: `company-decision-${id}-${decision}-${String(email.decidedAt ?? "")}`,
+            templateData: {
+              companyName: email.companyName,
+              kind: email.kind,
+              decision: email.decision,
+              decidedAt: email.decidedAt,
+              reason: email.reason,
+              code: email.code,
+              appUrl: window.location.origin,
+            },
+          });
+        } catch {
+          toast.warning("Decisione salvata, ma l'email all'ente non è partita");
+        }
+      }
+
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["admin-companies"] }),
         qc.invalidateQueries({ queryKey: ["admin-stats"] }),
