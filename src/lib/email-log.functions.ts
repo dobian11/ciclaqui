@@ -47,7 +47,7 @@ export const listCompanyEmailLog = createServerFn({ method: "GET" })
     let q = context.supabase
       .from("company_email_log")
       .select(
-        "id, company_id, review_id, template_name, decision, recipient_email, status, error_message, created_at",
+        "id, company_id, review_id, template_name, channel, decision, recipient_email, status, error_message, created_at",
       )
       .order("created_at", { ascending: false })
       .limit(100);
