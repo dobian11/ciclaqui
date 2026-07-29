@@ -2,7 +2,11 @@
 // to avoid browser CORS / network blocks and to enable mirror fallback.
 import { fetchPoisServer } from "./pois.functions";
 
-export type PoiCategory = "water" | "parking" | "pump";
+export type PoiCategory = "water" | "parking" | "pump" | "place";
+
+// Categorie mostrate nel pannello layer (escluso "place", usato solo per i
+// risultati della ricerca testuale).
+export const LAYER_CATEGORIES = ["water", "parking", "pump"] as const;
 
 export interface Poi {
   id: string;
@@ -11,6 +15,18 @@ export interface Poi {
   lng: number;
   name?: string;
   tags?: Record<string, string>;
+}
+
+// Overpass diventa lentissimo su bbox molto grandi: limitiamo l'area
+// interrogata a ~30 km attorno al centro della vista.
+const MAX_SPAN_DEG = 0.28;
+function clampBbox(b: [number, number, number, number]): [number, number, number, number] {
+  const [s0, w0, n0, e0] = b;
+  const cLat = (s0 + n0) / 2;
+  const cLng = (w0 + e0) / 2;
+  const halfLat = Math.min((n0 - s0) / 2, MAX_SPAN_DEG / 2);
+  const halfLng = Math.min((e0 - w0) / 2, MAX_SPAN_DEG / 2);
+  return [cLat - halfLat, cLng - halfLng, cLat + halfLat, cLng + halfLng];
 }
 
 const cache = new Map<string, { ts: number; data: Poi[] }>();
@@ -22,6 +38,7 @@ export async function fetchPois(
   signal?: AbortSignal,
 ): Promise<Poi[]> {
   if (categories.length === 0) return [];
+  bbox = clampBbox(bbox);
   const bboxStr = bbox.map((n) => n.toFixed(4)).join(",");
   const cacheKey = `${bboxStr}|${categories.slice().sort().join(",")}`;
   const cached = cache.get(cacheKey);
@@ -45,7 +62,11 @@ export async function fetchPois(
       category = "water";
     } else if (tags.amenity === "bicycle_parking") {
       category = "parking";
-    } else if (tags.amenity === "bicycle_repair_station" || tags.amenity === "compressed_air") {
+    } else if (
+      tags.amenity === "bicycle_repair_station" ||
+      tags.amenity === "compressed_air" ||
+      tags.shop === "bicycle"
+    ) {
       category = "pump";
     }
     if (!category || !categories.includes(category)) continue;
@@ -66,5 +87,6 @@ export async function fetchPois(
 export const POI_META: Record<PoiCategory, { label: string; color: string; emoji: string }> = {
   water: { label: "Acqua gratuita", color: "#3BA9F5", emoji: "💧" },
   parking: { label: "Parcheggio bici", color: "#8B5CF6", emoji: "🅿️" },
-  pump: { label: "Gonfiaggio / Riparazione", color: "#F59E0B", emoji: "🔧" },
+  pump: { label: "Officina / Gonfiaggio", color: "#F59E0B", emoji: "🔧" },
+  place: { label: "Destinazione", color: "#00B86B", emoji: "📍" },
 };

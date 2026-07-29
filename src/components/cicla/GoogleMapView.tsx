@@ -136,6 +136,7 @@ export function GoogleMapView({
   onPoiSelect,
   selectedPoiId,
   routePath,
+  focusPoi,
 }: {
   position: [number, number] | null;
   mode: TripMode;
@@ -149,6 +150,8 @@ export function GoogleMapView({
   onPoiSelect?: (poi: Poi) => void;
   selectedPoiId?: string | null;
   routePath?: TripPathPoint[] | null;
+  /** Destinazione scelta dalla ricerca testuale: marker + centratura mappa. */
+  focusPoi?: Poi | null;
 }) {
 
 
@@ -163,7 +166,12 @@ export function GoogleMapView({
   const poiAbortRef = useRef<AbortController | null>(null);
   const poiDebounceRef = useRef<number | null>(null);
   const firstFix = useRef(true);
+  const focusMarkerRef = useRef<any>(null);
   const [error, setError] = useState<string | null>(null);
+  // La mappa viene creata in modo asincrono: senza questo contatore gli effetti
+  // che dipendono da `mapRef.current` non venivano mai rieseguiti dopo il load
+  // (POI e layer restavano invisibili se attivati prima del caricamento).
+  const [mapReady, setMapReady] = useState(0);
 
 
 
@@ -183,6 +191,7 @@ export function GoogleMapView({
           backgroundColor: "#0c0c0e",
         });
         mapRef.current = map;
+        setMapReady((n) => n + 1);
       })
       .catch((e) => setError(e?.message ?? "Errore caricamento mappa"));
     return () => {
@@ -284,7 +293,7 @@ export function GoogleMapView({
     } else if (follow) {
       map.panTo(latLng);
     }
-  }, [position, mode, follow]);
+  }, [position, mode, follow, mapReady]);
 
   // Polyline del viaggio in corso
   useEffect(() => {
@@ -312,7 +321,7 @@ export function GoogleMapView({
       polyRef.current.setPath(path);
       polyRef.current.setOptions({ strokeColor: MODE_COLORS[mode] });
     }
-  }, [path, mode]);
+  }, [path, mode, mapReady]);
 
   // POI layers: fetch when categories change OR after the map stops panning, debounced.
   useEffect(() => {
@@ -385,7 +394,7 @@ export function GoogleMapView({
 
     const runFetch = () => {
       const zoom = map.getZoom?.() ?? 0;
-      if (zoom < 12) {
+      if (zoom < 10) {
         clearAll();
         console.info("[pois] zoom troppo basso, ingrandisci la mappa", zoom);
         return;
@@ -442,7 +451,7 @@ export function GoogleMapView({
       if (poiDebounceRef.current) window.clearTimeout(poiDebounceRef.current);
       poiAbortRef.current?.abort();
     };
-  }, [poiCategories.join(","), refreshKey]);
+  }, [poiCategories.join(","), refreshKey, mapReady]);
 
   // Highlight selected POI marker
   useEffect(() => {
@@ -472,7 +481,7 @@ export function GoogleMapView({
       marker.setIcon(scaleIcon(poi.category, isSel));
       marker.setZIndex(isSel ? 8 : 5);
     });
-  }, [selectedPoiId]);
+  }, [selectedPoiId, mapReady]);
 
   // Route polyline (in-app navigation)
   useEffect(() => {
@@ -507,7 +516,28 @@ export function GoogleMapView({
       routePath.forEach((p) => bounds.extend(p));
       map.fitBounds(bounds, { top: 110, right: 60, bottom: 220, left: 60 });
     } catch {}
-  }, [routePath]);
+  }, [routePath, mapReady]);
+
+  // Marker + centratura per la destinazione scelta dalla ricerca
+  useEffect(() => {
+    const map = mapRef.current;
+    const google = (window as any).google;
+    if (!map || !google?.maps) return;
+    if (!focusPoi) {
+      focusMarkerRef.current?.setMap(null);
+      focusMarkerRef.current = null;
+      return;
+    }
+    const pos = { lat: focusPoi.lat, lng: focusPoi.lng };
+    if (!focusMarkerRef.current) {
+      focusMarkerRef.current = new google.maps.Marker({ map, position: pos, zIndex: 9 });
+    } else {
+      focusMarkerRef.current.setPosition(pos);
+      focusMarkerRef.current.setMap(map);
+    }
+    map.panTo(pos);
+    if ((map.getZoom?.() ?? 0) < 15) map.setZoom(15);
+  }, [focusPoi, mapReady]);
 
 
 

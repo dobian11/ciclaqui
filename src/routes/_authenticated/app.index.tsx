@@ -12,7 +12,7 @@ import { GpsPermissionSheet } from "@/components/cicla/GpsPermissionSheet";
 import { TripSummarySheet, type TripSummary } from "@/components/cicla/TripSummarySheet";
 import { useGeolocation } from "@/lib/use-geolocation";
 import { useTripRecorder } from "@/lib/use-trip-recorder";
-import { Wind, Flame, Locate, Loader2, Search, Layers, X, Radio, AlertTriangle, RefreshCw, RotateCw } from "lucide-react";
+import { Wind, Flame, Locate, Loader2, Layers, X, Radio, AlertTriangle, RefreshCw, RotateCw } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAirQuality } from "@/lib/air-quality.functions";
@@ -20,7 +20,8 @@ import { endTrip } from "@/lib/trips.functions";
 import { getMyTrackingWindow } from "@/lib/companies.functions";
 import { computeRoute } from "@/lib/routes.functions";
 import { decodePolyline } from "@/lib/polyline";
-import { POI_META, type Poi, type PoiCategory } from "@/lib/pois";
+import { MapSearchBar } from "@/components/cicla/MapSearchBar";
+import { POI_META, LAYER_CATEGORIES, type Poi, type PoiCategory } from "@/lib/pois";
 import { supabase } from "@/integrations/supabase/client";
 import { logTelemetry } from "@/lib/telemetry";
 import { useMapPrefs } from "@/lib/use-map-prefs";
@@ -473,6 +474,7 @@ function MapHome() {
           onPoiSelect={(p) => setSelectedPoi(p)}
           selectedPoiId={selectedPoi?.id ?? routeData?.destination.id ?? null}
           routePath={routeData?.path ?? null}
+          focusPoi={selectedPoi?.category === "place" ? selectedPoi : null}
         />
       </Suspense>
 
@@ -530,12 +532,7 @@ function MapHome() {
         className="pointer-events-none absolute inset-x-0 top-0 z-[1000] flex items-center gap-2 px-3 pt-2"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 8px)" }}
       >
-        <div className="pointer-events-auto flex flex-1 items-center gap-2 rounded-full app-glass px-2.5 py-1.5 shadow-lg">
-          <div className="grid size-6 shrink-0 place-items-center rounded-full bg-cicla text-cicla-foreground">
-            <Search size={12} strokeWidth={2.8} />
-          </div>
-          <span className="truncate text-[11px] font-medium text-foreground/80">Cerca percorsi…</span>
-        </div>
+        <MapSearchBar origin={geo.position} onSelect={(p) => setSelectedPoi(p)} />
 
         <div className="pointer-events-auto inline-flex shrink-0 items-center gap-1.5 rounded-full app-glass px-2.5 py-1.5 shadow-lg">
           {geo.loading ? (
@@ -695,7 +692,7 @@ function MapHome() {
           <div className="px-2 pb-1 pt-1 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
             Punti d'interesse
           </div>
-          {(Object.keys(POI_META) as PoiCategory[]).map((cat) => {
+          {(LAYER_CATEGORIES as readonly PoiCategory[]).map((cat) => {
             const meta = POI_META[cat];
             const active = poiCategories.includes(cat);
             return (
