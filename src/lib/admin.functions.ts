@@ -492,3 +492,79 @@ export const adminDecideTripFlag = createServerFn({ method: "POST" })
     if (error) throw new Error("Aggiornamento fallito");
     return { ok: true as const };
   });
+
+/* ─────────────────  Centro verifiche enti (admin)  ───────────────── */
+
+/**
+ * Elenco completo degli enti con tutte le loro pratiche di verifica
+ * (documenti inclusi) e i dati del referente che le ha inviate.
+ * Alimenta la sezione admin "Verifiche enti".
+ */
+export const adminListVerifications = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const [{ data: companies }, { data: reviews }] = await Promise.all([
+      supabaseAdmin
+        .from("companies")
+        .select(
+          "id, name, kind, vat, iban, contact_email, code, status, rejection_reason, approved_at, approved_by, created_at, created_by",
+        )
+        .order("created_at", { ascending: false })
+        .limit(300),
+      supabaseAdmin
+        .from("company_reviews")
+        .select(
+          "id, company_id, kind, status, reason, notes, documents, submitted_at, submitted_by, reviewed_at, reviewed_by",
+        )
+        .order("submitted_at", { ascending: false })
+        .limit(600),
+    ]);
+
+    const userIds = [
+      ...new Set(
+        [
+          ...(companies ?? []).flatMap((c) => [c.created_by, c.approved_by]),
+          ...(reviews ?? []).flatMap((r) => [r.submitted_by, r.reviewed_by]),
+        ].filter(Boolean) as string[],
+      ),
+    ];
+    const { data: profiles } = userIds.length
+      ? await supabaseAdmin.from("profiles").select("id, full_name").in("id", userIds)
+      : { data: [] as { id: string; full_name: string | null }[] };
+    const nameOf = new Map((profiles ?? []).map((p) => [p.id, p.full_name ?? "—"]));
+
+    const reviewsByCompany = new Map<string, typeof reviews>();
+    for (const r of reviews ?? []) {
+      const list = reviewsByCompany.get(r.company_id) ?? [];
+      list.push(r);
+      reviewsByCompany.set(r.company_id, list as never);
+    }
+
+    return (companies ?? []).map((c) => {
+      const list = (reviewsByCompany.get(c.id) ?? []) as NonNullable<typeof reviews>;
+      const enriched = list.map((r) => ({
+        ...r,
+        documents: (Array.isArray(r.documents) ? r.documents : []) as {
+          name: string;
+          path: string;
+          size?: number;
+          content_type?: string;
+        }[],
+        submitted_by_name: r.submitted_by ? (nameOf.get(r.submitted_by) ?? "—") : "—",
+        reviewed_by_name: r.reviewed_by ? (nameOf.get(r.reviewed_by) ?? "—") : null,
+      }));
+      const pending = enriched.find((r) => r.status === "pending") ?? null;
+      return {
+        ...c,
+        owner_name: c.created_by ? (nameOf.get(c.created_by) ?? "—") : "—",
+        approved_by_name: c.approved_by ? (nameOf.get(c.approved_by) ?? "—") : null,
+        reviews: enriched,
+        pending_review: pending,
+        doc_count: pending?.documents.length ?? enriched[0]?.documents.length ?? 0,
+        last_submitted_at: enriched[0]?.submitted_at ?? c.created_at,
+      };
+    });
+  });
