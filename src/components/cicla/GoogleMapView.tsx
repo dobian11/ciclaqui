@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { loadGoogleMaps } from "@/lib/google-maps-loader";
-import { fetchPois, POI_META, type Poi, type PoiCategory } from "@/lib/pois";
+import { fetchPois, getKnownPois, POI_META, type Poi, type PoiCategory } from "@/lib/pois";
 
 
 
@@ -365,11 +365,11 @@ export function GoogleMapView({
       };
     };
 
+    // I marker restano sulla mappa: aggiungiamo i nuovi e rimuoviamo solo
+    // quelli di categorie non più attive (prima sparivano a ogni refetch).
     const renderPois = (pois: Poi[]) => {
-      const seen = new Set<string>();
       for (const p of pois) {
         if (!poiCategories.includes(p.category)) continue;
-        seen.add(p.id);
         if (poiMarkersRef.current.has(p.id)) continue;
         const m = new google.maps.Marker({
           map,
@@ -377,28 +377,24 @@ export function GoogleMapView({
           icon: poiIcon(p.category, p.id === selectedPoiId),
           zIndex: p.id === selectedPoiId ? 8 : 5,
           title: p.name || POI_META[p.category].label,
+          optimized: true,
         });
         m.addListener("click", () => onPoiSelect?.(p));
         poiMarkersRef.current.set(p.id, { marker: m, poi: p });
       }
-      // remove no-longer-visible markers
+      // rimuovi solo i layer disattivati
       for (const [id, entry] of poiMarkersRef.current) {
-        if (!seen.has(id)) {
+        if (!poiCategories.includes(entry.poi.category)) {
           entry.marker.setMap(null);
           poiMarkersRef.current.delete(id);
         }
       }
     };
 
-
+    // 1) mostra subito quelli già scaricati in sessione
+    renderPois(getKnownPois(poiCategories));
 
     const runFetch = () => {
-      const zoom = map.getZoom?.() ?? 0;
-      if (zoom < 10) {
-        clearAll();
-        console.info("[pois] zoom troppo basso, ingrandisci la mappa", zoom);
-        return;
-      }
       const b = map.getBounds?.();
       if (!b) {
         // bounds not ready yet — retry shortly
@@ -416,12 +412,10 @@ export function GoogleMapView({
       fetchPois([sw.lat(), sw.lng(), ne.lat(), ne.lng()], poiCategories, ctrl.signal)
         .then((pois) => {
           poiCount = pois.length;
-          console.info("[pois] caricati", pois.length, "per", poiCategories.join(","));
           renderPois(pois);
         })
         .catch((e) => {
           if (e?.name !== "AbortError") {
-            console.warn("[pois] errore", e);
             poiError = e?.message ?? "Errore caricamento punti d'interesse";
             onRefreshError?.(poiError!);
           } else {
@@ -440,11 +434,12 @@ export function GoogleMapView({
 
     const onIdle = () => {
       if (poiDebounceRef.current) window.clearTimeout(poiDebounceRef.current);
-      poiDebounceRef.current = window.setTimeout(runFetch, 450);
+      poiDebounceRef.current = window.setTimeout(runFetch, 600);
     };
 
     runFetch();
     const listener = map.addListener("idle", onIdle);
+
 
     return () => {
       listener?.remove?.();
