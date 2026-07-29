@@ -9,13 +9,14 @@ import { startCompanySubscription } from "@/lib/payments.functions";
 import { listMyEmployees } from "@/lib/admin.functions";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { CompanyReviewDialog } from "@/components/cicla/CompanyReviewDialog";
+import { PendingCompanyDashboard } from "@/components/cicla/PendingCompanyDashboard";
 import { CompanyRewardsSection } from "@/components/cicla/CompanyRewardsSection";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Loader2, Copy, Check, Users, CreditCard, Share2, LogOut, Building2, Landmark, Mail, Hash, Download, Bike, Clock, RefreshCw, History, FileText,
+  Loader2, Copy, Check, Users, CreditCard, Share2, LogOut, Building2, Landmark, Mail, Hash, Download, Bike, Clock, History, FileText,
 } from "lucide-react";
 
 
@@ -141,8 +142,37 @@ function CompanyDashboard() {
   const memberLabel = isMuni ? "Cittadini" : "Dipendenti";
   const status = (company as { status?: string }).status ?? "pending";
   const isApproved = status === "approved";
-  const isRejected = status === "rejected";
   const canShowCode = isApproved && subActive;
+
+  // ---- Dashboard dedicata agli enti non ancora approvati ----
+  if (!isApproved) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background via-secondary/40 to-background pb-12">
+        <div className="mx-auto max-w-md px-5 py-6">
+          <div className="flex items-center justify-between">
+            <CiclaLogo size="md" />
+            <Button variant="ghost" size="sm" onClick={handleSignOut}>
+              <LogOut className="size-4" />
+            </Button>
+          </div>
+
+          <div className="mt-6">
+            <PendingCompanyDashboard
+              company={company as never}
+              reviews={reviews as never}
+              onRequestReview={() => setReviewOpen(true)}
+            />
+          </div>
+
+          <CompanyReviewDialog
+            companyId={company.id}
+            open={reviewOpen}
+            onOpenChange={setReviewOpen}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-secondary/40 to-background pb-12">
@@ -159,45 +189,9 @@ function CompanyDashboard() {
             {isMuni ? <Landmark className="mr-1 size-3" /> : <Building2 className="mr-1 size-3" />}
             Pannello {isMuni ? "Comune" : "azienda"}
           </Badge>
-          {!isApproved && (
-            <Badge variant="secondary" className={isRejected ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"}>
-              {isRejected ? "Rifiutato" : "In attesa approvazione"}
-            </Badge>
-          )}
         </div>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">{company.name}</h1>
 
-        {/* Stato approvazione */}
-        {!isApproved && (
-          <Card className={`mt-6 p-5 ${isRejected ? "border-destructive/40 bg-destructive/5" : "border-warning/40 bg-warning/5"}`}>
-            <div className="flex items-center justify-between gap-2">
-              <div className="text-sm font-semibold">
-                {isRejected ? "Registrazione rifiutata" : "In attesa di approvazione admin"}
-              </div>
-              <Badge variant="secondary" className={isRejected ? "bg-destructive/15 text-destructive" : "bg-warning/15 text-warning"}>
-                {isRejected ? "Rifiutato" : "In revisione"}
-              </Badge>
-            </div>
-            {isRejected ? (
-              <div className="mt-3 rounded-md border border-destructive/30 bg-destructive/10 p-3">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-destructive">Motivo del rifiuto</div>
-                <p className="mt-1 text-[12px] leading-snug">
-                  {(company as { rejection_reason?: string | null }).rejection_reason?.trim() || "Nessun motivo specificato dall'admin."}
-                </p>
-                <p className="mt-2 text-[11px] text-muted-foreground">
-                  Aggiorna i tuoi dati ({isMuni ? "Comune" : "azienda"}, P.IVA/CF, email, IBAN) e invia una nuova richiesta con i documenti aggiornati.
-                </p>
-                <Button size="sm" className="mt-3 w-full" onClick={() => setReviewOpen(true)}>
-                  <RefreshCw className="mr-2 size-3.5" /> Richiedi nuova revisione
-                </Button>
-              </div>
-            ) : (
-              <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
-                Abbiamo ricevuto i tuoi dati ({isMuni ? "Comune" : "azienda"}, P.IVA/CF, email). Un amministratore li verifica entro 24–48h. Una volta approvato potrai attivare l'abbonamento e generare il codice da distribuire ai tuoi {isMuni ? "cittadini" : "dipendenti"}.
-              </p>
-            )}
-          </Card>
-        )}
 
         {/* Storico revisioni */}
         {reviews && reviews.length > 0 && (
