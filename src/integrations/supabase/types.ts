@@ -439,6 +439,59 @@ export type Database = {
           },
         ]
       }
+      company_email_log: {
+        Row: {
+          company_id: string
+          created_at: string
+          decision: string | null
+          error_message: string | null
+          id: string
+          idempotency_key: string | null
+          recipient_email: string
+          review_id: string | null
+          sent_by: string | null
+          status: string
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          decision?: string | null
+          error_message?: string | null
+          id?: string
+          idempotency_key?: string | null
+          recipient_email: string
+          review_id?: string | null
+          sent_by?: string | null
+          status?: string
+          template_name?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          decision?: string | null
+          error_message?: string | null
+          id?: string
+          idempotency_key?: string | null
+          recipient_email?: string
+          review_id?: string | null
+          sent_by?: string | null
+          status?: string
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_email_log_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_reviews: {
         Row: {
           company_id: string
