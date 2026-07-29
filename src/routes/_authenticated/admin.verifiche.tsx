@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { isAdmin, adminListVerifications, adminDecideCompany, adminListAuditLog } from "@/lib/admin.functions";
 import { getCompanyDocUrl } from "@/lib/companies.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
+import { logCompanyDecisionEmail } from "@/lib/email-log.functions";
+import { EmailLogSection } from "@/components/cicla/EmailLogSection";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -72,6 +74,7 @@ function AdminVerificationsPage() {
   const decideCompanyFn = useServerFn(adminDecideCompany);
   const listAudit = useServerFn(adminListAuditLog);
   const getDocUrl = useServerFn(getCompanyDocUrl);
+  const logEmailFn = useServerFn(logCompanyDecisionEmail);
 
   const [hasSession, setHasSession] = useState<boolean | null>(true);
   const [status, setStatus] = useState<StatusFilter>("pending");
@@ -208,6 +211,7 @@ function AdminVerificationsPage() {
         qc.invalidateQueries({ queryKey: ["admin-stats"] }),
         qc.invalidateQueries({ queryKey: ["admin-notifications"] }),
         qc.invalidateQueries({ queryKey: ["admin-audit-log"] }),
+        qc.invalidateQueries({ queryKey: ["company-email-log"] }),
       ]);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Errore");
