@@ -140,6 +140,26 @@ export const endTrip = createServerFn({ method: "POST" })
       throw new Error("Impossibile salvare il viaggio");
     }
 
+    // Coda di revisione anti-frode: registra la segnalazione per l'admin
+    if (anomaly) {
+      const predicted = maxSpeed > 45 ? "car" : maxSpeed > 20 ? "bike" : "foot";
+      const { data: prof0 } = await supabaseAdmin
+        .from("profiles")
+        .select("company_id")
+        .eq("id", userId)
+        .maybeSingle();
+      await supabaseAdmin.from("trip_flags").insert({
+        trip_id: trip.id,
+        user_id: userId,
+        company_id: prof0?.company_id ?? null,
+        score: Math.min(1, maxSpeed / 100),
+        declared_mode: data.mode,
+        predicted_mode: predicted,
+        reason: anomalyReason,
+        status: "pending",
+      });
+    }
+
     // Aggiorna wallet + transazione punti
     if (points > 0) {
       await supabaseAdmin.from("point_transactions").insert({
