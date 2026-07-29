@@ -12,6 +12,8 @@ import {
   adminListNotifications,
   adminMarkNotificationRead,
   adminListCompanyReviews,
+  adminListTripFlags,
+  adminDecideTripFlag,
   isAdmin,
 } from "@/lib/admin.functions";
 import { getCompanyDocUrl } from "@/lib/companies.functions";
@@ -21,7 +23,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Loader2, Users, Building2, Bike, Wallet, CreditCard, Shield, Check, X, Banknote, Bell, FileText, History, Download,
+  Loader2, Users, Building2, Bike, Wallet, CreditCard, Shield, Check, X, Banknote, Bell, FileText, History, Download, AlertTriangle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
@@ -118,6 +120,25 @@ function AdminDashboard() {
       supabase.removeChannel(channel);
     };
   }, [adminCheck?.admin, qc]);
+
+  const listTripFlags = useServerFn(adminListTripFlags);
+  const decideTripFlag = useServerFn(adminDecideTripFlag);
+
+  const { data: tripFlags } = useQuery({
+    queryKey: ["admin-trip-flags"],
+    queryFn: () => listTripFlags({}),
+    enabled: adminCheck?.admin === true,
+  });
+
+  async function handleFlagDecide(id: string, decision: "confirmed" | "dismissed") {
+    try {
+      await decideTripFlag({ data: { flag_id: id, decision } });
+      toast.success(decision === "confirmed" ? "Frode confermata, punti revocati" : "Viaggio validato");
+      await qc.invalidateQueries({ queryKey: ["admin-trip-flags"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Errore");
+    }
+  }
 
   const { data: companyReviews } = useQuery({
     queryKey: ["admin-company-reviews", expandedCompanyId],
@@ -367,7 +388,68 @@ function AdminDashboard() {
           )}
         </Card>
 
+        {/* Coda anti-frode */}
+        <Card className="mt-6 p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <AlertTriangle className="size-4" /> Revisione anti-frode
+            </div>
+            <span className="text-[11px] text-muted-foreground">
+              {tripFlags?.filter((f) => f.status === "pending").length ?? 0} da esaminare
+            </span>
+          </div>
+
+          {!tripFlags || tripFlags.length === 0 ? (
+            <p className="mt-3 text-[12px] text-muted-foreground">Nessun viaggio segnalato.</p>
+          ) : (
+            <ul className="mt-3 space-y-3">
+              {tripFlags.map((f) => (
+                <li key={f.id} className="rounded-lg border border-border/50 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium">{f.user_name}</div>
+                      <div className="mt-0.5 text-[11px] text-muted-foreground">
+                        Dichiarato <b>{f.declared_mode}</b> · stimato <b>{f.predicted_mode}</b> · score{" "}
+                        {Number(f.score).toFixed(2)}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {f.distance_km.toFixed(1)} km · {f.points_earned} pt
+                      </div>
+                      {f.reason && <div className="mt-1 text-[10px] text-muted-foreground">{f.reason}</div>}
+                      <div className="mt-1 text-[10px] text-muted-foreground">
+                        {new Date(f.started_at).toLocaleString("it-IT")}
+                      </div>
+                    </div>
+                    <StatusBadge status={f.status} />
+                  </div>
+                  {f.status === "pending" && (
+                    <div className="mt-3 flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => handleFlagDecide(f.id, "dismissed")}
+                      >
+                        <Check className="mr-1 size-3.5" /> Legittimo
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => handleFlagDecide(f.id, "confirmed")}
+                      >
+                        <X className="mr-1 size-3.5" /> Frode (revoca punti)
+                      </Button>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
         {/* Payouts */}
+
         <Card className="mt-6 p-5">
           <div className="flex items-center justify-between">
             <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">

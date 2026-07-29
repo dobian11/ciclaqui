@@ -9,6 +9,7 @@ import { startCompanySubscription } from "@/lib/payments.functions";
 import { listMyEmployees } from "@/lib/admin.functions";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { CompanyReviewDialog } from "@/components/cicla/CompanyReviewDialog";
+import { CompanyRewardsSection } from "@/components/cicla/CompanyRewardsSection";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -354,6 +355,8 @@ function CompanyDashboard() {
             />
           </>
         )}
+
+        <CompanyRewardsSection />
 
         {/* Dati azienda */}
         <Card className="mt-4 p-5">

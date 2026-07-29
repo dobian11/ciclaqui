@@ -31,6 +31,7 @@ import { Route as AuthenticatedAppProfiloRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAppPrivacyRouteImport } from './routes/_authenticated/app.privacy'
 import { Route as AuthenticatedAppPremiRouteImport } from './routes/_authenticated/app.premi'
 import { Route as AuthenticatedAppBiciRouteImport } from './routes/_authenticated/app.bici'
+import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/public/cron/maintenance'
 
 const CercaBiciRoute = CercaBiciRouteImport.update({
   id: '/cerca-bici',
@@ -143,6 +144,12 @@ const AuthenticatedAppBiciRoute = AuthenticatedAppBiciRouteImport.update({
   path: '/bici',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
+const ApiPublicCronMaintenanceRoute =
+  ApiPublicCronMaintenanceRouteImport.update({
+    id: '/api/public/cron/maintenance',
+    path: '/api/public/cron/maintenance',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
   '/azienda/': typeof AuthenticatedAziendaIndexRoute
+  '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -186,6 +194,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
   '/azienda': typeof AuthenticatedAziendaIndexRoute
+  '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -211,6 +220,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
   '/_authenticated/azienda/': typeof AuthenticatedAziendaIndexRoute
+  '/api/public/cron/maintenance': typeof ApiPublicCronMaintenanceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/app/'
     | '/azienda/'
+    | '/api/public/cron/maintenance'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -256,6 +267,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/azienda'
+    | '/api/public/cron/maintenance'
   id:
     | '__root__'
     | '/'
@@ -280,6 +292,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
     | '/_authenticated/azienda/'
+    | '/api/public/cron/maintenance'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -292,6 +305,7 @@ export interface RootRouteChildren {
   LegalPermessiRoute: typeof LegalPermessiRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
   LegalTermsRoute: typeof LegalTermsRoute
+  ApiPublicCronMaintenanceRoute: typeof ApiPublicCronMaintenanceRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -450,6 +464,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppBiciRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
+    '/api/public/cron/maintenance': {
+      id: '/api/public/cron/maintenance'
+      path: '/api/public/cron/maintenance'
+      fullPath: '/api/public/cron/maintenance'
+      preLoaderRoute: typeof ApiPublicCronMaintenanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -525,6 +546,7 @@ const rootRouteChildren: RootRouteChildren = {
   LegalPermessiRoute: LegalPermessiRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
   LegalTermsRoute: LegalTermsRoute,
+  ApiPublicCronMaintenanceRoute: ApiPublicCronMaintenanceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

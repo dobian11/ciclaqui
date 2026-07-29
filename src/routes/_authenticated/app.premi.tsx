@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Gift, Tag, Heart, Banknote } from "lucide-react";
+import { Gift, Tag, Heart, Banknote, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/app/premi")({
 });
 
 function PremiPage() {
-  const [tab, setTab] = useState<"national" | "local" | "cash" | "donation">("national");
+  const [tab, setTab] = useState<"national" | "local" | "cash" | "donation" | "company">("company");
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -37,6 +37,32 @@ function PremiPage() {
         setBalance(w?.points_balance ?? 0);
       } else {
         setBalance(0);
+      }
+      if (tab === "company") {
+        let companyId: string | null = null;
+        if (user) {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("company_id")
+            .eq("id", user.id)
+            .maybeSingle();
+          companyId = prof?.company_id ?? null;
+        }
+        if (!companyId) {
+          setRewards([]);
+          setLoading(false);
+          return;
+        }
+        const { data } = await supabase
+          .from("rewards_catalog")
+          .select("*")
+          .eq("active", true)
+          .eq("scope", "company")
+          .eq("company_id", companyId)
+          .order("points_cost");
+        setRewards((data ?? []) as Reward[]);
+        setLoading(false);
+        return;
       }
       const cat = tab === "cash" ? "cash" : tab === "donation" ? "donation" : "voucher";
       const scope = tab === "local" ? "local" : "national";
@@ -74,6 +100,7 @@ function PremiPage() {
           <div className="text-xs"><span className="font-bold text-cicla">{balance}</span> punti</div>
         </div>
         <div className="mt-3 flex gap-1 overflow-x-auto text-[11px]">
+          <Tab active={tab === "company"} onClick={() => setTab("company")} icon={Building2}>Il mio ente</Tab>
           <Tab active={tab === "national"} onClick={() => setTab("national")} icon={Tag}>Nazionali</Tab>
           <Tab active={tab === "local"} onClick={() => setTab("local")} icon={Gift}>Locali</Tab>
           <Tab active={tab === "cash"} onClick={() => setTab("cash")} icon={Banknote}>Cash</Tab>
