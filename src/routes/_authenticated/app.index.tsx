@@ -20,7 +20,7 @@ import { endTrip } from "@/lib/trips.functions";
 import { getMyTrackingWindow } from "@/lib/companies.functions";
 import { computeRoute } from "@/lib/routes.functions";
 import { decodePolyline } from "@/lib/polyline";
-import { POI_META, type Poi, type PoiCategory } from "@/lib/pois";
+import { POI_META, LAYER_CATEGORIES, type Poi, type PoiCategory } from "@/lib/pois";
 import { supabase } from "@/integrations/supabase/client";
 import { logTelemetry } from "@/lib/telemetry";
 import { useMapPrefs } from "@/lib/use-map-prefs";
@@ -695,7 +695,7 @@ function MapHome() {
           <div className="px-2 pb-1 pt-1 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
             Punti d'interesse
           </div>
-          {(Object.keys(POI_META) as PoiCategory[]).map((cat) => {
+          {(LAYER_CATEGORIES as readonly PoiCategory[]).map((cat) => {
             const meta = POI_META[cat];
             const active = poiCategories.includes(cat);
             return (

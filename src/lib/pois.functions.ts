@@ -18,7 +18,7 @@ const QUERIES = {
     `nwr["amenity"="drinking_water"](${b});nwr["man_made"="water_tap"]["drinking_water"!~"no"](${b});nwr["fountain"="drinking"](${b});`,
   parking: (b: string) => `nwr["amenity"="bicycle_parking"](${b});`,
   pump: (b: string) =>
-    `nwr["amenity"="bicycle_repair_station"](${b});nwr["amenity"="compressed_air"](${b});`,
+    `nwr["amenity"="bicycle_repair_station"](${b});nwr["amenity"="compressed_air"](${b});nwr["shop"="bicycle"](${b});`,
 } as const;
 
 export const fetchPoisServer = createServerFn({ method: "POST" })
@@ -28,9 +28,9 @@ export const fetchPoisServer = createServerFn({ method: "POST" })
     const body =
       "data=" +
       encodeURIComponent(
-        `[out:json][timeout:25];(${data.categories
+        `[out:json][timeout:12];(${data.categories
           .map((c) => QUERIES[c](bboxStr))
-          .join("")});out center 300;`,
+          .join("")});out center 250;`,
       );
 
     let lastErr: unknown = null;
@@ -45,7 +45,7 @@ export const fetchPoisServer = createServerFn({ method: "POST" })
             "Accept": "application/json",
             "Referer": "https://ciclaqui.app",
           },
-          signal: AbortSignal.timeout(15000),
+          signal: AbortSignal.timeout(9000),
         });
         if (!res.ok) {
           lastErr = new Error(`Overpass ${res.status}`);
