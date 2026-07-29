@@ -194,7 +194,10 @@ function CompanyDashboard() {
             Pannello {isMuni ? "Comune" : "azienda"}
           </Badge>
         </div>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">{company.name}</h1>
+        <NotificationsSection />
+
+        {/* Storico revisioni */}
+
 
 
         {/* Storico revisioni */}
