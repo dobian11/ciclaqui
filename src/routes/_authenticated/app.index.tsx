@@ -12,7 +12,7 @@ import { GpsPermissionSheet } from "@/components/cicla/GpsPermissionSheet";
 import { TripSummarySheet, type TripSummary } from "@/components/cicla/TripSummarySheet";
 import { useGeolocation } from "@/lib/use-geolocation";
 import { useTripRecorder } from "@/lib/use-trip-recorder";
-import { Wind, Flame, Locate, Loader2, Search, Layers, X, Radio, AlertTriangle, RefreshCw, RotateCw } from "lucide-react";
+import { Wind, Flame, Locate, Loader2, Layers, X, Radio, AlertTriangle, RefreshCw, RotateCw } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAirQuality } from "@/lib/air-quality.functions";
