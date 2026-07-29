@@ -249,6 +249,12 @@ export const adminDecideCompany = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("companies").update(patch).eq("id", data.company_id);
     if (error) throw new Error("Aggiornamento fallito");
 
+    const { data: company } = await supabaseAdmin
+      .from("companies")
+      .select("id, name, kind, code, contact_email, created_by")
+      .eq("id", data.company_id)
+      .maybeSingle();
+
     // Aggiorna la review pending più recente con esito + motivo
     const { data: latest } = await supabaseAdmin
       .from("company_reviews")
@@ -277,8 +283,72 @@ export const adminDecideCompany = createServerFn({ method: "POST" })
       .is("read_at", null)
       .eq("company_id", data.company_id);
 
-    return { ok: true };
+    // ---- Notifica in-app ai referenti dell'ente ----
+    const approved = data.decision === "approved";
+    const isMuni = company?.kind === "municipality";
+    const members = isMuni ? "cittadini" : "dipendenti";
+    const nextStep = approved
+      ? `Attiva l'abbonamento dal pannello ente: da quel momento il codice ${company?.code ?? ""} diventa operativo e potrai distribuirlo ai tuoi ${members}.`.trim()
+      : "Aggiorna i dati, carica i documenti richiesti e invia una nuova richiesta di revisione dal pannello ente.";
+    const title = approved
+      ? `${company?.name ?? "Il tuo ente"} è stato approvato`
+      : `Richiesta non approvata`;
+    const body = approved
+      ? `Verifica completata con esito positivo. ${nextStep}`
+      : `Motivo: ${data.reason?.trim() || "nessun motivo specificato"}. ${nextStep}`;
+
+    // Destinatari: creatore dell'ente + gestori collegati
+    const recipients = new Set<string>();
+    if (company?.created_by) recipients.add(company.created_by);
+    const { data: managerProfiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("company_id", data.company_id);
+    if (managerProfiles?.length) {
+      const ids = managerProfiles.map((p) => p.id);
+      const { data: managerRoles } = await supabaseAdmin
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "company_manager")
+        .in("user_id", ids);
+      for (const r of managerRoles ?? []) recipients.add(r.user_id);
+    }
+
+    if (recipients.size > 0) {
+      await supabaseAdmin.from("user_notifications").insert(
+        [...recipients].map((uid) => ({
+          user_id: uid,
+          company_id: data.company_id,
+          type: approved ? "company_approved" : "company_rejected",
+          title,
+          body,
+          payload: {
+            decision: data.decision,
+            decided_at: nowIso,
+            reason: approved ? null : (data.reason ?? null),
+            next_step: nextStep,
+            code: approved ? (company?.code ?? null) : null,
+          },
+        })),
+      );
+    }
+
+    return {
+      ok: true,
+      email: company?.contact_email
+        ? {
+            recipient: company.contact_email,
+            companyName: company.name,
+            kind: company.kind,
+            decision: data.decision,
+            decidedAt: nowIso,
+            reason: approved ? null : (data.reason ?? null),
+            code: approved ? company.code : null,
+          }
+        : null,
+    };
   });
+
 
 // ---------- Notifiche admin ----------
 
