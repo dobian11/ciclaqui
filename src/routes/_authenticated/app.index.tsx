@@ -1,6 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { GoogleMapView } from "@/components/cicla/GoogleMapView";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+// La mappa (componente + SDK Google) è il chunk più pesante della schermata:
+// caricandola in lazy, controlli, GPS e UI si vedono subito.
+const GoogleMapView = lazy(() =>
+  import("@/components/cicla/GoogleMapView").then((m) => ({ default: m.GoogleMapView })),
+);
+
 import { PoiSheet, NavigationBanner } from "@/components/cicla/PoiSheet";
 import { SourceErrorChip, ErrorDot } from "@/components/cicla/SourceErrorChip";
 import { GpsPermissionSheet } from "@/components/cicla/GpsPermissionSheet";
