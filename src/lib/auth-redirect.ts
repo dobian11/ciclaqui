@@ -18,7 +18,7 @@ export async function getPostLoginRedirect(): Promise<string> {
   const isManager = roles?.some((r) => r.role === "company_manager");
   const isAdmin = roles?.some((r) => r.role === "admin");
 
-  if (isAdmin) return "/azienda";
+  if (isAdmin) return "/admin";
 
   if (isManager) {
     const { data: profile } = await supabase
