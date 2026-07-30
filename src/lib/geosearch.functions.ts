@@ -24,8 +24,64 @@ export const searchPlaces = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => schema.parse(d))
   .handler(async ({ data }): Promise<{ results: GeoSearchResult[]; source: string }> => {
     const key = process.env.GOOGLE_API_KEY;
+    const lovableKey = process.env.LOVABLE_API_KEY;
+    const gmKey = process.env.GOOGLE_MAPS_API_KEY;
+
+    const parse = (json: any): GeoSearchResult[] =>
+      (json?.places ?? [])
+        .filter((p: any) => p.location)
+        .map((p: any) => ({
+          id: `g:${p.id}`,
+          name: p.displayName?.text ?? p.formattedAddress ?? data.q,
+          address: p.formattedAddress ?? "",
+          lat: p.location.latitude,
+          lng: p.location.longitude,
+        }));
+
+    const searchBody: Record<string, unknown> = {
+      textQuery: data.q,
+      languageCode: "it",
+      regionCode: "IT",
+      maxResultCount: 6,
+    };
+    if (data.lat != null && data.lng != null) {
+      searchBody.locationBias = {
+        circle: { center: { latitude: data.lat, longitude: data.lng }, radius: 40000 },
+      };
+    }
+    const fieldMask =
+      "places.id,places.displayName,places.formattedAddress,places.location";
+
+    // 1) Connector gateway Google Maps
+    if (lovableKey && gmKey) {
+      try {
+        const res = await fetch(
+          "https://connector-gateway.lovable.dev/google_maps/places/v1/places:searchText",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${lovableKey}`,
+              "X-Connection-Api-Key": gmKey,
+              "Content-Type": "application/json",
+              "X-Goog-FieldMask": fieldMask,
+            },
+            body: JSON.stringify(searchBody),
+            signal: AbortSignal.timeout(8000),
+          },
+        );
+        if (res.ok) {
+          const results = parse(await res.json());
+          if (results.length > 0) return { results, source: "google-gateway" };
+        } else {
+          console.error("[geosearch] gateway", res.status, (await res.text()).slice(0, 200));
+        }
+      } catch (e) {
+        console.error("[geosearch] gateway exception", e);
+      }
+    }
 
     if (key) {
+
       try {
         const body: Record<string, unknown> = {
           textQuery: data.q,
