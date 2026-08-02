@@ -200,7 +200,9 @@ export function MapSearchBar({
           maxLength={120}
           enterKeyHint="search"
           placeholder="Indirizzo, luogo, negozio…"
-          className="min-w-0 flex-1 bg-transparent text-[12px] font-medium text-foreground outline-none placeholder:text-muted-foreground"
+          /* 16px: sotto questa soglia iOS zooma automaticamente al focus */
+          className="min-w-0 flex-1 bg-transparent text-[16px] font-medium leading-tight text-foreground outline-none placeholder:text-muted-foreground"
+
         />
         {loading && <Loader2 size={12} className="animate-spin text-muted-foreground" />}
         <button

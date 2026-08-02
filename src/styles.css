@@ -238,3 +238,14 @@ a[href^="https://www.google.com/maps"],
   display: none !important;
 }
 .gm-style > div > a > div > img { display: none !important; }
+
+/* Su touch/mobile i campi di testo devono avere almeno 16px:
+   sotto questa soglia iOS Safari zooma automaticamente al focus e
+   l'utente resta "bloccato" ingrandito sulla mappa. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
