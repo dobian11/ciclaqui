@@ -508,10 +508,7 @@ function MapHome() {
             toast.message("Tragitto annullato · non salvato");
           }}
           onRefresh={() => geo.retry()}
-          onArrived={() => {
-            toast.success("🎯 Arrivato a destinazione");
-            setRouteData(null);
-          }}
+          onArrived={() => finishArrival()}
           onRecalc={() => routeMutation.mutate(routeData.destination)}
         />
       )}
