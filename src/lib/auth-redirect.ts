@@ -20,16 +20,20 @@ export function resolveRedirect(ctx: RoleContext): string {
 }
 
 /**
- * Determina dove portare l'utente dopo il login in base al ruolo.
+ * Legge i ruoli dell'utente corrente (con log in caso di errore RLS/rete).
  */
-export async function getPostLoginRedirect(): Promise<string> {
+export async function fetchRoleContext(): Promise<RoleContext | null> {
   const { data: userData } = await supabase.auth.getUser();
-  if (!userData.user) return "/auth";
+  if (!userData.user) return null;
 
-  const { data: roles } = await supabase
+  const { data: roles, error } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", userData.user.id);
+
+  if (error) {
+    console.error("[auth-redirect] lettura ruoli fallita:", error.message);
+  }
 
   const isManager = roles?.some((r) => r.role === "company_manager") ?? false;
   const isAdmin = roles?.some((r) => r.role === "admin") ?? false;
@@ -44,5 +48,15 @@ export async function getPostLoginRedirect(): Promise<string> {
     hasCompany = !!profile?.company_id;
   }
 
-  return resolveRedirect({ isAdmin, isManager, hasCompany });
+  return { isAdmin, isManager, hasCompany };
 }
+
+/**
+ * Determina dove portare l'utente dopo il login in base al ruolo.
+ */
+export async function getPostLoginRedirect(): Promise<string> {
+  const ctx = await fetchRoleContext();
+  if (!ctx) return "/auth";
+  return resolveRedirect(ctx);
+}
+
