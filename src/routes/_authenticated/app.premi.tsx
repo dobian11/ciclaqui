@@ -74,22 +74,10 @@ function PremiPage() {
 
   async function redeem(r: Reward) {
     if (balance < r.points_cost) return toast.error("Punti insufficienti");
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return toast.error("Devi accedere per riscattare un premio");
-    const code = `CQ-${Math.random().toString(36).slice(2, 8).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-    const { error } = await supabase.from("reward_redemptions").insert({
-      user_id: user!.id,
-      reward_id: r.id,
-      code,
-      points_spent: r.points_cost,
-      expires_at: new Date(Date.now() + 90 * 86400_000).toISOString(),
-    });
+    const { data, error } = await supabase.rpc("redeem_reward", { _reward_id: r.id });
     if (error) return toast.error(error.message);
-    // scala wallet
-    await supabase.from("wallets").update({ points_balance: balance - r.points_cost }).eq("user_id", user!.id);
-    await supabase.from("point_transactions").insert({ user_id: user!.id, delta_points: -r.points_cost, delta_eur: 0, reason: `redeem:${r.id}` });
     setBalance(balance - r.points_cost);
-    toast.success(`Riscattato! Codice: ${code}`);
+    toast.success(`Riscattato! Codice: ${data?.code ?? "disponibile nei tuoi premi"}`);
   }
 
   return (
