@@ -1,0 +1,2 @@
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO authenticated;
+GRANT SELECT (created_by, tracking_start, tracking_end, tracking_days, employee_cap, plan, subscription_status, approved_at, rejection_reason) ON public.companies TO authenticated;

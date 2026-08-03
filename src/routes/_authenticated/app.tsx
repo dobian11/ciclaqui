@@ -5,13 +5,10 @@ import { PermissionsOnboarding } from "@/components/cicla/PermissionsOnboarding"
 import { prefetchGoogleMaps } from "@/lib/google-maps-loader";
 import { fetchRoleContext } from "@/lib/auth-redirect";
 
-let roleChecked = false;
-
 export const Route = createFileRoute("/_authenticated/app")({
   beforeLoad: async () => {
-    // Un admin non deve restare nell'area ciclista: controllo una sola volta per sessione di app.
-    if (roleChecked) return;
-    roleChecked = true;
+    // Un admin non deve restare nell'area ciclista: verifica a ogni ingresso
+    // nel layout (nessun flag globale, che verrebbe condiviso tra utenti/sessioni).
     const ctx = await fetchRoleContext();
     if (ctx?.isAdmin) throw redirect({ to: "/admin" as never });
   },
