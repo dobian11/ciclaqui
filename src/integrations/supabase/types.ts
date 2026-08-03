@@ -1501,6 +1501,26 @@ export type Database = {
           read_ct: number
         }[]
       }
+      redeem_reward: {
+        Args: { _reward_id: string }
+        Returns: {
+          code: string
+          expires_at: string | null
+          id: string
+          points_spent: number
+          redeemed_at: string
+          reward_id: string
+          status: string
+          used_at: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "reward_redemptions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       app_role: "user" | "company_manager" | "admin"
