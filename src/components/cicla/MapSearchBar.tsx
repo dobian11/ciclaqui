@@ -19,9 +19,11 @@ interface Suggestion {
 export function MapSearchBar({
   origin,
   onSelect,
+  onMapInteractionLockChange,
 }: {
   origin: [number, number] | null;
   onSelect: (poi: Poi) => void;
+  onMapInteractionLockChange?: (locked: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
@@ -36,6 +38,10 @@ export function MapSearchBar({
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
+
+  useEffect(() => {
+    return () => onMapInteractionLockChange?.(false);
+  }, [onMapInteractionLockChange]);
 
   useEffect(() => {
     if (!open) return;
@@ -197,6 +203,8 @@ export function MapSearchBar({
           ref={inputRef}
           value={value}
           onChange={(e) => setValue(e.target.value)}
+          onFocus={() => onMapInteractionLockChange?.(true)}
+          onBlur={() => onMapInteractionLockChange?.(false)}
           maxLength={120}
           enterKeyHint="search"
           placeholder="Indirizzo, luogo, negozio…"
@@ -208,6 +216,7 @@ export function MapSearchBar({
         <button
           type="button"
           onClick={() => {
+            onMapInteractionLockChange?.(false);
             setOpen(false);
             setValue("");
             setItems([]);

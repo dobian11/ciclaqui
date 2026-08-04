@@ -79,6 +79,7 @@ function MapHome() {
   const [poiLoading, setPoiLoading] = useState(false);
   const [layerError, setLayerError] = useState<string | null>(null);
   const [lastSummary, setLastSummary] = useState<TripSummary | null>(null);
+  const [mapInteractionsLocked, setMapInteractionsLocked] = useState(false);
 
   // POI selection + in-app navigation
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
@@ -475,6 +476,7 @@ function MapHome() {
           selectedPoiId={selectedPoi?.id ?? routeData?.destination.id ?? null}
           routePath={routeData?.path ?? null}
           focusPoi={selectedPoi?.category === "place" ? selectedPoi : null}
+          interactionsLocked={mapInteractionsLocked}
         />
       </Suspense>
 
@@ -529,7 +531,11 @@ function MapHome() {
         className="pointer-events-none absolute inset-x-0 top-0 z-[1000] flex items-center gap-2 px-3 pt-2"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 8px)" }}
       >
-        <MapSearchBar origin={geo.position} onSelect={(p) => setSelectedPoi(p)} />
+        <MapSearchBar
+          origin={geo.position}
+          onSelect={(p) => setSelectedPoi(p)}
+          onMapInteractionLockChange={setMapInteractionsLocked}
+        />
 
         <div className="pointer-events-auto inline-flex shrink-0 items-center gap-1.5 rounded-full app-glass px-2.5 py-1.5 shadow-lg">
           {geo.loading ? (

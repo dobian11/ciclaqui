@@ -137,6 +137,7 @@ export function GoogleMapView({
   selectedPoiId,
   routePath,
   focusPoi,
+  interactionsLocked = false,
 }: {
   position: [number, number] | null;
   mode: TripMode;
@@ -152,6 +153,8 @@ export function GoogleMapView({
   routePath?: TripPathPoint[] | null;
   /** Destinazione scelta dalla ricerca testuale: marker + centratura mappa. */
   focusPoi?: Poi | null;
+  /** Disabilita temporaneamente pan e zoom, ad esempio durante la ricerca con tastiera aperta. */
+  interactionsLocked?: boolean;
 }) {
 
 
@@ -199,6 +202,19 @@ export function GoogleMapView({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Evita spostamenti involontari della mappa mentre l'utente scrive nella ricerca.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.setOptions({
+      draggable: !interactionsLocked,
+      gestureHandling: interactionsLocked ? "none" : "greedy",
+      scrollwheel: !interactionsLocked,
+      disableDoubleClickZoom: interactionsLocked,
+      keyboardShortcuts: !interactionsLocked,
+    });
+  }, [interactionsLocked, mapReady]);
 
   const prevPosRef = useRef<{ lat: number; lng: number } | null>(null);
   const headingRef = useRef<number | null>(null);
