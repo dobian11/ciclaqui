@@ -1501,8 +1501,8 @@ export type Database = {
           read_ct: number
         }[]
       }
-      redeem_reward: {
-        Args: { _reward_id: string }
+      redeem_reward_for_user: {
+        Args: { _reward_id: string; _user_id: string }
         Returns: {
           code: string
           expires_at: string | null
