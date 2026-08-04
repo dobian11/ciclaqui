@@ -8,7 +8,7 @@ import { z } from "zod";
  */
 
 async function assertManagerCompany(
-  supabase: { from: (t: string) => any; rpc: (fn: string, args: Record<string, unknown>) => any },
+  supabase: any,
   userId: string,
 ): Promise<string> {
   const { data: roles } = await (supabase as any)
