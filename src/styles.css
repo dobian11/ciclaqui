@@ -239,13 +239,24 @@ a[href^="https://www.google.com/maps"],
 }
 .gm-style > div > a > div > img { display: none !important; }
 
-/* Su touch/mobile i campi di testo devono avere almeno 16px:
-   sotto questa soglia iOS Safari zooma automaticamente al focus e
-   l'utente resta "bloccato" ingrandito sulla mappa. */
+/* Su touch/mobile i campi editabili devono avere almeno 16px:
+   sotto questa soglia iOS Safari zooma automaticamente al focus.
+   La seconda regola copre anche iPad/iPhone con mouse o trackpad, dove
+   il puntatore principale può essere rilevato come "fine". */
 @media (pointer: coarse) {
   input:not([type="checkbox"]):not([type="radio"]),
   select,
   textarea {
     font-size: 16px;
+  }
+}
+
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 1024px) {
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea {
+      font-size: 16px;
+    }
   }
 }
