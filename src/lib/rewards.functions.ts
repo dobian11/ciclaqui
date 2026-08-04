@@ -8,7 +8,7 @@ import { z } from "zod";
  */
 
 async function assertManagerCompany(
-  supabase: { from: (t: string) => any; rpc?: unknown },
+  supabase: { from: (t: string) => any; rpc: (fn: string, args: Record<string, unknown>) => any },
   userId: string,
 ): Promise<string> {
   const { data: roles } = await (supabase as any)
@@ -24,8 +24,25 @@ async function assertManagerCompany(
     .eq("id", userId)
     .maybeSingle();
   if (!profile?.company_id) throw new Error("Nessun ente associato al tuo profilo");
+  const { data: ownsCompany } = await (supabase as any).rpc("owns_company", {
+    _company_id: profile.company_id,
+  });
+  if (!ownsCompany) throw new Error("Accesso riservato al titolare dell'ente");
   return profile.company_id as string;
 }
+
+export const redeemReward = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ rewardId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: redemption, error } = await supabaseAdmin.rpc("redeem_reward_for_user", {
+      _user_id: context.userId,
+      _reward_id: data.rewardId,
+    });
+    if (error || !redemption) throw new Error("Impossibile riscattare il premio");
+    return { code: redemption.code };
+  });
 
 export const listCompanyRewards = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

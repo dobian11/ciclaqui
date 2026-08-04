@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/google_maps";
@@ -61,6 +62,7 @@ function parseGoogle(json: any): RouteResult | null {
  * 3) OSRM (OpenStreetMap, senza chiave) così la navigazione funziona sempre
  */
 export const computeRoute = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => schema.parse(d))
   .handler(async ({ data }): Promise<RouteResult> => {
     const lovableKey = process.env.LOVABLE_API_KEY;
