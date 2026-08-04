@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Gift, Tag, Heart, Banknote, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { redeemReward } from "@/lib/rewards.functions";
 import { toast } from "sonner";
 
 type Reward = {
@@ -74,10 +75,13 @@ function PremiPage() {
 
   async function redeem(r: Reward) {
     if (balance < r.points_cost) return toast.error("Punti insufficienti");
-    const { data, error } = await supabase.rpc("redeem_reward", { _reward_id: r.id });
-    if (error) return toast.error(error.message);
-    setBalance(balance - r.points_cost);
-    toast.success(`Riscattato! Codice: ${data?.code ?? "disponibile nei tuoi premi"}`);
+    try {
+      const data = await redeemReward({ data: { rewardId: r.id } });
+      setBalance(balance - r.points_cost);
+      toast.success(`Riscattato! Codice: ${data.code}`);
+    } catch {
+      toast.error("Impossibile riscattare il premio");
+    }
   }
 
   return (

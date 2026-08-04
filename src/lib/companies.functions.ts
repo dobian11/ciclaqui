@@ -139,6 +139,10 @@ export const getMyCompany = createServerFn({ method: "GET" })
       .maybeSingle();
 
     if (!profile?.company_id) return null;
+    const { data: ownsCompany } = await supabase.rpc("owns_company", {
+      _company_id: profile.company_id,
+    });
+    if (!ownsCompany) throw new Error("Accesso riservato al titolare dell'ente");
 
     // Sensitive columns (iban, vat, contact_email, ...) are not granted to the
     // authenticated role; read them through the admin client after verifying
@@ -189,6 +193,10 @@ export const updateTrackingWindow = createServerFn({ method: "POST" })
     const { data: profile } = await supabase
       .from("profiles").select("company_id").eq("id", userId).maybeSingle();
     if (!profile?.company_id) throw new Error("Nessuna azienda associata");
+    const { data: ownsCompany } = await supabase.rpc("owns_company", {
+      _company_id: profile.company_id,
+    });
+    if (!ownsCompany) throw new Error("Accesso riservato al titolare dell'ente");
     const { error } = await supabase
       .from("companies")
       .update({
@@ -212,6 +220,10 @@ export const getMyTrackingWindow = createServerFn({ method: "GET" })
     const { data: profile } = await supabase
       .from("profiles").select("company_id").eq("id", userId).maybeSingle();
     if (!profile?.company_id) return null;
+    const { data: ownsCompany } = await supabase.rpc("owns_company", {
+      _company_id: profile.company_id,
+    });
+    if (!ownsCompany) throw new Error("Accesso riservato al titolare dell'ente");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: company } = await supabaseAdmin
       .from("companies")
@@ -250,6 +262,10 @@ export const requestCompanyReview = createServerFn({ method: "POST" })
     const { data: profile } = await supabase
       .from("profiles").select("company_id").eq("id", userId).maybeSingle();
     if (!profile?.company_id) throw new Error("Nessuna azienda associata");
+    const { data: ownsCompany } = await supabase.rpc("owns_company", {
+      _company_id: profile.company_id,
+    });
+    if (!ownsCompany) throw new Error("Accesso riservato al titolare dell'ente");
 
     const { data: roles } = await supabase
       .from("user_roles").select("role").eq("user_id", userId);
@@ -309,6 +325,10 @@ export const listMyCompanyReviews = createServerFn({ method: "GET" })
     const { data: profile } = await supabase
       .from("profiles").select("company_id").eq("id", userId).maybeSingle();
     if (!profile?.company_id) return [];
+    const { data: ownsCompany } = await supabase.rpc("owns_company", {
+      _company_id: profile.company_id,
+    });
+    if (!ownsCompany) throw new Error("Accesso riservato al titolare dell'ente");
     const { data } = await supabase
       .from("company_reviews")
       .select("id, kind, status, reason, notes, documents, submitted_at, reviewed_at")
@@ -333,9 +353,10 @@ export const getCompanyDocUrl = createServerFn({ method: "POST" })
     if (!isAdmin) {
       // Manager: deve appartenere alla company indicata dal primo segmento del path
       const companyId = data.path.split("/")[0];
-      const { data: profile } = await supabase
-        .from("profiles").select("company_id").eq("id", userId).maybeSingle();
-      if (profile?.company_id !== companyId) throw new Error("Accesso negato");
+      const { data: ownsCompany } = await supabase.rpc("owns_company", {
+        _company_id: companyId,
+      });
+      if (!ownsCompany) throw new Error("Accesso negato");
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -366,8 +387,16 @@ export const joinCompanyByCode = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => validateCodeSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const { userId } = context;
+    const { supabase, userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    if (roles?.some((r) => r.role === "company_manager" || r.role === "admin")) {
+      return { ok: false as const, reason: "manager_cannot_join" as const };
+    }
 
     const { data: company } = await supabaseAdmin
       .from("companies")

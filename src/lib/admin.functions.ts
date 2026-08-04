@@ -26,6 +26,10 @@ export const listMyEmployees = createServerFn({ method: "GET" })
       .eq("id", userId)
       .maybeSingle();
     if (!profile?.company_id) throw new Error("Nessuna azienda associata");
+    const { data: ownsCompany } = await supabase.rpc("owns_company", {
+      _company_id: profile.company_id,
+    });
+    if (!ownsCompany) throw new Error("Accesso riservato al titolare dell'ente");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
