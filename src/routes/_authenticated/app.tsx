@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/cicla/BottomNav";
 import { PermissionsOnboarding } from "@/components/cicla/PermissionsOnboarding";
 import { prefetchGoogleMaps } from "@/lib/google-maps-loader";
 import { fetchRoleContext } from "@/lib/auth-redirect";
+import { useStableViewportHeight } from "@/hooks/use-stable-viewport";
 
 export const Route = createFileRoute("/_authenticated/app")({
   beforeLoad: async () => {
