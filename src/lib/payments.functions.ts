@@ -54,7 +54,7 @@ export const requestPayout = createServerFn({ method: "POST" })
 
     const { data: wallet, error: wErr } = await supabase
       .from("wallets")
-      .select("points_balance, eur_balance")
+      .select("points_balance")
       .eq("user_id", userId)
       .maybeSingle();
     if (wErr || !wallet) throw new Error("Wallet non trovato");
@@ -63,47 +63,23 @@ export const requestPayout = createServerFn({ method: "POST" })
       throw new Error(`Saldo insufficiente: hai ${wallet.points_balance} punti`);
     }
 
-    const amountEur = Number((data.points * 0.01).toFixed(2));
-    const iban = data.iban; // già normalizzato + validato dallo schema
-
-    // Salva IBAN sul profilo per riuso futuro
-    await supabase.from("profiles").update({ iban }).eq("id", userId);
-
-
-    // Scala punti dal wallet (lifetime restano per storico)
-    const newPoints = wallet.points_balance - data.points;
-    const newEur = Number((Number(wallet.eur_balance) - amountEur).toFixed(2));
-    const { error: updErr } = await supabase
-      .from("wallets")
-      .update({ points_balance: newPoints, eur_balance: Math.max(0, newEur) })
-      .eq("user_id", userId);
-    if (updErr) throw new Error("Aggiornamento wallet fallito");
-
-    // Crea la richiesta di prelievo
-    const { data: payout, error: pErr } = await supabase
-      .from("payout_requests")
-      .insert({
-        user_id: userId,
-        points_redeemed: data.points,
-        amount_eur: amountEur,
-        status: "pending",
-        iban_snapshot: iban,
-      })
-      .select()
-      .single();
+    // La mutazione del wallet è vietata al ruolo authenticated: passa dalla RPC
+    // SECURITY DEFINER eseguita con service role (atomica: wallet + payout).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: payout, error: pErr } = await supabaseAdmin.rpc("request_payout_for_user", {
+      _user_id: userId,
+      _points: data.points,
+      _iban: data.iban,
+    });
     if (pErr || !payout) {
-      // rollback wallet
-      await supabase
-        .from("wallets")
-        .update({
-          points_balance: wallet.points_balance,
-          eur_balance: wallet.eur_balance,
-        })
-        .eq("user_id", userId);
-      throw new Error("Impossibile creare la richiesta di prelievo");
+      throw new Error(pErr?.message ?? "Impossibile creare la richiesta di prelievo");
     }
 
-    return { id: payout.id, amount_eur: amountEur, points: data.points };
+    return {
+      id: payout.id,
+      amount_eur: Number(payout.amount_eur),
+      points: payout.points_redeemed,
+    };
   });
 
 export const listMyPayouts = createServerFn({ method: "GET" })
