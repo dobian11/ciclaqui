@@ -1521,6 +1521,29 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      request_payout_for_user: {
+        Args: { _iban: string; _points: number; _user_id: string }
+        Returns: {
+          admin_notes: string | null
+          amount_eur: number
+          created_at: string
+          iban_snapshot: string | null
+          id: string
+          points_redeemed: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["payout_status"]
+          stripe_payout_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payout_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       app_role: "user" | "company_manager" | "admin"

@@ -1,0 +1,2 @@
+REVOKE ALL ON FUNCTION public.request_payout_for_user(uuid, integer, text) FROM authenticated, anon, PUBLIC;
+GRANT EXECUTE ON FUNCTION public.request_payout_for_user(uuid, integer, text) TO service_role;
