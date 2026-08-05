@@ -260,3 +260,56 @@ a[href^="https://www.google.com/maps"],
     }
   }
 }
+
+/* Focus e accessibilità dei campi su touch/mobile (desktop invariato) */
+@media (pointer: coarse), (max-width: 1024px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea,
+  [contenteditable="true"] {
+    /* il campo resta visibile quando la tastiera lo porta a filo schermo */
+    scroll-margin-top: 6rem;
+    scroll-margin-bottom: 8rem;
+    caret-color: var(--color-cicla);
+    -webkit-tap-highlight-color: color-mix(in oklab, var(--color-cicla) 20%, transparent);
+  }
+
+  /* Anello di focus ad alto contrasto, visibile anche su sfondi scuri/glass */
+  input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [contenteditable="true"]:focus-visible,
+  input:not([type="checkbox"]):not([type="radio"]):focus,
+  select:focus,
+  textarea:focus {
+    outline: 2px solid var(--color-cicla);
+    outline-offset: 2px;
+    border-color: var(--color-cicla);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-cicla) 30%, transparent);
+  }
+
+  input[type="checkbox"]:focus-visible,
+  input[type="radio"]:focus-visible,
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible,
+  [role="option"]:focus-visible {
+    outline: 2px solid var(--color-cicla);
+    outline-offset: 2px;
+  }
+
+  /* Placeholder più leggibile su mobile */
+  input::placeholder,
+  textarea::placeholder {
+    color: color-mix(in oklab, var(--color-muted-foreground) 85%, var(--color-foreground));
+    opacity: 1;
+  }
+
+  /* Aree scrollabili: lo scroll automatico non nasconde il campo sotto header/nav */
+  .overflow-y-auto,
+  .overflow-auto {
+    scroll-padding-top: 5rem;
+    scroll-padding-bottom: 7rem;
+  }
+}
+
