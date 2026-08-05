@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/cicla/BottomNav";
 import { PermissionsOnboarding } from "@/components/cicla/PermissionsOnboarding";
 import { prefetchGoogleMaps } from "@/lib/google-maps-loader";
 import { fetchRoleContext } from "@/lib/auth-redirect";
+import { useStableViewportHeight } from "@/hooks/use-stable-viewport";
 
 export const Route = createFileRoute("/_authenticated/app")({
   beforeLoad: async () => {
@@ -18,6 +19,9 @@ export const Route = createFileRoute("/_authenticated/app")({
 
 
 function AppLayout() {
+  // Altezza stabile: la tastiera non deve rimpicciolire mappa e layout.
+  useStableViewportHeight();
+
   // Scalda l'SDK mappe in idle: quando l'utente arriva sulla scheda Mappa
   // (o ci torna da un'altra tab) lo script è già in cache.
   useEffect(() => {
@@ -25,7 +29,10 @@ function AppLayout() {
   }, []);
 
   return (
-    <div className="fixed inset-0 flex flex-col">
+    <div
+      className="fixed inset-x-0 top-0 flex flex-col"
+      style={{ height: "var(--app-shell-h, 100dvh)" }}
+    >
       <main
         className="relative flex-1 overflow-hidden"
         style={{ paddingBottom: "calc(64px + env(safe-area-inset-bottom, 0))" }}
