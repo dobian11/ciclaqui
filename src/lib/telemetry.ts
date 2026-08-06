@@ -1,6 +1,8 @@
 // Lightweight client-side telemetry helper.
 // Logs events to console (always) and persists to public.telemetry_events when signed in.
 // Designed to never throw and never block the caller.
+// Gli eventi sono accodati e inviati in batch per non generare una insert
+// per ogni interazione (che rallentava mappa e navigazione).
 import { supabase } from "@/integrations/supabase/client";
 
 export type TelemetrySource = "poi" | "air_quality" | "gps" | "live" | "all";
@@ -22,6 +24,66 @@ const COLOR = {
   start: "color:#60a5fa",
 } as const;
 
+const FLUSH_DELAY_MS = 8_000;
+const MAX_BUFFER = 20;
+
+type Row = Record<string, unknown>;
+
+let buffer: Row[] = [];
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+let cachedUserId: string | null | undefined;
+let listenersBound = false;
+
+async function getUserId(): Promise<string | null> {
+  if (cachedUserId !== undefined) return cachedUserId;
+  try {
+    const { data } = await supabase.auth.getSession();
+    cachedUserId = data.session?.user?.id ?? null;
+  } catch {
+    cachedUserId = null;
+  }
+  return cachedUserId;
+}
+
+function bindListeners() {
+  if (listenersBound || typeof document === "undefined") return;
+  listenersBound = true;
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") void flushTelemetry();
+  });
+  window.addEventListener("pagehide", () => void flushTelemetry());
+  supabase.auth.onAuthStateChange((_e, session) => {
+    cachedUserId = session?.user?.id ?? null;
+  });
+}
+
+export async function flushTelemetry(): Promise<void> {
+  if (flushTimer) {
+    clearTimeout(flushTimer);
+    flushTimer = null;
+  }
+  if (buffer.length === 0) return;
+  const batch = buffer;
+  buffer = [];
+  try {
+    const userId = await getUserId();
+    if (!userId) return;
+    await supabase
+      .from("telemetry_events")
+      .insert(batch.map((r) => ({ ...r, user_id: userId })) as never);
+  } catch {
+    // swallow – telemetry must never break UX
+  }
+}
+
+function scheduleFlush() {
+  if (flushTimer) return;
+  flushTimer = setTimeout(() => {
+    flushTimer = null;
+    void flushTelemetry();
+  }, FLUSH_DELAY_MS);
+}
+
 export async function logTelemetry(input: TelemetryEventInput): Promise<void> {
   const ts = new Date().toISOString();
   try {
@@ -37,24 +99,26 @@ export async function logTelemetry(input: TelemetryEventInput): Promise<void> {
     );
   } catch {}
 
-  try {
-    const { data: sess } = await supabase.auth.getSession();
-    const userId = sess.session?.user?.id ?? null;
-    if (!userId) return; // skip persist when unauthenticated
+  // Gli eventi "start" servono solo al debug live: non li persistiamo.
+  if (input.status === "start") return;
+  if (typeof window === "undefined") return;
 
-    await supabase.from("telemetry_events").insert({
-      user_id: userId,
-      event: input.event,
-      source: input.source,
-      status: input.status,
-      duration_ms: input.durationMs ?? null,
-      error_message: input.errorMessage ?? null,
-      meta: (input.meta ?? null) as any,
-      user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 300) : null,
-      created_at: ts,
-    });
-  } catch {
-    // swallow – telemetry must never break UX
+  bindListeners();
+  buffer.push({
+    event: input.event,
+    source: input.source,
+    status: input.status,
+    duration_ms: input.durationMs ?? null,
+    error_message: input.errorMessage ?? null,
+    meta: (input.meta ?? null) as unknown,
+    user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 300) : null,
+    created_at: ts,
+  });
+
+  if (buffer.length >= MAX_BUFFER || input.status === "error") {
+    void flushTelemetry();
+  } else {
+    scheduleFlush();
   }
 }
 
