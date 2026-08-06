@@ -276,7 +276,7 @@ function MapHome() {
         return { ok: false, error: e?.message ?? String(e) };
       });
   };
-  const onRefreshComplete = async (poiResult?: { ok: boolean; error?: string }) => {
+  const onRefreshComplete = useCallback(async (poiResult?: { ok: boolean; error?: string }) => {
     if (!isRefreshingRef.current) return;
     const aqResult: { ok: boolean; error?: string } = await (aqPromiseRef.current ?? Promise.resolve({ ok: true }));
     const totalMs = Math.round(performance.now() - refreshStartRef.current);
@@ -292,7 +292,8 @@ function MapHome() {
     isRefreshingRef.current = false;
     setRefreshing(false);
     toast.message("Layer aggiornati");
-  };
+  }, []);
+
   const [authed, setAuthed] = useState(false);
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setAuthed(!!data.session));
