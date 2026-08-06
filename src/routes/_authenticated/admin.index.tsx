@@ -26,7 +26,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Loader2, Users, Building2, Bike, Wallet, CreditCard, Shield, Check, X, Banknote, Bell, FileText, History, Download, AlertTriangle,
+  Loader2, LogOut, Users, Building2, Bike, Wallet, CreditCard, Shield, Check, X, Banknote, Bell, FileText, History, Download, AlertTriangle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
@@ -42,6 +42,13 @@ function AdminDashboard() {
   const listPayouts = useServerFn(adminListPayouts);
   const decide = useServerFn(adminDecidePayout);
   const [hasSession, setHasSession] = useState<boolean | null>(true);
+
+  async function handleSignOut() {
+    await qc.cancelQueries();
+    qc.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth" as never, replace: true });
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setHasSession(!!data.session));
@@ -289,7 +296,17 @@ function AdminDashboard() {
             <Badge variant="secondary" className="bg-destructive/10 text-destructive">
               <Shield className="mr-1 size-3" /> Admin
             </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 px-2.5"
+              onClick={handleSignOut}
+            >
+              <LogOut className="size-4" />
+              <span className="hidden sm:inline">Esci</span>
+            </Button>
           </div>
+
         </div>
 
         <h1 className="mt-6 text-2xl font-bold tracking-tight">Pannello amministratore</h1>
