@@ -289,7 +289,17 @@ function AdminDashboard() {
             <Badge variant="secondary" className="bg-destructive/10 text-destructive">
               <Shield className="mr-1 size-3" /> Admin
             </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5 px-2.5"
+              onClick={handleSignOut}
+            >
+              <LogOut className="size-4" />
+              <span className="hidden sm:inline">Esci</span>
+            </Button>
           </div>
+
         </div>
 
         <h1 className="mt-6 text-2xl font-bold tracking-tight">Pannello amministratore</h1>
