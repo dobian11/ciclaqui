@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 // La mappa (componente + SDK Google) è il chunk più pesante della schermata:
 // caricandola in lazy, controlli, GPS e UI si vedono subito.
 const GoogleMapView = lazy(() =>
@@ -341,6 +341,17 @@ function MapHome() {
   // dettagli AQ usati dal trittico in basso (BottomTrio)
 
 
+  const handleRefreshError = useCallback((msg: string) => {
+    setLayerError(msg);
+    toast.error(msg);
+    window.setTimeout(() => setLayerError(null), 5000);
+    // sblocca il pulsante anche in caso di errore
+    isRefreshingRef.current = false;
+    setRefreshing(false);
+  }, []);
+
+  const handlePoiSelect = useCallback((p: Poi) => setSelectedPoi(p), []);
+
   const polylinePath = useMemo(
     () => trip.path.map((p) => ({ lat: p.lat, lng: p.lng })),
     [trip.path],
@@ -462,17 +473,10 @@ function MapHome() {
           path={polylinePath}
           poiCategories={poiCategories}
           refreshKey={refreshKey}
-          onRefreshError={(msg) => {
-            setLayerError(msg);
-            toast.error(msg);
-            window.setTimeout(() => setLayerError(null), 5000);
-            // sblocca il pulsante anche in caso di errore
-            isRefreshingRef.current = false;
-            setRefreshing(false);
-          }}
+          onRefreshError={handleRefreshError}
           onRefreshComplete={onRefreshComplete}
           onPoiLoadingChange={setPoiLoading}
-          onPoiSelect={(p) => setSelectedPoi(p)}
+          onPoiSelect={handlePoiSelect}
           selectedPoiId={selectedPoi?.id ?? routeData?.destination.id ?? null}
           routePath={routeData?.path ?? null}
           focusPoi={selectedPoi?.category === "place" ? selectedPoi : null}

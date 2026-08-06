@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { loadGoogleMaps } from "@/lib/google-maps-loader";
 import { fetchPois, getKnownPois, POI_META, type Poi, type PoiCategory } from "@/lib/pois";
 
@@ -123,7 +123,7 @@ export interface TripPathPoint {
   lng: number;
 }
 
-export function GoogleMapView({
+function GoogleMapViewImpl({
   position,
   mode,
   follow = true,
@@ -565,3 +565,7 @@ export function GoogleMapView({
     </>
   );
 }
+
+// Memoizzato: il recorder GPS aggiorna lo stato ogni secondo e senza memo
+// l'intera mappa veniva riconciliata ad ogni tick.
+export const GoogleMapView = memo(GoogleMapViewImpl);
