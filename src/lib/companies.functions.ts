@@ -65,7 +65,9 @@ export const createCompany = createServerFn({ method: "POST" })
 
     // Link the manager's profile to the company (so they appear in their own
     // company in queries that filter by company_id).
-    await supabase.from("profiles").update({ company_id: company.id }).eq("id", userId);
+    // Server-side only: client updates of profiles.company_id are blocked by a
+    // DB trigger to prevent joining an entity you don't belong to.
+    await supabaseAdmin.from("profiles").update({ company_id: company.id }).eq("id", userId);
 
     // Create the initial review record + admin notification
     const { data: review } = await supabaseAdmin
