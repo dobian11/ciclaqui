@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { CookieBanner } from "@/components/cicla/CookieBanner";
+import { PerfProvider } from "@/components/cicla/PerfPanel";
 
 function NotFoundComponent() {
   return (
@@ -164,7 +165,9 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <PerfProvider>
+        <Outlet />
+      </PerfProvider>
       <Toaster richColors position="top-center" />
       <CookieBanner />
     </QueryClientProvider>
