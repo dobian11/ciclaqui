@@ -222,10 +222,8 @@ export const getMyTrackingWindow = createServerFn({ method: "GET" })
     const { data: profile } = await supabase
       .from("profiles").select("company_id").eq("id", userId).maybeSingle();
     if (!profile?.company_id) return null;
-    const { data: ownsCompany } = await supabase.rpc("owns_company", {
-      _company_id: profile.company_id,
-    });
-    if (!ownsCompany) throw new Error("Accesso riservato al titolare dell'ente");
+    // Ogni membro dell'ente deve poter leggere la finestra di tracking del
+    // PROPRIO ente (orari + nome): non è dato sensibile e serve all'auto-start.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: company } = await supabaseAdmin
       .from("companies")
