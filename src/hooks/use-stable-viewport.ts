@@ -65,6 +65,8 @@ export function useStableViewportHeight() {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("orientationchange", onResize);
       window.removeEventListener("focusin", onFocusIn);
+      window.removeEventListener("focusout", onFocusOut);
+      window.visualViewport?.removeEventListener("resize", onResize);
     };
   }, []);
 }
