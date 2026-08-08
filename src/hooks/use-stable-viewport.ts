@@ -22,6 +22,13 @@ export function useStableViewportHeight() {
 
     apply(window.innerHeight);
 
+    const keyboardOpen = () => {
+      const el = document.activeElement as HTMLElement | null;
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+    };
+
     const onResize = () => {
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -31,8 +38,10 @@ export function useStableViewportHeight() {
         apply(h);
         return;
       }
-      // Il viewport si è ristretto: quasi certamente è la tastiera → ignora.
-      if (h < lastHeight) return;
+      // Il viewport si è ristretto MENTRE un campo è a fuoco: è la tastiera → ignora.
+      // Altrimenti (barre del browser che ricompaiono) va applicato, altrimenti la
+      // bottom nav finisce sotto la toolbar di Safari.
+      if (h < lastHeight && keyboardOpen()) return;
       apply(h);
     };
 
@@ -41,13 +50,23 @@ export function useStableViewportHeight() {
       requestAnimationFrame(() => window.scrollTo(0, 0));
     };
 
+    // Alla chiusura della tastiera riallinea l'altezza reale.
+    const onFocusOut = () => {
+      setTimeout(() => apply(window.innerHeight), 120);
+    };
+
     window.addEventListener("resize", onResize);
     window.addEventListener("orientationchange", onResize);
     window.addEventListener("focusin", onFocusIn);
+    window.addEventListener("focusout", onFocusOut);
+    window.visualViewport?.addEventListener("resize", onResize);
+
     return () => {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("orientationchange", onResize);
       window.removeEventListener("focusin", onFocusIn);
+      window.removeEventListener("focusout", onFocusOut);
+      window.visualViewport?.removeEventListener("resize", onResize);
     };
   }, []);
 }
