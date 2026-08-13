@@ -43,6 +43,7 @@ function CompanyDashboard() {
   const [copied, setCopied] = useState(false);
   const [hasSession, setHasSession] = useState<boolean | null>(true);
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [section, setSection] = useState("panoramica");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setHasSession(!!data.session));
