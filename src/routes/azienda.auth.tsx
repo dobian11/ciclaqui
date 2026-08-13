@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, User } from "lucide-react";
 import { getPostLoginRedirect } from "@/lib/auth-redirect";
+import { ForgotPasswordDialog } from "@/components/cicla/ForgotPasswordDialog";
 
 type Search = { mode?: "login" | "signup"; manager?: boolean };
 
