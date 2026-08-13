@@ -621,6 +621,155 @@ export type Database = {
           },
         ]
       }
+      company_topups: {
+        Row: {
+          amount_eur: number
+          company_id: string
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          method: string
+          notes: string | null
+          reference: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_eur: number
+          company_id: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          method?: string
+          notes?: string | null
+          reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_eur?: number
+          company_id?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          method?: string
+          notes?: string | null
+          reference?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_topups_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_wallet_transactions: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          delta_eur: number
+          id: string
+          kind: string
+          note: string | null
+          payout_id: string | null
+          topup_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          delta_eur: number
+          id?: string
+          kind: string
+          note?: string | null
+          payout_id?: string | null
+          topup_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          delta_eur?: number
+          id?: string
+          kind?: string
+          note?: string | null
+          payout_id?: string | null
+          topup_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_wallet_transactions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_wallet_transactions_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "payout_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_wallet_transactions_topup_id_fkey"
+            columns: ["topup_id"]
+            isOneToOne: false
+            referencedRelation: "company_topups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_wallets: {
+        Row: {
+          balance_eur: number
+          company_id: string
+          created_at: string
+          lifetime_paid_eur: number
+          lifetime_topup_eur: number
+          updated_at: string
+        }
+        Insert: {
+          balance_eur?: number
+          company_id: string
+          created_at?: string
+          lifetime_paid_eur?: number
+          lifetime_topup_eur?: number
+          updated_at?: string
+        }
+        Update: {
+          balance_eur?: number
+          company_id?: string
+          created_at?: string
+          lifetime_paid_eur?: number
+          lifetime_topup_eur?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_wallets_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cookie_consents: {
         Row: {
           analytics: boolean
@@ -1540,6 +1689,29 @@ export type Database = {
           user_id: string
         }[]
       }
+      confirm_company_topup: {
+        Args: { _actor: string; _topup_id: string }
+        Returns: {
+          amount_eur: number
+          company_id: string
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          method: string
+          notes: string | null
+          reference: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "company_topups"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -1567,6 +1739,29 @@ export type Database = {
         Returns: number
       }
       owns_company: { Args: { _company_id: string }; Returns: boolean }
+      pay_payout_from_company: {
+        Args: { _actor: string; _company_id: string; _payout_id: string }
+        Returns: {
+          admin_notes: string | null
+          amount_eur: number
+          created_at: string
+          iban_snapshot: string | null
+          id: string
+          points_redeemed: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["payout_status"]
+          stripe_payout_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "payout_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {

@@ -2,11 +2,23 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listCompanyPayouts } from "@/lib/payments.functions";
+import { getCompanyWallet, payMemberPayout } from "@/lib/company-wallet.functions";
+import { CompanyTopupDialog } from "@/components/cicla/CompanyTopupDialog";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Wallet, Coins, Clock, CheckCircle2 } from "lucide-react";
+import {
+  Loader2,
+  RefreshCw,
+  Wallet,
+  Coins,
+  Clock,
+  CheckCircle2,
+  PlusCircle,
+  Send,
+} from "lucide-react";
 
 const STATUS: Record<string, { label: string; className: string }> = {
   pending: { label: "In attesa", className: "bg-warning/15 text-warning" },
@@ -26,6 +38,10 @@ function eur(n: number) {
 export function CompanyPayoutsSection({ memberLabel }: { memberLabel: string }) {
   const qc = useQueryClient();
   const fetchPayouts = useServerFn(listCompanyPayouts);
+  const fetchWallet = useServerFn(getCompanyWallet);
+  const payPayout = useServerFn(payMemberPayout);
+  const [topupOpen, setTopupOpen] = useState(false);
+  const [paying, setPaying] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<string>("all");
 
@@ -44,10 +60,80 @@ export function CompanyPayoutsSection({ memberLabel }: { memberLabel: string }) 
     );
   }, [q.data, query, status]);
 
+  const wallet = useQuery({
+    queryKey: ["company-wallet"],
+    queryFn: () => fetchWallet(),
+  });
+
+  const balance = wallet.data?.balance_eur ?? 0;
+
+  async function handlePay(id: string, amount: number) {
+    if (amount > balance) {
+      toast.error("Saldo insufficiente", {
+        description: "Ricarica il conto ente prima di pagare questo prelievo.",
+      });
+      setTopupOpen(true);
+      return;
+    }
+    setPaying(id);
+    try {
+      await payPayout({ data: { payout_id: id } });
+      toast.success("Pagamento eseguito", {
+        description: `€ ${amount.toFixed(2)} inviati sull'IBAN del dipendente.`,
+      });
+      qc.invalidateQueries({ queryKey: ["company-payouts"] });
+      qc.invalidateQueries({ queryKey: ["company-wallet"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Pagamento non riuscito");
+    } finally {
+      setPaying(null);
+    }
+  }
+
   const totals = q.data?.totals;
 
   return (
     <div className="space-y-4">
+      <Card className="p-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Wallet className="size-4" />
+              <span className="text-[11px] uppercase tracking-wider">Conto ente</span>
+            </div>
+            <div className="mt-1 font-display text-3xl font-bold tabular-nums text-cicla">
+              {eur(balance)}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Ricaricato {eur(wallet.data?.lifetime_topup_eur ?? 0)} · Pagato{" "}
+              {eur(wallet.data?.lifetime_paid_eur ?? 0)}
+            </div>
+          </div>
+          <Button onClick={() => setTopupOpen(true)}>
+            <PlusCircle className="mr-1.5 size-4" /> Ricarica conto
+          </Button>
+        </div>
+        {(totals?.pending_eur ?? 0) > balance && (
+          <p className="mt-3 rounded-lg bg-warning/10 p-2 text-[11px] text-warning">
+            I prelievi in attesa ({eur(totals?.pending_eur ?? 0)}) superano il saldo
+            disponibile: ricarica il conto per poterli pagare.
+          </p>
+        )}
+        {wallet.data?.topups?.some((t) => t.status === "pending") && (
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Hai una ricarica in attesa di conferma.
+          </p>
+        )}
+      </Card>
+
+      {wallet.data && (
+        <CompanyTopupDialog
+          open={topupOpen}
+          onOpenChange={setTopupOpen}
+          bank={wallet.data.bank}
+        />
+      )}
+
       <div className="grid gap-3 sm:grid-cols-3">
         <Card className="p-4">
           <div className="flex items-center gap-2 text-muted-foreground">
@@ -157,14 +243,28 @@ export function CompanyPayoutsSection({ memberLabel }: { memberLabel: string }) 
                 <Badge variant="secondary" className={meta.className}>
                   {meta.label}
                 </Badge>
+                {(p.status === "pending" || p.status === "approved") && (
+                  <Button
+                    size="sm"
+                    disabled={paying === p.id}
+                    onClick={() => handlePay(p.id, p.amount_eur)}
+                  >
+                    {paying === p.id ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Send className="mr-1.5 size-3.5" />
+                    )}
+                    Paga
+                  </Button>
+                )}
               </div>
             );
           })}
         </div>
 
         <p className="mt-4 text-[11px] text-muted-foreground">
-          I pagamenti vengono processati centralmente da Cicla Qui: qui vedi solo lo
-          stato delle richieste dei tuoi iscritti.
+          Paghi direttamente dal saldo del conto ente: l'importo viene inviato
+          sull'IBAN indicato dal dipendente e il prelievo passa a "Pagato".
         </p>
       </Card>
     </div>
