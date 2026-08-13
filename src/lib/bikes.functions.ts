@@ -100,6 +100,30 @@ export const markRecovered = createServerFn({ method: "POST" })
       .eq("id", data.bike_id)
       .eq("owner_id", userId);
     if (error) throw new Error(error.message);
+
+    try {
+      if (bike.owner_id) {
+        const { notifyUsers } = await import("@/lib/notify.server");
+        const bikeName = [bike.brand, bike.model].filter(Boolean).join(" ") || "La tua bici";
+        await notifyUsers({
+          userIds: [bike.owner_id],
+          topic: "bike",
+          type: "bike_sighting",
+          title: "Avvistamento sulla tua bici",
+          body: `${bikeName}: qualcuno ha segnalato un avvistamento. Nota: ${data.note}`,
+          url: "/app/bici",
+          ctaLabel: "Vedi le segnalazioni",
+          details: [
+            { label: "Bici", value: bikeName },
+            { label: "Segnalazione", value: data.note },
+          ],
+          payload: { bike_id: bike.id, ref: `${bike.id}:${Date.now()}` },
+        });
+      }
+    } catch (e) {
+      console.error("[addSighting] notify failed", e);
+    }
+
     return { ok: true };
   });
 
@@ -167,7 +191,7 @@ export const addSighting = createServerFn({ method: "POST" })
     // Verifica che la bici sia effettivamente rubata
     const { data: bike } = await supabaseAdmin
       .from("bikes")
-      .select("id, status")
+      .select("id, status, owner_id, brand, model")
       .eq("id", data.bike_id)
       .maybeSingle();
     if (!bike || bike.status !== "rubata") {

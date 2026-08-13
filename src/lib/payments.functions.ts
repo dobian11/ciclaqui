@@ -138,6 +138,37 @@ export const requestPayout = createServerFn({ method: "POST" })
       throw new Error(pErr?.message ?? "Impossibile creare la richiesta di prelievo");
     }
 
+    // Notifica multicanale ai referenti dell'ente: c'è un prelievo da pagare.
+    try {
+      const { data: prof } = await supabaseAdmin
+        .from("profiles")
+        .select("company_id, full_name")
+        .eq("id", userId)
+        .maybeSingle();
+      if (prof?.company_id) {
+        const { notifyUsers, companyManagerIds } = await import("@/lib/notify.server");
+        const managers = await companyManagerIds(prof.company_id);
+        const amount = Number(payout.amount_eur).toFixed(2);
+        await notifyUsers({
+          userIds: managers,
+          topic: "company",
+          type: "payout_requested",
+          title: "Nuova richiesta di prelievo",
+          body: `${prof.full_name ?? "Un membro"} ha richiesto € ${amount} (${payout.points_redeemed} punti). Puoi pagarla dalla sezione Prelievi.`,
+          url: "/azienda",
+          companyId: prof.company_id,
+          ctaLabel: "Vai ai prelievi",
+          details: [
+            { label: "Richiedente", value: prof.full_name ?? "Membro" },
+            { label: "Importo", value: `€ ${amount}` },
+          ],
+          payload: { payout_id: payout.id, ref: payout.id },
+        });
+      }
+    } catch (e) {
+      console.error("[requestPayout] notify failed", e);
+    }
+
     return {
       id: payout.id,
       amount_eur: Number(payout.amount_eur),

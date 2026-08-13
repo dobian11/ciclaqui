@@ -147,6 +147,27 @@ export const payMemberPayout = createServerFn({ method: "POST" })
     });
     if (error || !payout) throw new Error(error?.message ?? "Pagamento non riuscito");
 
+    // La riga in-app è già creata dalla RPC: qui aggiungiamo push + email.
+    try {
+      const { notifyUsers } = await import("@/lib/notify.server");
+      const amount = Number(payout.amount_eur).toFixed(2);
+      await notifyUsers({
+        userIds: [payout.user_id],
+        topic: "rewards",
+        type: "payout_paid",
+        title: "Prelievo pagato",
+        body: `Il tuo ente ha effettuato il bonifico di € ${amount} sul tuo IBAN.`,
+        url: "/app/punti",
+        companyId: companyId,
+        skipInApp: true,
+        ctaLabel: "Vedi i tuoi punti",
+        details: [{ label: "Importo", value: `€ ${amount}` }],
+        payload: { payout_id: payout.id, ref: payout.id },
+      });
+    } catch (e) {
+      console.error("[payMemberPayout] notify failed", e);
+    }
+
     return { id: payout.id, amount_eur: Number(payout.amount_eur), status: payout.status };
   });
 
@@ -197,5 +218,25 @@ export const adminConfirmTopup = createServerFn({ method: "POST" })
       _actor: context.userId,
     });
     if (error || !topup) throw new Error(error?.message ?? "Conferma non riuscita");
+
+    try {
+      const { notifyUsers, companyManagerIds } = await import("@/lib/notify.server");
+      const amount = Number(topup.amount_eur).toFixed(2);
+      await notifyUsers({
+        userIds: await companyManagerIds(topup.company_id),
+        topic: "company",
+        type: "topup_confirmed",
+        title: "Ricarica confermata",
+        body: `Abbiamo accreditato € ${amount} sul conto del tuo ente. Ora puoi pagare i prelievi dei membri.`,
+        url: "/azienda",
+        companyId: topup.company_id,
+        ctaLabel: "Apri il conto ente",
+        details: [{ label: "Importo accreditato", value: `€ ${amount}` }],
+        payload: { topup_id: topup.id, ref: topup.id },
+      });
+    } catch (e) {
+      console.error("[adminConfirmTopup] notify failed", e);
+    }
+
     return { id: topup.id, amount_eur: Number(topup.amount_eur), status: topup.status };
   });
