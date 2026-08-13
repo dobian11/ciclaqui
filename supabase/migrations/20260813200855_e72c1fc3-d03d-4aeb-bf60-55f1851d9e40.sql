@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.enforce_company_seat_cap() FROM PUBLIC, anon, authenticated;
