@@ -830,3 +830,86 @@ export const adminSetUserBlocked = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true, blocked: data.blocked };
   });
+
+/* ---------------------------------------------------------------------- */
+/* Codici sconto (fase test / partner)                                     */
+/* ---------------------------------------------------------------------- */
+
+export const adminListDiscountCodes = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: ok } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!ok) throw new Error("Accesso riservato agli admin");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("discount_codes")
+      .select("id, code, label, percent_off, plan, max_redemptions, redeemed_count, expires_at, active, created_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    return data ?? [];
+  });
+
+export const adminCreateDiscountCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        code: z.string().trim().min(3).max(40),
+        label: z.string().trim().max(120).optional(),
+        percent_off: z.number().int().min(1).max(100).default(100),
+        plan: z.enum(["starter", "pro", "enterprise"]).nullable().optional(),
+        max_redemptions: z.number().int().min(1).max(100000).nullable().optional(),
+        expires_at: z.string().nullable().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: ok } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!ok) throw new Error("Accesso riservato agli admin");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: created, error } = await supabaseAdmin
+      .from("discount_codes")
+      .insert({
+        code: data.code.toUpperCase(),
+        label: data.label || null,
+        percent_off: data.percent_off,
+        plan: data.plan ?? null,
+        max_redemptions: data.max_redemptions ?? null,
+        expires_at: data.expires_at || null,
+        created_by: context.userId,
+      })
+      .select("id, code")
+      .single();
+    if (error) {
+      throw new Error(
+        error.code === "23505" ? "Esiste già un codice con questo nome" : "Impossibile creare il codice",
+      );
+    }
+    return created;
+  });
+
+export const adminToggleDiscountCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ id: z.string().uuid(), active: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: ok } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!ok) throw new Error("Accesso riservato agli admin");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("discount_codes")
+      .update({ active: data.active })
+      .eq("id", data.id);
+    if (error) throw new Error("Impossibile aggiornare il codice");
+    return { ok: true as const };
+  });

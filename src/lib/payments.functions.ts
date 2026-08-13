@@ -207,13 +207,14 @@ export const activateCompanySubscription = createServerFn({ method: "POST" })
       discountCode = res.code;
       price = res.final_price_eur;
       if (price === 0) status = "active";
+      const { data: dc } = await supabaseAdmin
+        .from("discount_codes")
+        .select("redeemed_count")
+        .eq("id", res.id)
+        .single();
       await supabaseAdmin
         .from("discount_codes")
-        .update({ redeemed_count: (await supabaseAdmin
-          .from("discount_codes")
-          .select("redeemed_count")
-          .eq("id", res.id)
-          .single()).data!.redeemed_count + 1 })
+        .update({ redeemed_count: (dc?.redeemed_count ?? 0) + 1 })
         .eq("id", res.id);
     }
 
