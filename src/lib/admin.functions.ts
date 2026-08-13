@@ -669,3 +669,149 @@ export const adminListAuditLog = createServerFn({ method: "POST" })
       company_kind: byId.get(r.company_id)?.kind ?? null,
     }));
   });
+
+// ---------- Gestione utenti e ruoli ----------
+
+const APP_ROLES = ["user", "company_manager", "admin"] as const;
+
+export const adminListUsers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ query: z.string().trim().max(120).optional() }).parse(d ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const q = (data.query ?? "").trim();
+
+    let profQuery = supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, phone, company_id, created_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (q) profQuery = profQuery.ilike("full_name", `%${q}%`);
+    const { data: profiles } = await profQuery;
+
+    // Utenti auth (email + stato blocco)
+    const { data: authList } = await supabaseAdmin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000,
+    });
+    const authMap = new Map(
+      (authList?.users ?? []).map((u) => [
+        u.id,
+        {
+          email: u.email ?? "—",
+          banned_until: (u as unknown as { banned_until?: string | null }).banned_until ?? null,
+          last_sign_in_at: u.last_sign_in_at ?? null,
+        },
+      ]),
+    );
+
+    let rows = profiles ?? [];
+    if (q) {
+      // include anche match per email
+      const emailIds = (authList?.users ?? [])
+        .filter((u) => (u.email ?? "").toLowerCase().includes(q.toLowerCase()))
+        .map((u) => u.id);
+      const missing = emailIds.filter((id) => !rows.some((r) => r.id === id));
+      if (missing.length) {
+        const { data: extra } = await supabaseAdmin
+          .from("profiles")
+          .select("id, full_name, phone, company_id, created_at")
+          .in("id", missing);
+        rows = [...rows, ...(extra ?? [])];
+      }
+    }
+
+    const ids = rows.map((r) => r.id);
+    const roleMap = new Map<string, string[]>();
+    const companyMap = new Map<string, string>();
+    if (ids.length) {
+      const [{ data: roles }, { data: companies }] = await Promise.all([
+        supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", ids),
+        supabaseAdmin
+          .from("companies")
+          .select("id, name")
+          .in(
+            "id",
+            Array.from(new Set(rows.map((r) => r.company_id).filter(Boolean))) as string[],
+          ),
+      ]);
+      roles?.forEach((r) => {
+        const arr = roleMap.get(r.user_id) ?? [];
+        arr.push(r.role as string);
+        roleMap.set(r.user_id, arr);
+      });
+      companies?.forEach((c) => companyMap.set(c.id, c.name));
+    }
+
+    const now = Date.now();
+    return rows.map((r) => {
+      const a = authMap.get(r.id);
+      const bannedUntil = a?.banned_until ?? null;
+      return {
+        id: r.id,
+        full_name: r.full_name ?? "—",
+        email: a?.email ?? "—",
+        phone: r.phone ?? null,
+        company_name: r.company_id ? (companyMap.get(r.company_id) ?? null) : null,
+        roles: roleMap.get(r.id) ?? [],
+        created_at: r.created_at,
+        last_sign_in_at: a?.last_sign_in_at ?? null,
+        banned: !!bannedUntil && new Date(bannedUntil).getTime() > now,
+        banned_until: bannedUntil,
+      };
+    });
+  });
+
+export const adminSetUserRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        user_id: z.string().uuid(),
+        role: z.enum(APP_ROLES),
+        action: z.enum(["grant", "revoke"]),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    if (data.user_id === context.userId && data.role === "admin" && data.action === "revoke") {
+      throw new Error("Non puoi rimuovere il tuo ruolo admin");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    if (data.action === "grant") {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .upsert({ user_id: data.user_id, role: data.role }, { onConflict: "user_id,role" });
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", data.user_id)
+        .eq("role", data.role);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+export const adminSetUserBlocked = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ user_id: z.string().uuid(), blocked: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    if (data.user_id === context.userId) throw new Error("Non puoi bloccare il tuo account");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+      ban_duration: data.blocked ? "876000h" : "none",
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true, blocked: data.blocked };
+  });
