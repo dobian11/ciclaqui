@@ -279,8 +279,6 @@ function AdminVerificationsPage() {
       onTabChange={(id) => setTab(id as "queue" | "history" | "audit")}
     >
       <div>
-
-
         {/* Filtri */}
         {tab !== "audit" && (
           <Card className="mt-4 space-y-3 p-4">
