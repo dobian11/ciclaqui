@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -206,9 +206,22 @@ function CompanyDashboard() {
         </div>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">{company.name}</h1>
 
+        <Link to="/azienda/documenti" className="mt-4 block">
+          <Card className="flex items-center gap-3 p-4 transition hover:bg-secondary/40">
+            <FileText className="size-4 text-cicla" />
+            <div className="min-w-0 flex-1">
+              <div className="text-[13px] font-medium">I miei documenti</div>
+              <div className="text-[11px] text-muted-foreground">
+                Stato verifica, checklist mancanti e timeline revisioni
+              </div>
+            </div>
+          </Card>
+        </Link>
+
         <NotificationsSection />
 
         <EmailLogSection companyId={company.id} title="Email di esito verifica" />
+
 
         <CompanyRejectionSection
           companyRejectionReason={(company as { rejection_reason?: string | null }).rejection_reason}
