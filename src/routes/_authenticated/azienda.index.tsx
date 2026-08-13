@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { emailLinkOrigin } from "@/lib/public-url";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -101,7 +102,7 @@ function CompanyDashboard() {
 
   async function shareInvite() {
     if (!company) return;
-    const url = `${window.location.origin}/auth?mode=signup&code=${company.code}`;
+    const url = `${emailLinkOrigin()}/auth?mode=signup&code=${company.code}`;
     const payload = {
       title: "Iscriviti a Cicla Qui",
       text: `Unisciti a ${company.name} su Cicla Qui con il codice ${company.code}`,

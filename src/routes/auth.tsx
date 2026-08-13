@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate, useRouter, useSearch } from "@tanstack/react-router";
+import { emailLinkOrigin } from "@/lib/public-url";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -142,7 +143,7 @@ function AuthPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/app`,
+        emailRedirectTo: `${emailLinkOrigin()}/app`,
         data: {
           full_name,
           phone,

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { emailLinkOrigin } from "@/lib/public-url";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +32,7 @@ export function ForgotPasswordDialog({ label = "Password dimenticata?" }: Props)
     if (!email) return toast.error("Inserisci la tua email");
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${emailLinkOrigin()}/reset-password`,
     });
     setLoading(false);
     if (error) return toast.error(error.message);
