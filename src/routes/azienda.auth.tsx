@@ -129,9 +129,11 @@ function CompanyAuthPage() {
     setLoading(false);
     if (!signUpData.session) {
       setPendingEmail(email);
+      setCooldown(60);
       toast.success("Ti abbiamo inviato una email di conferma");
       return;
     }
+
     toast.success("Account creato! Completa l'onboarding della tua azienda.");
     await redirectAfter();
   }
