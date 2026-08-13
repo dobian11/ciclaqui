@@ -192,7 +192,12 @@ function CompanyAuthPage() {
                   verifica dell'admin: all'approvazione riceverai un'email con il codice ente da
                   distribuire.
                 </p>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Non la trovi? Controlla <strong>Spam</strong> e <strong>Promozioni</strong>: il
+                  mittente è <strong>notify.ciclaqui.it</strong>.
+                </p>
               </div>
+
 
               <Button
                 type="button"
