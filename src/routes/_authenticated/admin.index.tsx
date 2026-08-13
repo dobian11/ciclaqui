@@ -701,6 +701,12 @@ function AdminDashboard() {
                   ))}
                 </ul>
               )}
+              <AdminPagination
+                page={payoutsList.page}
+                pageCount={payoutsList.pageCount}
+                total={payoutsList.total}
+                onPage={payoutsList.setPage}
+              />
             </Card>
           )}
         </div>
