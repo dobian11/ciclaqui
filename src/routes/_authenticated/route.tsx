@@ -25,7 +25,13 @@ export const Route = createFileRoute("/_authenticated")({
     }
 
     if (!user) {
-      throw redirect({ to: "/auth", search: { mode: "login", redirect: location.href } as never });
+      // Gli enti (link email "Apri il pannello ente") vanno alla login dedicata,
+      // non a quella dei dipendenti.
+      const isCompanyArea = location.pathname.startsWith("/azienda");
+      throw redirect({
+        to: isCompanyArea ? "/azienda/auth" : "/auth",
+        search: { mode: "login", redirect: location.href } as never,
+      });
     }
     return { user };
   },
