@@ -34,6 +34,7 @@ import {
 import { toast } from "sonner";
 import {
   Loader2,
+  ListChecks,
   Search,
   FileText,
   Check,
@@ -269,23 +270,15 @@ function AdminVerificationsPage() {
     <AdminShell
       title="Richieste di verifica"
       subtitle={`${counts.pending} in attesa · ${counts.approved} approvati · ${counts.rejected} rifiutati`}
+      tabs={[
+        { id: "queue", label: "Coda", icon: ListChecks, count: counts.pending },
+        { id: "history", label: "Cronologia", icon: History },
+        { id: "audit", label: "Audit", icon: ScrollText },
+      ]}
+      activeTab={tab}
+      onTabChange={(id) => setTab(id as "queue" | "history" | "audit")}
     >
       <div>
-        {/* Tabs */}
-        <div className="grid max-w-md grid-cols-3 gap-1 rounded-lg bg-secondary/60 p-1">
-          {(["queue", "history", "audit"] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`rounded-md py-1.5 text-[12px] font-semibold transition ${
-                tab === t ? "bg-background shadow-sm" : "text-muted-foreground"
-              }`}
-            >
-              {t === "queue" ? "Coda" : t === "history" ? "Cronologia" : "Audit"}
-            </button>
-          ))}
-        </div>
-
         {/* Filtri */}
         {tab !== "audit" && (
           <Card className="mt-4 space-y-3 p-4">

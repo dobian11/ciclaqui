@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,21 +12,35 @@ const NAV = [
   { to: "/admin/verifiche", label: "Verifiche enti", icon: ShieldCheck, exact: false },
 ] as const;
 
+export type AdminTab = {
+  id: string;
+  label: string;
+  icon?: ComponentType<{ className?: string }>;
+  /** Contatore mostrato accanto all'etichetta (es. elementi in attesa). */
+  count?: number;
+};
+
 /**
- * Layout del pannello admin: sidebar fissa e larghezza piena su desktop/tablet
- * orizzontale, barra di navigazione compatta su mobile.
+ * Layout del pannello admin: sidebar fissa su desktop/tablet, header sticky con
+ * navigazione a tab scorrevole su mobile.
  */
 export function AdminShell({
   title,
   subtitle,
   unread = 0,
   actions,
+  tabs,
+  activeTab,
+  onTabChange,
   children,
 }: {
   title: string;
   subtitle?: ReactNode;
   unread?: number;
   actions?: ReactNode;
+  tabs?: AdminTab[];
+  activeTab?: string;
+  onTabChange?: (id: string) => void;
   children: ReactNode;
 }) {
   const navigate = useNavigate();
@@ -72,59 +86,101 @@ export function AdminShell({
 
         {/* Contenuto */}
         <div className="min-w-0 flex-1">
-          {/* Header mobile */}
-          <header className="sticky top-0 z-20 border-b border-border/60 bg-background/85 backdrop-blur md:hidden">
-            <div className="flex items-center justify-between px-4 py-3">
-              <CiclaLogo size="sm" />
-              <div className="flex items-center gap-2">
-                {unread > 0 && (
-                  <Badge variant="secondary" className="bg-warning/15 text-warning">
-                    <Bell className="mr-1 size-3" /> {unread}
-                  </Badge>
-                )}
-                <Button variant="outline" size="sm" className="h-8 px-2" onClick={signOut}>
-                  <LogOut className="size-4" />
-                </Button>
+          {/* Header sticky (titolo + tab) */}
+          <header className="sticky top-0 z-30 border-b border-border/60 bg-background/90 backdrop-blur">
+            <div className="mx-auto w-full max-w-[1600px] px-4 md:px-8">
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="md:hidden">
+                    <CiclaLogo size="sm" />
+                  </span>
+                  <div className="min-w-0">
+                    <h1 className="truncate text-lg font-bold tracking-tight md:text-2xl lg:text-3xl">
+                      {title}
+                    </h1>
+                    {subtitle && (
+                      <div className="mt-0.5 hidden truncate text-sm text-muted-foreground md:block">
+                        {subtitle}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  {unread > 0 && (
+                    <Badge variant="secondary" className="bg-warning/15 text-warning">
+                      <Bell className="mr-1 size-3" /> {unread}
+                    </Badge>
+                  )}
+                  {actions}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 px-2 md:hidden"
+                    onClick={signOut}
+                  >
+                    <LogOut className="size-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
-            <nav className="flex gap-1 px-3 pb-2">
-              {NAV.map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  activeOptions={{ exact: item.exact }}
-                  activeProps={{ className: "bg-cicla/10 text-cicla" }}
-                  inactiveProps={{ className: "text-muted-foreground bg-secondary/50" }}
-                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-semibold transition"
+
+              {/* Tab di sezione */}
+              {tabs && tabs.length > 0 && (
+                <nav
+                  role="tablist"
+                  aria-label="Sezioni"
+                  className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden"
                 >
-                  <item.icon className="size-3.5" />
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
+                  {tabs.map((t) => {
+                    const active = t.id === activeTab;
+                    return (
+                      <button
+                        key={t.id}
+                        role="tab"
+                        aria-selected={active}
+                        onClick={() => onTabChange?.(t.id)}
+                        className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-semibold transition md:text-[13px] ${
+                          active
+                            ? "bg-cicla/15 text-cicla"
+                            : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
+                        }`}
+                      >
+                        {t.icon && <t.icon className="size-3.5 shrink-0" />}
+                        {t.label}
+                        {typeof t.count === "number" && t.count > 0 && (
+                          <span
+                            className={`rounded-full px-1.5 text-[10px] ${
+                              active ? "bg-cicla/20" : "bg-background/70"
+                            }`}
+                          >
+                            {t.count}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </nav>
+              )}
+
+              {/* Navigazione di rotta su mobile */}
+              <nav className="flex gap-1 pb-2 md:hidden">
+                {NAV.map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    activeOptions={{ exact: item.exact }}
+                    activeProps={{ className: "bg-cicla/10 text-cicla" }}
+                    inactiveProps={{ className: "text-muted-foreground bg-secondary/40" }}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-semibold transition"
+                  >
+                    <item.icon className="size-3.5" />
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
           </header>
 
-          <main className="mx-auto w-full max-w-[1600px] px-4 py-6 pb-16 md:px-8">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">{title}</h1>
-                {subtitle && <div className="mt-1 text-sm text-muted-foreground">{subtitle}</div>}
-              </div>
-              <div className="flex items-center gap-2">
-                {unread > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="hidden bg-warning/15 text-warning md:inline-flex"
-                  >
-                    <Bell className="mr-1 size-3" /> {unread}
-                  </Badge>
-                )}
-                {actions}
-              </div>
-            </div>
-
-            <div className="mt-6">{children}</div>
-          </main>
+          <main className="mx-auto w-full max-w-[1600px] px-4 py-6 pb-16 md:px-8">{children}</main>
         </div>
       </div>
     </div>
