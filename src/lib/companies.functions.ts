@@ -159,7 +159,9 @@ export const getMyCompany = createServerFn({ method: "GET" })
     if (!company) return null;
 
     const [{ count: employees }, { data: sub }] = await Promise.all([
-      supabase
+      // Il conteggio passa dall'admin client: le RLS di `profiles` limitano la
+      // SELECT lato utente e restituirebbero sempre 0/1.
+      supabaseAdmin
         .from("profiles")
         .select("id", { count: "exact", head: true })
         .eq("company_id", company.id),
@@ -169,6 +171,7 @@ export const getMyCompany = createServerFn({ method: "GET" })
         .eq("company_id", company.id)
         .maybeSingle(),
     ]);
+
 
     // Il codice ente esiste in DB fin dalla creazione, ma viene rivelato
     // al titolare solo dopo l'approvazione dell'admin.

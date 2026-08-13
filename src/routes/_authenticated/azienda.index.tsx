@@ -17,6 +17,7 @@ import { CompanyRewardsSection } from "@/components/cicla/CompanyRewardsSection"
 import { CompanyChallengesSection } from "@/components/cicla/CompanyChallengesSection";
 import { CompanyBadgesSection } from "@/components/cicla/CompanyBadgesSection";
 import { CompanyShell, type CompanySection } from "@/components/cicla/CompanyShell";
+import { CompanyMemberDialog } from "@/components/cicla/CompanyMemberDialog";
 import { NotificationsBell } from "@/components/cicla/NotificationsBell";
 import { EmailLogSection } from "@/components/cicla/EmailLogSection";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Loader2, Copy, Check, Users, CreditCard, Share2, LogOut, Building2, Landmark, Mail, Hash, Download, Bike, Clock,
-  LayoutDashboard, Trophy, Award, Gift,
+  LayoutDashboard, Trophy, Award, Gift, RefreshCw,
 } from "lucide-react";
 
 
@@ -302,7 +303,7 @@ function CompanyDashboard() {
         <div className="space-y-4">
           {canShowCode ? (
             <>
-              <EmployeesSection />
+              <EmployeesSection memberLabel={memberLabel} />
               <TrackingWindowSection
                 initial={{
                   tracking_start: company.tracking_start ?? null,
@@ -360,22 +361,35 @@ function Row({ icon, label, value }: { icon: React.ReactNode; label: string; val
   );
 }
 
-function EmployeesSection() {
+function EmployeesSection({ memberLabel }: { memberLabel: string }) {
   const list = useServerFn(listMyEmployees);
-  const { data, isLoading } = useQuery({
+  const qc = useQueryClient();
+  const [selected, setSelected] = useState<string | null>(null);
+  const { data, isLoading, isFetching, refetch } = useQuery({
     queryKey: ["my-employees"],
     queryFn: () => list({}),
     retry: false,
+    refetchOnWindowFocus: true,
+    staleTime: 15_000,
   });
+
+  async function refreshAll() {
+    await Promise.all([refetch(), qc.invalidateQueries({ queryKey: ["my-company"] })]);
+    toast.success("Elenco aggiornato");
+  }
 
   function exportCsv() {
     if (!data || data.length === 0) return;
-    const header = ["Nome", "Iscritto il", "Viaggi", "Km totali", "Punti correnti", "Punti lifetime"];
+    const header = ["Nome", "Iscritto il", "Viaggi", "Km totali", "Km bici", "Km a piedi", "CO2 kg", "Badge", "Punti correnti", "Punti lifetime"];
     const rows = data.map((e) => [
       e.full_name,
       new Date(e.joined_at).toLocaleDateString("it-IT"),
       e.trips_count,
       e.total_km,
+      e.bike_km,
+      e.foot_km,
+      e.co2_saved_kg,
+      e.badges_count,
       e.points_balance,
       e.lifetime_points,
     ]);
@@ -386,7 +400,7 @@ function EmployeesSection() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `dipendenti-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `membri-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success("CSV esportato");
@@ -396,11 +410,16 @@ function EmployeesSection() {
     <Card className="mt-4 p-5">
       <div className="flex items-center justify-between">
         <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Dipendenti
+          {memberLabel} {data ? `(${data.length})` : ""}
         </div>
-        <Button size="sm" variant="ghost" onClick={exportCsv} disabled={!data?.length}>
-          <Download className="mr-1 size-3.5" /> CSV
-        </Button>
+        <div className="flex gap-1">
+          <Button size="sm" variant="ghost" onClick={refreshAll} disabled={isFetching} aria-label="Aggiorna elenco">
+            <RefreshCw className={`mr-1 size-3.5 ${isFetching ? "animate-spin" : ""}`} /> Aggiorna
+          </Button>
+          <Button size="sm" variant="ghost" onClick={exportCsv} disabled={!data?.length}>
+            <Download className="mr-1 size-3.5" /> CSV
+          </Button>
+        </div>
       </div>
       {isLoading ? (
         <div className="mt-4 flex justify-center">
@@ -408,31 +427,40 @@ function EmployeesSection() {
         </div>
       ) : !data || data.length === 0 ? (
         <p className="mt-3 text-[12px] text-muted-foreground">
-          Nessun dipendente ancora iscritto. Condividi il codice azienda per invitarli.
+          Nessun iscritto ancora. Condividi il codice ente per invitarli.
         </p>
       ) : (
         <ul className="mt-3 divide-y divide-border/40">
           {data.map((e) => (
-            <li key={e.id} className="flex items-center justify-between py-2.5">
-              <div className="min-w-0">
-                <div className="truncate text-sm font-medium">{e.full_name}</div>
-                <div className="text-[11px] text-muted-foreground">
-                  {e.trips_count} viaggi · {e.total_km} km
+            <li key={e.id}>
+              <button
+                type="button"
+                onClick={() => setSelected(e.id)}
+                className="flex w-full items-center justify-between gap-3 rounded-lg py-2.5 text-left transition-colors hover:bg-secondary/50"
+              >
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-medium">{e.full_name}</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {e.trips_count} viaggi · {e.total_km} km · {e.co2_saved_kg} kg CO₂ · {e.badges_count} badge
+                  </div>
                 </div>
-              </div>
-              <div className="text-right">
-                <div className="font-display text-sm font-bold text-cicla">{e.points_balance} pt</div>
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                  <Bike className="mr-0.5 inline size-3" />lifetime {e.lifetime_points}
+                <div className="text-right">
+                  <div className="font-display text-sm font-bold text-cicla">{e.points_balance} pt</div>
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <Bike className="mr-0.5 inline size-3" />lifetime {e.lifetime_points}
+                  </div>
                 </div>
-              </div>
+              </button>
             </li>
           ))}
         </ul>
       )}
+
+      <CompanyMemberDialog userId={selected} onOpenChange={(o: boolean) => !o && setSelected(null)} />
     </Card>
   );
 }
+
 
 const DAY_LABELS = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
 
