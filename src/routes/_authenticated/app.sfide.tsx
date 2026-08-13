@@ -101,8 +101,10 @@ function SfidePage() {
         ) : (
           <div className="flex flex-col gap-3">
             {(ch.data ?? []).map((c: any) => {
-              const pct = Math.min(100, Math.round((Number(c.progress) / Number(c.goal)) * 100));
-              const done = !!c.completed_at;
+              const team = !!c.is_team;
+              const value = team ? Number(c.team_progress ?? 0) : Number(c.progress);
+              const pct = Math.min(100, Math.round((value / Number(c.goal)) * 100));
+              const done = team ? pct >= 100 : !!c.completed_at;
               return (
                 <div key={c.id} className="rounded-3xl app-glass p-4 shadow-lg">
                   <div className="flex items-start gap-3">
@@ -116,7 +118,17 @@ function SfidePage() {
                           +{c.reward_points} pt
                         </span>
                       </div>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{c.description}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                          {team ? "Coppa di squadra" : "Individuale"}
+                        </span>
+                        {c.trophy_label && (
+                          <span className="rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-bold text-warning">
+                            🏆 {c.trophy_label}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">{c.description}</p>
                     </div>
                   </div>
                   <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/5">
@@ -127,12 +139,18 @@ function SfidePage() {
                   </div>
                   <div className="mt-1.5 flex items-center justify-between text-[11px]">
                     <span className="tabular-nums text-muted-foreground">
-                      {Number(c.progress).toFixed(1)} / {Number(c.goal)}
+                      {value.toFixed(1)} / {Number(c.goal)}
+                      {team ? ` · ${c.team_participants ?? 0} partecipanti` : ""}
                     </span>
                     <span className={done ? "font-bold text-cicla" : "text-muted-foreground"}>
                       {done ? "Completata ✓" : `${pct}%`}
                     </span>
                   </div>
+                  {team && (
+                    <div className="mt-1 text-[10px] text-muted-foreground">
+                      Il tuo contributo: {Number(c.progress).toFixed(1)}
+                    </div>
+                  )}
                 </div>
               );
             })}
