@@ -25,9 +25,17 @@ export const Route = createFileRoute("/auth")({
   }),
   head: () => ({
     meta: [
-      { title: "Accedi · Cicla Qui" },
+      { title: "Accedi o registrati · Cicla Qui" },
       { name: "description", content: "Accedi a Cicla Qui o crea il tuo account per iniziare a guadagnare punti con la mobilità sostenibile." },
+      { property: "og:title", content: "Accedi o registrati · Cicla Qui" },
+      {
+        property: "og:description",
+        content: "Entra in Cicla Qui con il codice del tuo ente e inizia a trasformare i chilometri in punti.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://ciclaqui.it/auth" },
     ],
+    links: [{ rel: "canonical", href: "https://ciclaqui.it/auth" }],
   }),
   component: AuthPage,
 });
@@ -158,6 +166,7 @@ function AuthPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-secondary/40 to-background">
       <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 py-8">
+        <h1 className="sr-only">Accedi o registrati a Cicla Qui</h1>
         <div className="mb-8 flex items-center justify-between">
           <CiclaLogo size="md" />
           <Link

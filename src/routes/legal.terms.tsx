@@ -5,7 +5,15 @@ export const Route = createFileRoute("/legal/terms")({
     meta: [
       { title: "Termini di Servizio — Cicla Qui" },
       { name: "description", content: "Condizioni d'uso della piattaforma Cicla Qui per utenti, aziende e comuni." },
+      { property: "og:title", content: "Termini di Servizio — Cicla Qui" },
+      {
+        property: "og:description",
+        content: "Regole d'uso di Cicla Qui: iscrizione con codice ente, natura dei punti, premi e prelievi.",
+      },
+      { property: "og:type", content: "article" },
+      { property: "og:url", content: "https://ciclaqui.it/legal/terms" },
     ],
+    links: [{ rel: "canonical", href: "https://ciclaqui.it/legal/terms" }],
   }),
   component: TermsPage,
 });

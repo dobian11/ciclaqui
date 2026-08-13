@@ -149,7 +149,7 @@ export function CompanyReviewDialog({
                     <Badge variant="secondary" className="ml-auto text-[10px]">
                       {((d.size ?? 0) / 1024).toFixed(0)} KB
                     </Badge>
-                    <Button size="icon" variant="ghost" className="size-6" onClick={() => removeDoc(d)}>
+                    <Button size="icon" variant="ghost" aria-label={`Rimuovi documento ${d.name}`} className="size-6" onClick={() => removeDoc(d)}>
                       <X className="size-3.5" />
                     </Button>
                   </li>

@@ -22,6 +22,30 @@ export const Route = createFileRoute("/cerca-bici")({
         content:
           "Registro pubblico delle bici segnalate rubate. Cerca per numero di telaio e segnala un avvistamento.",
       },
+      { property: "og:title", content: "Cerca una bici rubata · Cicla Qui" },
+      {
+        property: "og:description",
+        content: "Controlla il numero di telaio nel registro pubblico delle bici rubate e segnala un avvistamento.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://ciclaqui.it/cerca-bici" },
+    ],
+    links: [{ rel: "canonical", href: "https://ciclaqui.it/cerca-bici" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          name: "Registro bici rubate Cicla Qui",
+          url: "https://ciclaqui.it/cerca-bici",
+          applicationCategory: "SecurityApplication",
+          operatingSystem: "Web",
+          description:
+            "Registro pubblico delle biciclette segnalate rubate: ricerca per numero di telaio e segnalazione avvistamenti.",
+          offers: { "@type": "Offer", price: "0", priceCurrency: "EUR" },
+        }),
+      },
     ],
   }),
 });

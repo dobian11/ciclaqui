@@ -251,7 +251,7 @@ function AddBikeModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
       <div className="w-full max-w-md rounded-t-3xl border border-border bg-card p-6 sm:rounded-3xl">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg font-semibold">Nuova bici</h2>
-          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-muted">
+          <button type="button" aria-label="Chiudi" onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-muted">
             <X size={18} />
           </button>
         </div>
@@ -341,7 +341,7 @@ function QrModal({ bike, onClose }: { bike: BikeRow; onClose: () => void }) {
       <div className="w-full max-w-sm rounded-3xl border border-border bg-card p-6 text-center">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg font-semibold">Passaporto QR</h2>
-          <button onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-muted">
+          <button type="button" aria-label="Chiudi" onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-muted">
             <X size={18} />
           </button>
         </div>

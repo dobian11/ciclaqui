@@ -1,7 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/legal/cookie")({
-  head: () => ({ meta: [{ title: "Cookie Policy — Cicla Qui" }] }),
+  head: () => ({
+    meta: [
+      { title: "Cookie Policy — Cicla Qui" },
+      {
+        name: "description",
+        content:
+          "Quali cookie usa Cicla Qui: tecnici sempre attivi, analitici e marketing solo con il tuo consenso. Scopri come gestire le preferenze.",
+      },
+      { property: "og:title", content: "Cookie Policy — Cicla Qui" },
+      {
+        property: "og:description",
+        content: "Cookie tecnici, analitici e di marketing usati da Cicla Qui e come gestirli.",
+      },
+      { property: "og:type", content: "article" },
+      { property: "og:url", content: "https://ciclaqui.it/legal/cookie" },
+    ],
+    links: [{ rel: "canonical", href: "https://ciclaqui.it/legal/cookie" }],
+  }),
   component: CookiePage,
 });
 
