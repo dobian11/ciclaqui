@@ -21,6 +21,7 @@ import {
 import { AdminShell, type AdminTab } from "@/components/cicla/AdminShell";
 import { AdminListControls, AdminPagination } from "@/components/cicla/AdminListControls";
 import { useAdminList } from "@/hooks/use-admin-list";
+import { AdminUsersPanel } from "@/components/cicla/AdminUsersPanel";
 import { DocumentViewerDialog, type DocTarget } from "@/components/cicla/DocumentViewerDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -44,7 +45,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 
-type TabId = "panoramica" | "enti" | "antifrode" | "prelievi" | "notifiche";
+type TabId = "panoramica" | "enti" | "utenti" | "antifrode" | "prelievi" | "notifiche";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   ssr: false,
@@ -321,6 +322,7 @@ function AdminDashboard() {
   const tabs: AdminTab[] = [
     { id: "panoramica", label: "Panoramica", icon: LayoutDashboard },
     { id: "enti", label: "Enti", icon: Building2, count: pendingCompaniesCount },
+    { id: "utenti", label: "Utenti", icon: Users },
     { id: "antifrode", label: "Anti-frode", icon: AlertTriangle, count: pendingFlagsCount },
     { id: "prelievi", label: "Prelievi", icon: Wallet, count: pendingPayoutsCount },
     { id: "notifiche", label: "Notifiche", icon: Bell, count: unreadCount },
@@ -573,6 +575,9 @@ function AdminDashboard() {
               />
             </Card>
           )}
+
+          {/* Utenti e ruoli */}
+          {tab === "utenti" && <AdminUsersPanel />}
 
           {/* Coda anti-frode */}
           {tab === "antifrode" && (
