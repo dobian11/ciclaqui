@@ -103,6 +103,35 @@ export const markRecovered = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Segnalazioni ricevute su una bici del proprietario.
+ * Proiezione sicura: non espone mai `reporter_id` (le segnalazioni restano anonime).
+ */
+export const listReportsForMyBike = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ bike_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: bike } = await supabase
+      .from("bikes")
+      .select("id")
+      .eq("id", data.bike_id)
+      .eq("owner_id", userId)
+      .maybeSingle();
+    if (!bike) throw new Error("Bici non trovata");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: reports, error } = await supabaseAdmin
+      .from("bike_reports")
+      .select("id, bike_id, type, lat, lng, note, photo_url, created_at")
+      .eq("bike_id", data.bike_id)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return reports ?? [];
+  });
+
+
+
 const lookupSchema = z.object({
   query: z.string().trim().min(3).max(40),
 });
