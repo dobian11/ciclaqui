@@ -17,6 +17,7 @@ import { CompanyRewardsSection } from "@/components/cicla/CompanyRewardsSection"
 import { CompanyChallengesSection } from "@/components/cicla/CompanyChallengesSection";
 import { CompanyBadgesSection } from "@/components/cicla/CompanyBadgesSection";
 import { CompanyShell, type CompanySection } from "@/components/cicla/CompanyShell";
+import { CompanyMemberDialog } from "@/components/cicla/CompanyMemberDialog";
 import { NotificationsBell } from "@/components/cicla/NotificationsBell";
 import { EmailLogSection } from "@/components/cicla/EmailLogSection";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Loader2, Copy, Check, Users, CreditCard, Share2, LogOut, Building2, Landmark, Mail, Hash, Download, Bike, Clock,
-  LayoutDashboard, Trophy, Award, Gift,
+  LayoutDashboard, Trophy, Award, Gift, RefreshCw,
 } from "lucide-react";
 
 
@@ -302,7 +303,7 @@ function CompanyDashboard() {
         <div className="space-y-4">
           {canShowCode ? (
             <>
-              <EmployeesSection />
+              <EmployeesSection memberLabel={memberLabel} />
               <TrackingWindowSection
                 initial={{
                   tracking_start: company.tracking_start ?? null,
@@ -455,7 +456,7 @@ function EmployeesSection({ memberLabel }: { memberLabel: string }) {
         </ul>
       )}
 
-      <CompanyMemberDialog userId={selected} onOpenChange={(o) => !o && setSelected(null)} />
+      <CompanyMemberDialog userId={selected} onOpenChange={(o: boolean) => !o && setSelected(null)} />
     </Card>
   );
 }
