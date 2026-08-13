@@ -549,6 +549,8 @@ function AdminDashboard() {
         </Card>
         </div>
       </div>
+
+      <DocumentViewerDialog target={docTarget} onClose={() => setDocTarget(null)} />
     </AdminShell>
   );
 }
