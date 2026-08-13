@@ -264,7 +264,7 @@ function AdminDashboard() {
               decidedAt: email.decidedAt,
               reason: email.reason,
               code: email.code,
-              appUrl: window.location.origin,
+              appUrl: PUBLIC_APP_URL,
             },
           });
         } catch (err) {
