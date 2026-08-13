@@ -16,7 +16,13 @@ import { Bell, Check, CheckCheck, AlertTriangle, Dot, Undo2 } from "lucide-react
  * (approvazione / rifiuto) con data, motivazione e prossimo passo.
  * Supporta stato letto/non letto e filtro "solo non lette".
  */
-export function NotificationsSection({ alwaysShow = false }: { alwaysShow?: boolean }) {
+export function NotificationsSection({
+  alwaysShow = false,
+  embedded = false,
+}: {
+  alwaysShow?: boolean;
+  embedded?: boolean;
+}) {
   const list = useServerFn(listMyNotifications);
   const setRead = useServerFn(setNotificationRead);
   const markAll = useServerFn(markAllNotificationsRead);
@@ -46,8 +52,10 @@ export function NotificationsSection({ alwaysShow = false }: { alwaysShow?: bool
     await qc.invalidateQueries({ queryKey: ["my-notifications"] });
   }
 
+  const Wrapper: any = embedded ? "div" : Card;
+
   return (
-    <Card className="mt-4 p-5">
+    <Wrapper className={embedded ? "" : "mt-4 p-5"}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-muted-foreground">
           <Bell className="size-4" />
@@ -172,6 +180,6 @@ export function NotificationsSection({ alwaysShow = false }: { alwaysShow?: bool
           })}
         </ul>
       )}
-    </Card>
+    </Wrapper>
   );
 }

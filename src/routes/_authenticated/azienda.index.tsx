@@ -17,7 +17,7 @@ import { CompanyRewardsSection } from "@/components/cicla/CompanyRewardsSection"
 import { CompanyChallengesSection } from "@/components/cicla/CompanyChallengesSection";
 import { CompanyBadgesSection } from "@/components/cicla/CompanyBadgesSection";
 import { CompanyShell, type CompanySection } from "@/components/cicla/CompanyShell";
-import { NotificationsSection } from "@/components/cicla/NotificationsSection";
+import { NotificationsBell } from "@/components/cicla/NotificationsBell";
 import { EmailLogSection } from "@/components/cicla/EmailLogSection";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -159,9 +159,12 @@ function CompanyDashboard() {
         <div className="mx-auto max-w-md px-5 py-6">
           <div className="flex items-center justify-between">
             <CiclaLogo size="md" />
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="size-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <NotificationsBell />
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="size-4" />
+              </Button>
+            </div>
           </div>
 
           <CompanyAccessStatus
@@ -171,7 +174,6 @@ function CompanyDashboard() {
             isMuni={isMuni}
           />
 
-          <NotificationsSection />
 
           <div className="mt-6">
             <PendingCompanyDashboard
@@ -282,10 +284,7 @@ function CompanyDashboard() {
             </Card>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-2">
-            <div>
-              <NotificationsSection />
-            </div>
+          <div className="grid gap-4">
             <Card className="p-5">
               <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Dati {isMuni ? "ente" : "aziendali"}
