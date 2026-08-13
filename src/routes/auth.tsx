@@ -192,6 +192,7 @@ function AuthPage() {
     if (error) return toast.error(error.message);
     if (!signUpData.session) {
       setPendingEmail(email);
+      setCooldown(60);
       toast.success("Ti abbiamo inviato una email di conferma");
       return;
     }
