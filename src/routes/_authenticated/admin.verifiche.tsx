@@ -668,6 +668,9 @@ function AdminVerificationsPage() {
           await runDecision(t.id, t.decision, t.reason || undefined);
         }}
       />
-    </div>
+
+      {/* Visualizzatore documenti in-app */}
+      <DocumentViewerDialog target={docTarget} onClose={() => setDocTarget(null)} />
+    </AdminShell>
   );
 }
