@@ -28,6 +28,7 @@ import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedAziendaOnboardingRouteImport } from './routes/_authenticated/azienda.onboarding'
+import { Route as AuthenticatedAziendaDocumentiRouteImport } from './routes/_authenticated/azienda.documenti'
 import { Route as AuthenticatedAppSfideRouteImport } from './routes/_authenticated/app.sfide'
 import { Route as AuthenticatedAppPuntiRouteImport } from './routes/_authenticated/app.punti'
 import { Route as AuthenticatedAppProfiloRouteImport } from './routes/_authenticated/app.profilo'
@@ -139,6 +140,12 @@ const AuthenticatedAziendaOnboardingRoute =
     path: '/onboarding',
     getParentRoute: () => AuthenticatedAziendaRoute,
   } as any)
+const AuthenticatedAziendaDocumentiRoute =
+  AuthenticatedAziendaDocumentiRouteImport.update({
+    id: '/documenti',
+    path: '/documenti',
+    getParentRoute: () => AuthenticatedAziendaRoute,
+  } as any)
 const AuthenticatedAppSfideRoute = AuthenticatedAppSfideRouteImport.update({
   id: '/sfide',
   path: '/sfide',
@@ -238,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/app/profilo': typeof AuthenticatedAppProfiloRoute
   '/app/punti': typeof AuthenticatedAppPuntiRoute
   '/app/sfide': typeof AuthenticatedAppSfideRoute
+  '/azienda/documenti': typeof AuthenticatedAziendaDocumentiRoute
   '/azienda/onboarding': typeof AuthenticatedAziendaOnboardingRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -269,6 +277,7 @@ export interface FileRoutesByTo {
   '/app/profilo': typeof AuthenticatedAppProfiloRoute
   '/app/punti': typeof AuthenticatedAppPuntiRoute
   '/app/sfide': typeof AuthenticatedAppSfideRoute
+  '/azienda/documenti': typeof AuthenticatedAziendaDocumentiRoute
   '/azienda/onboarding': typeof AuthenticatedAziendaOnboardingRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -305,6 +314,7 @@ export interface FileRoutesById {
   '/_authenticated/app/profilo': typeof AuthenticatedAppProfiloRoute
   '/_authenticated/app/punti': typeof AuthenticatedAppPuntiRoute
   '/_authenticated/app/sfide': typeof AuthenticatedAppSfideRoute
+  '/_authenticated/azienda/documenti': typeof AuthenticatedAziendaDocumentiRoute
   '/_authenticated/azienda/onboarding': typeof AuthenticatedAziendaOnboardingRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
     | '/app/profilo'
     | '/app/punti'
     | '/app/sfide'
+    | '/azienda/documenti'
     | '/azienda/onboarding'
     | '/lovable/email/suppression'
     | '/admin/'
@@ -372,6 +383,7 @@ export interface FileRouteTypes {
     | '/app/profilo'
     | '/app/punti'
     | '/app/sfide'
+    | '/azienda/documenti'
     | '/azienda/onboarding'
     | '/lovable/email/suppression'
     | '/admin'
@@ -407,6 +419,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/profilo'
     | '/_authenticated/app/punti'
     | '/_authenticated/app/sfide'
+    | '/_authenticated/azienda/documenti'
     | '/_authenticated/azienda/onboarding'
     | '/lovable/email/suppression'
     | '/_authenticated/admin/'
@@ -576,6 +589,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAziendaOnboardingRouteImport
       parentRoute: typeof AuthenticatedAziendaRoute
     }
+    '/_authenticated/azienda/documenti': {
+      id: '/_authenticated/azienda/documenti'
+      path: '/documenti'
+      fullPath: '/azienda/documenti'
+      preLoaderRoute: typeof AuthenticatedAziendaDocumentiRouteImport
+      parentRoute: typeof AuthenticatedAziendaRoute
+    }
     '/_authenticated/app/sfide': {
       id: '/_authenticated/app/sfide'
       path: '/sfide'
@@ -716,11 +736,13 @@ const AuthenticatedAppRouteWithChildren =
   AuthenticatedAppRoute._addFileChildren(AuthenticatedAppRouteChildren)
 
 interface AuthenticatedAziendaRouteChildren {
+  AuthenticatedAziendaDocumentiRoute: typeof AuthenticatedAziendaDocumentiRoute
   AuthenticatedAziendaOnboardingRoute: typeof AuthenticatedAziendaOnboardingRoute
   AuthenticatedAziendaIndexRoute: typeof AuthenticatedAziendaIndexRoute
 }
 
 const AuthenticatedAziendaRouteChildren: AuthenticatedAziendaRouteChildren = {
+  AuthenticatedAziendaDocumentiRoute: AuthenticatedAziendaDocumentiRoute,
   AuthenticatedAziendaOnboardingRoute: AuthenticatedAziendaOnboardingRoute,
   AuthenticatedAziendaIndexRoute: AuthenticatedAziendaIndexRoute,
 }
