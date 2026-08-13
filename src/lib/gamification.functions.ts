@@ -39,11 +39,29 @@ export const listActiveChallenges = createServerFn({ method: "GET" })
           .in("challenge_id", ids)
       : { data: [] as any[] };
 
+    const teamIds = (challenges ?? []).filter((c: any) => c.is_team).map((c: any) => c.id);
+    const { data: teamRows } = teamIds.length
+      ? await supabaseAdmin
+          .from("user_challenges")
+          .select("challenge_id, progress")
+          .in("challenge_id", teamIds)
+      : { data: [] as any[] };
+
+    const teamTotals = new Map<string, { total: number; participants: number }>();
+    for (const r of teamRows ?? []) {
+      const cur = teamTotals.get(r.challenge_id) ?? { total: 0, participants: 0 };
+      cur.total += Number(r.progress ?? 0);
+      cur.participants += 1;
+      teamTotals.set(r.challenge_id, cur);
+    }
+
     const map = new Map((progress ?? []).map((p: any) => [p.challenge_id, p]));
     return (challenges ?? []).map((c: any) => ({
       ...c,
       progress: Number(map.get(c.id)?.progress ?? 0),
       completed_at: map.get(c.id)?.completed_at ?? null,
+      team_progress: teamTotals.get(c.id)?.total ?? 0,
+      team_participants: teamTotals.get(c.id)?.participants ?? 0,
     }));
   });
 
