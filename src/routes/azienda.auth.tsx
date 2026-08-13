@@ -166,18 +166,46 @@ function CompanyAuthPage() {
         </div>
 
         <Card className="border-border/60 p-6 shadow-cicla">
-          {pendingEmail && (
-            <div className="mb-5 rounded-xl border border-cicla/30 bg-cicla/10 p-4">
-              <p className="text-sm font-semibold">Conferma la tua email</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Abbiamo inviato un link di conferma a <strong>{pendingEmail}</strong>.
-                Aprilo per attivare l'account: verrai portato al modulo di registrazione
-                dell'ente, che resterà in attesa di verifica da parte dell'admin.
-              </p>
-            </div>
-          )}
+          {pendingEmail ? (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-cicla/30 bg-cicla/10 p-4">
+                <p className="text-sm font-semibold">Conferma la tua email</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Abbiamo inviato un link di conferma a <strong>{pendingEmail}</strong>.
+                  Aprilo per attivare l'account: verrai portato al modulo dove inserire i dati
+                  dell'ente e caricare i documenti. Dopo l'invio, la richiesta resta in attesa di
+                  verifica dell'admin: all'approvazione riceverai un'email con il codice ente da
+                  distribuire.
+                </p>
+              </div>
 
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleResend}
+                disabled={loading || cooldown > 0}
+              >
+                {loading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : cooldown > 0 ? (
+                  `Rinvia email tra ${cooldown}s`
+                ) : (
+                  "Rinvia email di conferma"
+                )}
+              </Button>
+
+              <button
+                type="button"
+                className="w-full text-center text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => setPendingEmail(null)}
+              >
+                ← Torna all'accesso
+              </button>
+            </div>
+          ) : (
           <Tabs defaultValue={defaultTab} className="w-full">
+
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Accedi</TabsTrigger>
               <TabsTrigger value="signup">Inizia ora</TabsTrigger>
