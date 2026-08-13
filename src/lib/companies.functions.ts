@@ -504,6 +504,16 @@ export const submitInitialDocuments = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!company) throw new Error("Ente non trovato");
 
+    // L'abbonamento va attivato prima di inviare la pratica di verifica.
+    const { data: sub } = await supabaseAdmin
+      .from("company_subscriptions")
+      .select("status")
+      .eq("company_id", company.id)
+      .maybeSingle();
+    if (!sub || !["active", "trial"].includes(sub.status)) {
+      throw new Error("Attiva prima l'abbonamento per inviare i documenti");
+    }
+
     const { data: review } = await supabaseAdmin
       .from("company_reviews")
       .select("id")
