@@ -48,6 +48,7 @@ import {
   AlertTriangle,
   LayoutDashboard,
   TicketPercent,
+  Landmark,
 } from "lucide-react";
 
 type TabId =
