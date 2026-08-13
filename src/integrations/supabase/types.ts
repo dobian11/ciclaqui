@@ -80,13 +80,6 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "admin_notifications_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       app_config: {
@@ -319,13 +312,6 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "challenges_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       companies: {
@@ -451,13 +437,6 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "company_audit_log_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       company_email_log: {
@@ -512,13 +491,6 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_email_log_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies_public"
             referencedColumns: ["id"]
           },
         ]
@@ -577,13 +549,6 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "company_reviews_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       company_subscriptions: {
@@ -623,13 +588,6 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_subscriptions_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1023,13 +981,6 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "profiles_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       reward_redemptions: {
@@ -1137,13 +1088,6 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "rewards_catalog_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1287,13 +1231,6 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "trip_flags_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies_public"
             referencedColumns: ["id"]
           },
           {
@@ -1445,13 +1382,6 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "user_notifications_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies_public"
-            referencedColumns: ["id"]
-          },
         ]
       }
       user_roles: {
@@ -1510,48 +1440,7 @@ export type Database = {
       }
     }
     Views: {
-      bike_reports_for_owner: {
-        Row: {
-          bike_id: string | null
-          created_at: string | null
-          id: string | null
-          lat: number | null
-          lng: number | null
-          note: string | null
-          photo_url: string | null
-          type: Database["public"]["Enums"]["bike_report_type"] | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bike_reports_bike_id_fkey"
-            columns: ["bike_id"]
-            isOneToOne: false
-            referencedRelation: "bikes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      companies_public: {
-        Row: {
-          id: string | null
-          kind: Database["public"]["Enums"]["company_kind"] | null
-          name: string | null
-          status: Database["public"]["Enums"]["company_status"] | null
-        }
-        Insert: {
-          id?: string | null
-          kind?: Database["public"]["Enums"]["company_kind"] | null
-          name?: string | null
-          status?: Database["public"]["Enums"]["company_status"] | null
-        }
-        Update: {
-          id?: string | null
-          kind?: Database["public"]["Enums"]["company_kind"] | null
-          name?: string | null
-          status?: Database["public"]["Enums"]["company_status"] | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       apply_trip_to_challenges: {
