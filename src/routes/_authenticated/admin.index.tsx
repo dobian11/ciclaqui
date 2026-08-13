@@ -44,7 +44,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 
-type TabId = "panoramica" | "enti" | "antifrode" | "prelievi" | "notifiche";
+type TabId = "panoramica" | "enti" | "utenti" | "antifrode" | "prelievi" | "notifiche";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   ssr: false,
