@@ -180,6 +180,6 @@ export function NotificationsSection({
           })}
         </ul>
       )}
-    </Card>
+    </Wrapper>
   );
 }
