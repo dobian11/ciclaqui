@@ -10,6 +10,7 @@ import { listMyEmployees } from "@/lib/admin.functions";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { CompanyReviewDialog } from "@/components/cicla/CompanyReviewDialog";
 import { PendingCompanyDashboard } from "@/components/cicla/PendingCompanyDashboard";
+import { CompanyRejectionSection } from "@/components/cicla/CompanyRejectionSection";
 import { CompanyRewardsSection } from "@/components/cicla/CompanyRewardsSection";
 import { NotificationsSection } from "@/components/cicla/NotificationsSection";
 import { EmailLogSection } from "@/components/cicla/EmailLogSection";
