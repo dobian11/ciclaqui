@@ -42,41 +42,159 @@ export const listMyEmployees = createServerFn({ method: "GET" })
     if (!employees || employees.length === 0) return [];
 
     const ids = employees.map((e) => e.id);
-    const [{ data: wallets }, { data: trips }] = await Promise.all([
+    const [{ data: wallets }, { data: trips }, { data: badges }] = await Promise.all([
       supabaseAdmin
         .from("wallets")
         .select("user_id, points_balance, lifetime_points, lifetime_km")
         .in("user_id", ids),
       supabaseAdmin
         .from("trips")
-        .select("user_id, distance_km, mode")
+        .select("user_id, distance_km, mode, co2_saved_kg")
         .in("user_id", ids),
+      supabaseAdmin.from("badges").select("user_id").in("user_id", ids),
     ]);
 
-    const tripsByUser = new Map<string, { km: number; trips: number }>();
+    const tripsByUser = new Map<
+      string,
+      { km: number; trips: number; bike_km: number; foot_km: number; co2: number }
+    >();
     (trips ?? []).forEach((t) => {
-      const cur = tripsByUser.get(t.user_id) ?? { km: 0, trips: 0 };
-      cur.km += Number(t.distance_km ?? 0);
+      const cur =
+        tripsByUser.get(t.user_id) ?? { km: 0, trips: 0, bike_km: 0, foot_km: 0, co2: 0 };
+      const km = Number(t.distance_km ?? 0);
+      cur.km += km;
       cur.trips += 1;
+      cur.co2 += Number(t.co2_saved_kg ?? 0);
+      if (t.mode === "bike") cur.bike_km += km;
+      if (t.mode === "foot") cur.foot_km += km;
       tripsByUser.set(t.user_id, cur);
     });
+
+    const badgeCount = new Map<string, number>();
+    (badges ?? []).forEach((b) => badgeCount.set(b.user_id, (badgeCount.get(b.user_id) ?? 0) + 1));
 
     const walletByUser = new Map(wallets?.map((w) => [w.user_id, w]) ?? []);
 
     return employees.map((e) => {
       const w = walletByUser.get(e.id);
-      const t = tripsByUser.get(e.id) ?? { km: 0, trips: 0 };
+      const t = tripsByUser.get(e.id) ?? { km: 0, trips: 0, bike_km: 0, foot_km: 0, co2: 0 };
       return {
         id: e.id,
         full_name: e.full_name ?? "—",
         joined_at: e.created_at,
         trips_count: t.trips,
         total_km: Number(t.km.toFixed(2)),
+        bike_km: Number(t.bike_km.toFixed(2)),
+        foot_km: Number(t.foot_km.toFixed(2)),
+        co2_saved_kg: Number(t.co2.toFixed(2)),
+        badges_count: badgeCount.get(e.id) ?? 0,
         points_balance: w?.points_balance ?? 0,
         lifetime_points: w?.lifetime_points ?? 0,
       };
     });
   });
+
+/**
+ * Dettaglio completo di un membro dell'ente (km per mezzo, CO2, badge,
+ * streak e ultimi viaggi). Riservato al titolare dell'ente di appartenenza.
+ */
+export const getMyEmployeeDetail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ user_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("company_id")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!profile?.company_id) throw new Error("Nessun ente associato");
+    const { data: ownsCompany } = await supabase.rpc("owns_company", {
+      _company_id: profile.company_id,
+    });
+    if (!ownsCompany) throw new Error("Accesso riservato al titolare dell'ente");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: member } = await supabaseAdmin
+      .from("profiles")
+      .select("id, full_name, avatar_url, created_at, company_id")
+      .eq("id", data.user_id)
+      .maybeSingle();
+    if (!member || member.company_id !== profile.company_id) {
+      throw new Error("Membro non trovato in questo ente");
+    }
+
+    const [{ data: wallet }, { data: trips }, { data: badges }, { data: streak }] =
+      await Promise.all([
+        supabaseAdmin
+          .from("wallets")
+          .select("points_balance, lifetime_points, lifetime_km")
+          .eq("user_id", member.id)
+          .maybeSingle(),
+        supabaseAdmin
+          .from("trips")
+          .select("id, started_at, mode, distance_km, avg_speed_kmh, calories, co2_saved_kg, points_earned")
+          .eq("user_id", member.id)
+          .order("started_at", { ascending: false })
+          .limit(200),
+        supabaseAdmin
+          .from("badges")
+          .select("id, code, title, description, icon, earned_at")
+          .eq("user_id", member.id)
+          .order("earned_at", { ascending: false }),
+        supabaseAdmin
+          .from("streaks")
+          .select("current_days, best_days, multiplier")
+          .eq("user_id", member.id)
+          .maybeSingle(),
+      ]);
+
+    const all = trips ?? [];
+    const sum = (f: (t: (typeof all)[number]) => number) => all.reduce((a, t) => a + f(t), 0);
+    const kmBy = (mode: string) =>
+      Number(all.filter((t) => t.mode === mode).reduce((a, t) => a + Number(t.distance_km ?? 0), 0).toFixed(2));
+
+    const since30 = Date.now() - 30 * 24 * 3600 * 1000;
+    const km30 = Number(
+      all
+        .filter((t) => new Date(t.started_at).getTime() >= since30)
+        .reduce((a, t) => a + Number(t.distance_km ?? 0), 0)
+        .toFixed(2),
+    );
+
+    return {
+      id: member.id,
+      full_name: member.full_name ?? "—",
+      avatar_url: member.avatar_url,
+      joined_at: member.created_at,
+      wallet: {
+        points_balance: wallet?.points_balance ?? 0,
+        lifetime_points: wallet?.lifetime_points ?? 0,
+        lifetime_km: Number(wallet?.lifetime_km ?? 0),
+      },
+      totals: {
+        trips: all.length,
+        total_km: Number(sum((t) => Number(t.distance_km ?? 0)).toFixed(2)),
+        bike_km: kmBy("bike"),
+        foot_km: kmBy("foot"),
+        car_km: kmBy("car"),
+        km_last_30d: km30,
+        co2_saved_kg: Number(sum((t) => Number(t.co2_saved_kg ?? 0)).toFixed(2)),
+        calories: Math.round(sum((t) => Number(t.calories ?? 0))),
+        points_earned: Math.round(sum((t) => Number(t.points_earned ?? 0))),
+      },
+      streak: {
+        current_days: streak?.current_days ?? 0,
+        best_days: streak?.best_days ?? 0,
+        multiplier: Number(streak?.multiplier ?? 1),
+      },
+      badges: badges ?? [],
+      recent_trips: all.slice(0, 12),
+    };
+  });
+
 
 // --------------- ADMIN ---------------
 
