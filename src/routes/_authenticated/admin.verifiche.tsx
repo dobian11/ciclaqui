@@ -1,15 +1,15 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { isAdmin, adminListVerifications, adminDecideCompany, adminListAuditLog } from "@/lib/admin.functions";
-import { getCompanyDocUrl } from "@/lib/companies.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { logCompanyDecisionEmail } from "@/lib/email-log.functions";
 import { EmailLogSection } from "@/components/cicla/EmailLogSection";
 import { DecisionEmailPreview, type DecisionPreviewTarget } from "@/components/cicla/DecisionEmailPreview";
-import { CiclaLogo } from "@/components/cicla/CiclaLogo";
+import { AdminShell } from "@/components/cicla/AdminShell";
+import { DocumentViewerDialog, type DocTarget } from "@/components/cicla/DocumentViewerDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,8 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
-  Loader2, ShieldCheck, Search, FileText, Download, Check, X, History,
-  Building2, Landmark, ChevronDown, ChevronRight, ArrowLeft, Clock, AlertTriangle, Eye, ScrollText,
+  Loader2, Search, FileText, Check, X, History,
+  Building2, Landmark, ChevronDown, ChevronRight, Clock, AlertTriangle, Eye, ScrollText,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/verifiche")({
