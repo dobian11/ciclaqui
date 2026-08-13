@@ -561,8 +561,9 @@ function AdminDashboard() {
             </ul>
           )}
         </Card>
+        </div>
       </div>
-    </div>
+    </AdminShell>
   );
 }
 
