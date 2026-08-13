@@ -22,9 +22,17 @@ export const Route = createFileRoute("/azienda/auth")({
   }),
   head: () => ({
     meta: [
-      { title: "Area Aziende · Cicla Qui" },
+      { title: "Area Aziende e Comuni · Cicla Qui" },
       { name: "description", content: "Registra la tua azienda su Cicla Qui: genera il codice per i dipendenti e premia la mobilità sostenibile." },
+      { property: "og:title", content: "Area Aziende e Comuni · Cicla Qui" },
+      {
+        property: "og:description",
+        content: "Aziende e Comuni: attiva il codice ente, premia dipendenti e cittadini che si muovono in modo sostenibile.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://ciclaqui.it/azienda/auth" },
     ],
+    links: [{ rel: "canonical", href: "https://ciclaqui.it/azienda/auth" }],
   }),
   component: CompanyAuthPage,
 });
