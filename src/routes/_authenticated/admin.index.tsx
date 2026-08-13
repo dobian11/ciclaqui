@@ -14,6 +14,7 @@ import {
   adminListNotifications,
   adminMarkNotificationRead,
   adminListCompanyReviews,
+  adminListAuditLog,
   adminListTripFlags,
   adminDecideTripFlag,
   isAdmin,
@@ -51,6 +52,13 @@ export const Route = createFileRoute("/_authenticated/admin/")({
   ssr: false,
   component: AdminDashboard,
 });
+const AUDIT_ACTION_LABELS: Record<string, string> = {
+  document_viewed: "Documento visualizzato",
+  company_approved: "Ente approvato",
+  company_rejected: "Ente rifiutato",
+  review_submitted: "Revisione inviata",
+};
+
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -163,6 +171,15 @@ function AdminDashboard() {
     queryFn: () => listCompanyReviews({ data: { company_id: expandedCompanyId! } }),
     enabled: adminCheck?.admin === true && !!expandedCompanyId,
   });
+
+  const listAuditLog = useServerFn(adminListAuditLog);
+  const { data: companyAudit } = useQuery({
+    queryKey: ["admin-company-audit", expandedCompanyId],
+    queryFn: () => listAuditLog({ data: { company_id: expandedCompanyId!, limit: 50 } }),
+    enabled: adminCheck?.admin === true && !!expandedCompanyId,
+  });
+
+
 
   const unreadCount = notifications?.filter((n) => !n.read_at).length ?? 0;
   const pendingCompaniesCount = companies?.filter((c) => c.status === "pending").length ?? 0;
@@ -561,7 +578,49 @@ function AdminDashboard() {
                               );
                             })
                           )}
+
+                          <div className="pt-1">
+                            <div className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                              Audit log admin
+                            </div>
+                            {!companyAudit || companyAudit.length === 0 ? (
+                              <p className="text-[11px] text-muted-foreground">
+                                Nessuna azione registrata.
+                              </p>
+                            ) : (
+                              <ul className="space-y-1">
+                                {companyAudit.map((a) => (
+                                  <li
+                                    key={a.id}
+                                    className="rounded border border-border/40 bg-background/60 p-2 text-[11px]"
+                                  >
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className="font-medium">
+                                        {AUDIT_ACTION_LABELS[a.action] ?? a.action}
+                                      </span>
+                                      <span className="text-[10px] text-muted-foreground">
+                                        {new Date(a.created_at).toLocaleString("it-IT")}
+                                      </span>
+                                    </div>
+                                    <div className="text-[10px] text-muted-foreground">
+                                      {a.actor_name ?? "Admin"}
+                                      {a.actor_role ? ` · ${a.actor_role}` : ""}
+                                    </div>
+                                    {a.document_name && (
+                                      <div className="mt-0.5">Documento: {a.document_name}</div>
+                                    )}
+                                    {a.reason && (
+                                      <div className="mt-0.5 text-destructive">
+                                        Motivo: {a.reason}
+                                      </div>
+                                    )}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
                         </div>
+
                       )}
                     </li>
                   ))}
