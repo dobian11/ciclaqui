@@ -123,7 +123,9 @@ export type Database = {
       }
       badges: {
         Row: {
+          awarded_by: string | null
           code: string
+          company_id: string | null
           description: string | null
           earned_at: string
           icon: string | null
@@ -132,7 +134,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          awarded_by?: string | null
           code: string
+          company_id?: string | null
           description?: string | null
           earned_at?: string
           icon?: string | null
@@ -141,7 +145,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          awarded_by?: string | null
           code?: string
+          company_id?: string | null
           description?: string | null
           earned_at?: string
           icon?: string | null
@@ -149,7 +155,15 @@ export type Database = {
           title?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "badges_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bike_reports: {
         Row: {
@@ -263,10 +277,12 @@ export type Database = {
           icon: string | null
           id: string
           is_active: boolean
+          is_team: boolean
           period: Database["public"]["Enums"]["challenge_period"]
           reward_points: number
           starts_at: string
           title: string
+          trophy_label: string | null
           type: Database["public"]["Enums"]["challenge_type"]
           updated_at: string
         }
@@ -280,10 +296,12 @@ export type Database = {
           icon?: string | null
           id?: string
           is_active?: boolean
+          is_team?: boolean
           period?: Database["public"]["Enums"]["challenge_period"]
           reward_points?: number
           starts_at?: string
           title: string
+          trophy_label?: string | null
           type: Database["public"]["Enums"]["challenge_type"]
           updated_at?: string
         }
@@ -297,10 +315,12 @@ export type Database = {
           icon?: string | null
           id?: string
           is_active?: boolean
+          is_team?: boolean
           period?: Database["public"]["Enums"]["challenge_period"]
           reward_points?: number
           starts_at?: string
           title?: string
+          trophy_label?: string | null
           type?: Database["public"]["Enums"]["challenge_type"]
           updated_at?: string
         }
