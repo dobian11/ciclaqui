@@ -398,17 +398,17 @@ export const adminDecideCompany = createServerFn({ method: "POST" })
         ownerEmail = null;
       }
     }
-    const recipients = [
+    const emailRecipients: string[] = [
       ...new Set([company?.contact_email, ownerEmail].filter((e): e is string => !!e)),
     ];
 
     return {
       ok: true,
       push,
-      email: company && recipients.length > 0
+      email: company && emailRecipients.length > 0
         ? {
-            recipient: recipients[0],
-            recipients,
+            recipient: emailRecipients[0],
+            recipients: emailRecipients,
             companyName: company.name,
             kind: company.kind,
             decision: data.decision,
