@@ -556,8 +556,11 @@ export type Database = {
           company_id: string
           created_at: string
           current_period_end: string | null
+          discount_code: string | null
           id: string
+          monthly_price_eur: number
           plan: Database["public"]["Enums"]["subscription_plan"]
+          seats: number
           status: Database["public"]["Enums"]["subscription_status"]
           stripe_subscription_id: string | null
           updated_at: string
@@ -566,8 +569,11 @@ export type Database = {
           company_id: string
           created_at?: string
           current_period_end?: string | null
+          discount_code?: string | null
           id?: string
+          monthly_price_eur?: number
           plan?: Database["public"]["Enums"]["subscription_plan"]
+          seats?: number
           status?: Database["public"]["Enums"]["subscription_status"]
           stripe_subscription_id?: string | null
           updated_at?: string
@@ -576,8 +582,11 @@ export type Database = {
           company_id?: string
           created_at?: string
           current_period_end?: string | null
+          discount_code?: string | null
           id?: string
+          monthly_price_eur?: number
           plan?: Database["public"]["Enums"]["subscription_plan"]
+          seats?: number
           status?: Database["public"]["Enums"]["subscription_status"]
           stripe_subscription_id?: string | null
           updated_at?: string
@@ -682,6 +691,51 @@ export type Database = {
           platform?: string
           token?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      discount_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          label: string | null
+          max_redemptions: number | null
+          percent_off: number
+          plan: Database["public"]["Enums"]["subscription_plan"] | null
+          redeemed_count: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          label?: string | null
+          max_redemptions?: number | null
+          percent_off?: number
+          plan?: Database["public"]["Enums"]["subscription_plan"] | null
+          redeemed_count?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          label?: string | null
+          max_redemptions?: number | null
+          percent_off?: number
+          plan?: Database["public"]["Enums"]["subscription_plan"] | null
+          redeemed_count?: number
+          updated_at?: string
         }
         Relationships: []
       }

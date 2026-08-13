@@ -13,7 +13,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, Building2, ArrowRight, ShieldCheck, Lock } from "lucide-react";
+import { Loader2, Building2, ArrowRight, ShieldCheck, Lock, CreditCard } from "lucide-react";
+import { PlanPicker } from "@/components/cicla/PlanPicker";
 
 export const Route = createFileRoute("/_authenticated/azienda/onboarding")({
   ssr: false,
@@ -32,6 +33,7 @@ function OnboardingPage() {
   const [created, setCreated] = useState<{ id: string; kind: string; name: string } | null>(null);
   const [docs, setDocs] = useState<UploadedDoc[]>([]);
   const [notes, setNotes] = useState("");
+  const [subActive, setSubActive] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setHasSession(!!data.session));
@@ -109,7 +111,7 @@ function OnboardingPage() {
   }
 
   const isMuni = kind === "municipality";
-  const step = created ? 2 : 1;
+  const step = !created ? 1 : !subActive ? 2 : 3;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-secondary/40 to-background">
@@ -118,15 +120,17 @@ function OnboardingPage() {
 
         <div className="mt-8">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-cicla/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-cicla">
-            <Building2 size={12} /> Onboarding · passo {step} di 2
+            <Building2 size={12} /> Onboarding · passo {step} di 3
           </div>
           <h1 className="mt-3 text-2xl font-bold tracking-tight">
-            {step === 1 ? "Registra il tuo ente" : "Carica i documenti obbligatori"}
+            {step === 1 ? "Registra il tuo ente" : step === 2 ? "Scegli il piano e attiva l'abbonamento" : "Carica i documenti obbligatori"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {step === 1
               ? `Scegli il tipo di ente: i dati appariranno sulla tua fattura e servono per la verifica prima di poter accogliere i tuoi ${isMuni ? "cittadini" : "dipendenti"}.`
-              : "Tutti i documenti elencati sono necessari per la verifica. Senza documenti completi la richiesta non può essere approvata."}
+              : step === 2
+                ? `L'abbonamento va attivato prima di inviare i documenti. Hai un codice sconto partner? Inseriscilo: azzera il costo.`
+                : "Tutti i documenti elencati sono necessari per la verifica. Senza documenti completi la richiesta non può essere approvata."}
           </p>
         </div>
 
@@ -183,6 +187,21 @@ function OnboardingPage() {
         )}
 
         {step === 2 && created && (
+          <Card className="mt-5 border-border/60 p-5">
+            <div className="mb-4 flex items-center gap-2 text-sm font-semibold">
+              <CreditCard className="size-4 text-cicla" /> Abbonamento mensile
+            </div>
+            <PlanPicker
+              memberLabel={created.kind === "municipality" ? "cittadini" : "dipendenti"}
+              onActivated={async () => {
+                setSubActive(true);
+                await router.invalidate();
+              }}
+            />
+          </Card>
+        )}
+
+        {step === 3 && created && (
           <>
             <Card className="mt-5 border-border/60 p-5">
               <CompanyDocsUploader

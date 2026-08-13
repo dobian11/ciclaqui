@@ -431,6 +431,20 @@ export const joinCompanyByCode = createServerFn({ method: "POST" })
       return { ok: false as const, reason: "already_linked" as const };
     }
 
+    // Posti disponibili secondo il piano acquistato
+    const { data: caps } = await supabaseAdmin
+      .from("companies")
+      .select("employee_cap")
+      .eq("id", company.id)
+      .maybeSingle();
+    const { count: used } = await supabaseAdmin
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", company.id);
+    if (caps?.employee_cap && (used ?? 0) >= caps.employee_cap) {
+      return { ok: false as const, reason: "seats_full" as const };
+    }
+
     const { error } = await supabaseAdmin
       .from("profiles")
       .update({ company_id: company.id })
@@ -503,6 +517,16 @@ export const submitInitialDocuments = createServerFn({ method: "POST" })
       .eq("id", profile.company_id)
       .maybeSingle();
     if (!company) throw new Error("Ente non trovato");
+
+    // L'abbonamento va attivato prima di inviare la pratica di verifica.
+    const { data: sub } = await supabaseAdmin
+      .from("company_subscriptions")
+      .select("status")
+      .eq("company_id", company.id)
+      .maybeSingle();
+    if (!sub || !["active", "trial"].includes(sub.status)) {
+      throw new Error("Attiva prima l'abbonamento per inviare i documenti");
+    }
 
     const { data: review } = await supabaseAdmin
       .from("company_reviews")

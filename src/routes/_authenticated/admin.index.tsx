@@ -24,6 +24,7 @@ import { AdminShell, type AdminTab } from "@/components/cicla/AdminShell";
 import { AdminListControls, AdminPagination } from "@/components/cicla/AdminListControls";
 import { useAdminList } from "@/hooks/use-admin-list";
 import { AdminUsersPanel } from "@/components/cicla/AdminUsersPanel";
+import { AdminDiscountCodes } from "@/components/cicla/AdminDiscountCodes";
 import { DocumentViewerDialog, type DocTarget } from "@/components/cicla/DocumentViewerDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -45,9 +46,10 @@ import {
   Eye,
   AlertTriangle,
   LayoutDashboard,
+  TicketPercent,
 } from "lucide-react";
 
-type TabId = "panoramica" | "enti" | "utenti" | "antifrode" | "prelievi" | "notifiche";
+type TabId = "panoramica" | "enti" | "utenti" | "antifrode" | "prelievi" | "sconti" | "notifiche";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   ssr: false,
@@ -348,6 +350,7 @@ function AdminDashboard() {
     { id: "utenti", label: "Utenti", icon: Users },
     { id: "antifrode", label: "Anti-frode", icon: AlertTriangle, count: pendingFlagsCount },
     { id: "prelievi", label: "Prelievi", icon: Wallet, count: pendingPayoutsCount },
+    { id: "sconti", label: "Codici sconto", icon: TicketPercent },
     { id: "notifiche", label: "Notifiche", icon: Bell, count: unreadCount },
   ];
 
@@ -643,6 +646,8 @@ function AdminDashboard() {
 
           {/* Utenti e ruoli */}
           {tab === "utenti" && <AdminUsersPanel />}
+
+          {tab === "sconti" && <AdminDiscountCodes />}
 
           {/* Coda anti-frode */}
           {tab === "antifrode" && (

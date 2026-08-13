@@ -5,9 +5,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyCompany, updateTrackingWindow, listMyCompanyReviews } from "@/lib/companies.functions";
-import { startCompanySubscription } from "@/lib/payments.functions";
 
 import { listMyEmployees } from "@/lib/admin.functions";
+import { PlanPicker } from "@/components/cicla/PlanPicker";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { CompanyReviewDialog } from "@/components/cicla/CompanyReviewDialog";
 import { PendingCompanyDashboard } from "@/components/cicla/PendingCompanyDashboard";
@@ -35,10 +35,8 @@ function CompanyDashboard() {
   const router = useRouter();
   const qc = useQueryClient();
   const getMine = useServerFn(getMyCompany);
-  const startSub = useServerFn(startCompanySubscription);
   const listReviews = useServerFn(listMyCompanyReviews);
   const [copied, setCopied] = useState(false);
-  const [subLoading, setSubLoading] = useState(false);
   const [hasSession, setHasSession] = useState<boolean | null>(true);
   const [reviewOpen, setReviewOpen] = useState(false);
 
@@ -353,36 +351,23 @@ function CompanyDashboard() {
           </Card>
         </div>
 
-        {/* Abbonamento CTA — solo dopo approvazione */}
-        {isApproved && !subActive && (
+        {/* Abbonamento — piani e codice sconto */}
+        {!subActive && (
           <Card className="mt-4 border-warning/40 bg-warning/5 p-5">
             <div className="text-sm font-semibold">Attiva l'abbonamento per generare il codice</div>
             <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
               Per riconoscere i premi (denaro, voucher o altri incentivi) ai punti accumulati
               dai tuoi {isMuni ? "cittadini" : "dipendenti"} serve un abbonamento mensile.
-              All'attivazione riceverai il <strong>codice ente</strong> da distribuire.
-              Stripe non è ancora collegato: puoi avviare un <strong>trial 14 giorni</strong> per testare il pannello.
+              Il numero di account collegati al tuo codice è limitato al piano scelto.
             </p>
-            <Button
-              className="mt-3 w-full"
-              disabled={subLoading}
-              onClick={async () => {
-                setSubLoading(true);
-                try {
-                  const res = await startSub({});
-                  toast.success(res.message);
+            <div className="mt-4">
+              <PlanPicker
+                memberLabel={isMuni ? "cittadini" : "dipendenti"}
+                onActivated={async () => {
                   await qc.invalidateQueries({ queryKey: ["my-company"] });
-                } catch (e) {
-                  toast.error(e instanceof Error ? e.message : "Errore");
-                } finally {
-                  setSubLoading(false);
-                }
-              }}
-            >
-              {subLoading ? <Loader2 className="size-4 animate-spin" /> : (
-                <><CreditCard className="mr-2 size-4" /> Avvia trial (stub)</>
-              )}
-            </Button>
+                }}
+              />
+            </div>
           </Card>
         )}
 
