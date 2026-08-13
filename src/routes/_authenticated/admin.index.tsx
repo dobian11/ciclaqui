@@ -433,11 +433,22 @@ function AdminDashboard() {
                   {companies?.filter((c) => c.status === "pending").length ?? 0} in attesa
                 </span>
               </div>
-              {!companies || companies.length === 0 ? (
+              <AdminListControls
+                query={companiesList.query}
+                onQuery={companiesList.setQuery}
+                statuses={companiesList.statuses}
+                statusFilter={companiesList.statusFilter}
+                onStatus={companiesList.setStatusFilter}
+                sort={companiesList.sort}
+                onSort={companiesList.setSort}
+                placeholder="Cerca per nome, P.IVA o email…"
+              />
+
+              {companiesList.total === 0 ? (
                 <p className="mt-3 text-[12px] text-muted-foreground">Nessun ente registrato.</p>
               ) : (
                 <ul className="mt-3 space-y-3">
-                  {companies.map((c) => (
+                  {companiesList.items.map((c) => (
                     <li key={c.id} className="rounded-lg border border-border/50 p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -554,6 +565,12 @@ function AdminDashboard() {
                   ))}
                 </ul>
               )}
+              <AdminPagination
+                page={companiesList.page}
+                pageCount={companiesList.pageCount}
+                total={companiesList.total}
+                onPage={companiesList.setPage}
+              />
             </Card>
           )}
 
