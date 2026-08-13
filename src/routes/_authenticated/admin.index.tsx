@@ -394,24 +394,9 @@ function AdminDashboard() {
             </Card>
           )}
 
-          {/* Centro verifiche enti */}
-          <Link to="/admin/verifiche" className="mt-6 block">
-            <Card className="flex items-center justify-between p-5 transition hover:border-cicla/40">
-              <div>
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Verifiche enti
-                </div>
-                <div className="mt-1 text-sm font-semibold">
-                  Coda, filtri, cronologia e documenti
-                </div>
-              </div>
-              <Shield className="size-5 text-cicla" />
-            </Card>
-          </Link>
-
           {/* Enti (aziende/comuni) da approvare */}
-
-          <Card className="mt-6 p-5">
+          {tab === "enti" && (
+            <Card className="p-5">
             <div className="flex items-center justify-between">
               <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Enti registrati
@@ -539,10 +524,12 @@ function AdminDashboard() {
                 ))}
               </ul>
             )}
-          </Card>
+            </Card>
+          )}
 
           {/* Coda anti-frode */}
-          <Card className="mt-6 p-5">
+          {tab === "antifrode" && (
+            <Card className="p-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <AlertTriangle className="size-4" /> Revisione anti-frode
@@ -601,11 +588,12 @@ function AdminDashboard() {
                 ))}
               </ul>
             )}
-          </Card>
+            </Card>
+          )}
 
           {/* Payouts */}
-
-          <Card className="mt-6 p-5">
+          {tab === "prelievi" && (
+            <Card className="p-5">
             <div className="flex items-center justify-between">
               <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Richieste di prelievo
@@ -672,7 +660,8 @@ function AdminDashboard() {
                 ))}
               </ul>
             )}
-          </Card>
+            </Card>
+          )}
         </div>
       </div>
 
