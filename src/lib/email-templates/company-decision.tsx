@@ -104,6 +104,18 @@ const Email = ({
               {approved ? 'Apri il pannello ente' : 'Aggiorna e reinvia'}
             </Link>
 
+            <Section style={box}>
+              <Text style={label}>Password dimenticata?</Text>
+              <Text style={value}>
+                Accedi con l'email del referente e la password scelta in fase di
+                registrazione. Se non la ricordi, usa{' '}
+                <Link href={`${appUrl}/azienda/auth`} style={{ color: BRAND_GREEN }}>
+                  "Password dimenticata?"
+                </Link>{' '}
+                nella schermata di accesso: ti inviamo subito un link per impostarne una nuova.
+              </Text>
+            </Section>
+
             <Text style={{ ...text, margin: '24px 0 0', fontSize: '13px' }}>
               Hai bisogno di aiuto? Rispondi a questa email oppure scrivici da{' '}
               <Link href={appUrl} style={{ color: BRAND_GREEN }}>
