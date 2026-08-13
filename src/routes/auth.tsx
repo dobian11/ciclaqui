@@ -166,6 +166,7 @@ function AuthPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-secondary/40 to-background">
       <div className="mx-auto flex min-h-screen max-w-md flex-col px-5 py-8">
+        <h1 className="sr-only">Accedi o registrati a Cicla Qui</h1>
         <div className="mb-8 flex items-center justify-between">
           <CiclaLogo size="md" />
           <Link
