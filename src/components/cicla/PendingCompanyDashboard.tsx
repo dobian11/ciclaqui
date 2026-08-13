@@ -42,7 +42,7 @@ export function PendingCompanyDashboard({
   reviews: PendingReview[] | undefined;
   onRequestReview: () => void;
 }) {
-  const [revealCode, setRevealCode] = useState(false);
+  
   const isMuni = company.kind === "municipality";
   const isRejected = (company.status ?? "pending") === "rejected";
   const specs = isMuni ? MUNI_DOCS : COMPANY_DOCS;
