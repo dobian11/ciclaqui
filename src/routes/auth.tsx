@@ -70,7 +70,43 @@ function AuthPage() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
   const checkCode = useServerFn(checkCompanyCode);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  async function handleResend() {
+    if (!pendingEmail || cooldown > 0) return;
+    setLoading(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: pendingEmail,
+      options: { emailRedirectTo: `${emailLinkOrigin()}/app` },
+    });
+    setLoading(false);
+    if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes("not found") || msg.includes("already") || msg.includes("confirmed")) {
+        toast.error("Questo indirizzo non risulta in attesa di conferma", {
+          description:
+            "Se l'account è già confermato prova ad accedere; altrimenti registrati di nuovo con questa email.",
+          duration: 9000,
+        });
+        setPendingEmail(null);
+        return;
+      }
+      return toast.error(error.message);
+    }
+    setCooldown(60);
+    toast.success("Email di conferma inviata di nuovo", {
+      description: "Controlla anche la cartella Spam/Promozioni: il mittente è notify.ciclaqui.it.",
+    });
+  }
+
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
