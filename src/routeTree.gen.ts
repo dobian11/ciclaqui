@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as CercaBiciRouteImport } from './routes/cerca-bici'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -47,6 +48,11 @@ import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/publi
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
   path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CercaBiciRoute = CercaBiciRouteImport.update({
@@ -227,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/cerca-bici': typeof CercaBiciRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/app': typeof AuthenticatedAppRouteWithChildren
@@ -262,6 +269,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/cerca-bici': typeof CercaBiciRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/azienda/auth': typeof AziendaAuthRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -296,6 +304,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/cerca-bici': typeof CercaBiciRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
@@ -333,6 +342,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/cerca-bici'
+    | '/sitemap.xml'
     | '/unsubscribe'
     | '/admin'
     | '/app'
@@ -368,6 +378,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/cerca-bici'
+    | '/sitemap.xml'
     | '/unsubscribe'
     | '/azienda/auth'
     | '/email/unsubscribe'
@@ -401,6 +412,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/cerca-bici'
+    | '/sitemap.xml'
     | '/unsubscribe'
     | '/_authenticated/admin'
     | '/_authenticated/app'
@@ -438,6 +450,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   CercaBiciRoute: typeof CercaBiciRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   AziendaAuthRoute: typeof AziendaAuthRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
@@ -461,6 +474,13 @@ declare module '@tanstack/react-router' {
       path: '/unsubscribe'
       fullPath: '/unsubscribe'
       preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cerca-bici': {
@@ -770,6 +790,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   CercaBiciRoute: CercaBiciRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   AziendaAuthRoute: AziendaAuthRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
