@@ -5,7 +5,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyCompany, updateTrackingWindow, listMyCompanyReviews } from "@/lib/companies.functions";
-import { startCompanySubscription } from "@/lib/payments.functions";
 
 import { listMyEmployees } from "@/lib/admin.functions";
 import { PlanPicker } from "@/components/cicla/PlanPicker";
@@ -36,10 +35,8 @@ function CompanyDashboard() {
   const router = useRouter();
   const qc = useQueryClient();
   const getMine = useServerFn(getMyCompany);
-  const startSub = useServerFn(startCompanySubscription);
   const listReviews = useServerFn(listMyCompanyReviews);
   const [copied, setCopied] = useState(false);
-  const [subLoading, setSubLoading] = useState(false);
   const [hasSession, setHasSession] = useState<boolean | null>(true);
   const [reviewOpen, setReviewOpen] = useState(false);
 
