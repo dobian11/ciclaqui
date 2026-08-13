@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
 import { template as companyDecisionTemplate } from './company-decision'
+import { template as appNotificationTemplate } from './app-notification'
 
 export interface TemplateEntry {
   component: ComponentType<any>
