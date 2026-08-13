@@ -43,12 +43,6 @@ function AdminDashboard() {
   const decide = useServerFn(adminDecidePayout);
   const [hasSession, setHasSession] = useState<boolean | null>(true);
 
-  async function handleSignOut() {
-    await qc.cancelQueries();
-    qc.clear();
-    await supabase.auth.signOut();
-    navigate({ to: "/auth" as never, replace: true });
-  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setHasSession(!!data.session));
@@ -78,9 +72,9 @@ function AdminDashboard() {
   const listNotifications = useServerFn(adminListNotifications);
   const markRead = useServerFn(adminMarkNotificationRead);
   const listCompanyReviews = useServerFn(adminListCompanyReviews);
-  const getDocUrl = useServerFn(getCompanyDocUrl);
   const logEmailFn = useServerFn(logCompanyDecisionEmail);
   const [expandedCompanyId, setExpandedCompanyId] = useState<string | null>(null);
+  const [docTarget, setDocTarget] = useState<DocTarget>(null);
 
   const { data: companies } = useQuery({
     queryKey: ["admin-companies"],
@@ -235,14 +229,6 @@ function AdminDashboard() {
     }
   }
 
-  async function handleOpenDoc(path: string) {
-    try {
-      const { url } = await getDocUrl({ data: { path } });
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Impossibile aprire il documento");
-    }
-  }
 
   async function markAllRead() {
     await markRead({ data: { all: true } });
@@ -428,9 +414,9 @@ function AdminDashboard() {
                                       size="sm"
                                       variant="outline"
                                       className="h-6 px-1.5 text-[10px]"
-                                      onClick={() => handleOpenDoc(d.path)}
+                                      onClick={() => setDocTarget({ name: d.name, path: d.path })}
                                     >
-                                      <Download className="mr-1 size-3" /> {d.name}
+                                      <Eye className="mr-1 size-3" /> {d.name}
                                     </Button>
                                   ))}
                                 </div>
