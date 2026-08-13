@@ -391,9 +391,10 @@ export const adminDecideCompany = createServerFn({ method: "POST" })
     return {
       ok: true,
       push,
-      email: company?.contact_email
+      email: (company?.contact_email || ownerEmail)
         ? {
-            recipient: company.contact_email,
+            recipient: company?.contact_email || ownerEmail,
+            recipients: [...new Set([company?.contact_email, ownerEmail].filter(Boolean))] as string[],
             companyName: company.name,
             kind: company.kind,
             decision: data.decision,
