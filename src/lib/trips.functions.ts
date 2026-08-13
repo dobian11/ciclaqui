@@ -158,6 +158,36 @@ export const endTrip = createServerFn({ method: "POST" })
         reason: anomalyReason,
         status: "pending",
       });
+
+      try {
+        const { notifyUsers, companyManagerIds } = await import("@/lib/notify.server");
+        await notifyUsers({
+          userIds: [userId],
+          topic: "trip_flag",
+          type: "trip_flagged",
+          title: "Viaggio da verificare",
+          body: `Il viaggio appena concluso è in verifica (${anomalyReason ?? "anomalia rilevata"}). I punti verranno accreditati dopo il controllo.`,
+          url: "/app/punti",
+          companyId: prof0?.company_id ?? null,
+          ctaLabel: "Vedi i tuoi viaggi",
+          payload: { trip_id: trip.id, ref: trip.id },
+        });
+        if (prof0?.company_id) {
+          await notifyUsers({
+            userIds: await companyManagerIds(prof0.company_id),
+            topic: "trip_flag",
+            type: "trip_flag_review",
+            title: "Viaggio da rivedere",
+            body: `Un viaggio di un membro è stato segnalato (${anomalyReason ?? "anomalia"}). Verificalo dalla sezione "Da verificare".`,
+            url: "/azienda",
+            companyId: prof0.company_id,
+            ctaLabel: "Apri la dashboard ente",
+            payload: { trip_id: trip.id, ref: trip.id },
+          });
+        }
+      } catch (e) {
+        console.error("[endTrip] notify flag failed", e);
+      }
     }
 
     // Aggiorna wallet + transazione punti
