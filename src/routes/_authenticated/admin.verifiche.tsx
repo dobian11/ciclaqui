@@ -74,7 +74,7 @@ function AdminVerificationsPage() {
   const listVerifications = useServerFn(adminListVerifications);
   const decideCompanyFn = useServerFn(adminDecideCompany);
   const listAudit = useServerFn(adminListAuditLog);
-  const getDocUrl = useServerFn(getCompanyDocUrl);
+  const [docTarget, setDocTarget] = useState<DocTarget>(null);
   const logEmailFn = useServerFn(logCompanyDecisionEmail);
 
   const [hasSession, setHasSession] = useState<boolean | null>(true);
@@ -229,14 +229,6 @@ function AdminVerificationsPage() {
     }
   }
 
-  async function openDoc(path: string) {
-    try {
-      const { url } = await getDocUrl({ data: { path } });
-      window.open(url, "_blank", "noopener,noreferrer");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Impossibile aprire il documento");
-    }
-  }
 
   if (checking || adminCheck?.admin !== true) {
     return (
@@ -439,9 +431,9 @@ function AdminVerificationsPage() {
                                     size="sm"
                                     variant="ghost"
                                     className="h-6 shrink-0 px-2 text-[10px]"
-                                    onClick={() => openDoc(d.path)}
+                                    onClick={() => setDocTarget({ name: d.name, path: d.path })}
                                   >
-                                    <Download className="mr-1 size-3" /> Scarica
+                                    <Eye className="mr-1 size-3" /> Apri
                                   </Button>
                                 </li>
                               ))}
