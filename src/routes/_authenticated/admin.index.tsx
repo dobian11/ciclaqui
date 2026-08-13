@@ -19,6 +19,8 @@ import {
   isAdmin,
 } from "@/lib/admin.functions";
 import { AdminShell, type AdminTab } from "@/components/cicla/AdminShell";
+import { AdminListControls, AdminPagination } from "@/components/cicla/AdminListControls";
+import { useAdminList } from "@/hooks/use-admin-list";
 import { DocumentViewerDialog, type DocTarget } from "@/components/cicla/DocumentViewerDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -165,6 +167,32 @@ function AdminDashboard() {
   const pendingCompaniesCount = companies?.filter((c) => c.status === "pending").length ?? 0;
   const pendingPayoutsCount = payouts?.filter((p) => p.status === "pending").length ?? 0;
   const pendingFlagsCount = tripFlags?.filter((f) => f.status === "pending").length ?? 0;
+
+  // Ricerca, filtri, ordinamento e paginazione per le tre code operative
+  const companiesList = useAdminList({
+    items: companies,
+    searchText: (c) => `${c.name} ${c.vat ?? ""} ${c.contact_email} ${c.kind}`,
+    status: (c) => c.status,
+    date: (c) => c.created_at,
+    // più tempo in attesa = più urgente
+    urgency: (c) => -new Date(c.created_at).getTime() / 1e10,
+  });
+
+  const flagsList = useAdminList({
+    items: tripFlags,
+    searchText: (f) => `${f.user_name} ${f.declared_mode} ${f.predicted_mode} ${f.reason ?? ""}`,
+    status: (f) => f.status,
+    date: (f) => f.started_at,
+    urgency: (f) => Number(f.score) || 0,
+  });
+
+  const payoutsList = useAdminList({
+    items: payouts,
+    searchText: (p) => `${p.user_name} ${p.iban_snapshot ?? ""} ${p.amount_eur}`,
+    status: (p) => p.status,
+    date: (p) => p.created_at,
+    urgency: (p) => Number(p.amount_eur) || 0,
+  });
 
   async function handleDecide(id: string, decision: "approved" | "rejected" | "paid") {
     try {
@@ -405,11 +433,22 @@ function AdminDashboard() {
                   {companies?.filter((c) => c.status === "pending").length ?? 0} in attesa
                 </span>
               </div>
-              {!companies || companies.length === 0 ? (
+              <AdminListControls
+                query={companiesList.query}
+                onQuery={companiesList.setQuery}
+                statuses={companiesList.statuses}
+                statusFilter={companiesList.statusFilter}
+                onStatus={companiesList.setStatusFilter}
+                sort={companiesList.sort}
+                onSort={companiesList.setSort}
+                placeholder="Cerca per nome, P.IVA o email…"
+              />
+
+              {companiesList.total === 0 ? (
                 <p className="mt-3 text-[12px] text-muted-foreground">Nessun ente registrato.</p>
               ) : (
                 <ul className="mt-3 space-y-3">
-                  {companies.map((c) => (
+                  {companiesList.items.map((c) => (
                     <li key={c.id} className="rounded-lg border border-border/50 p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -526,6 +565,12 @@ function AdminDashboard() {
                   ))}
                 </ul>
               )}
+              <AdminPagination
+                page={companiesList.page}
+                pageCount={companiesList.pageCount}
+                total={companiesList.total}
+                onPage={companiesList.setPage}
+              />
             </Card>
           )}
 
@@ -541,11 +586,22 @@ function AdminDashboard() {
                 </span>
               </div>
 
-              {!tripFlags || tripFlags.length === 0 ? (
+              <AdminListControls
+                query={flagsList.query}
+                onQuery={flagsList.setQuery}
+                statuses={flagsList.statuses}
+                statusFilter={flagsList.statusFilter}
+                onStatus={flagsList.setStatusFilter}
+                sort={flagsList.sort}
+                onSort={flagsList.setSort}
+                placeholder="Cerca per utente, modalità o motivo…"
+              />
+
+              {flagsList.total === 0 ? (
                 <p className="mt-3 text-[12px] text-muted-foreground">Nessun viaggio segnalato.</p>
               ) : (
                 <ul className="mt-3 space-y-3">
-                  {tripFlags.map((f) => (
+                  {flagsList.items.map((f) => (
                     <li key={f.id} className="rounded-lg border border-border/50 p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -590,6 +646,12 @@ function AdminDashboard() {
                   ))}
                 </ul>
               )}
+              <AdminPagination
+                page={flagsList.page}
+                pageCount={flagsList.pageCount}
+                total={flagsList.total}
+                onPage={flagsList.setPage}
+              />
             </Card>
           )}
 
@@ -605,11 +667,22 @@ function AdminDashboard() {
                 </span>
               </div>
 
-              {!payouts || payouts.length === 0 ? (
+              <AdminListControls
+                query={payoutsList.query}
+                onQuery={payoutsList.setQuery}
+                statuses={payoutsList.statuses}
+                statusFilter={payoutsList.statusFilter}
+                onStatus={payoutsList.setStatusFilter}
+                sort={payoutsList.sort}
+                onSort={payoutsList.setSort}
+                placeholder="Cerca per utente, IBAN o importo…"
+              />
+
+              {payoutsList.total === 0 ? (
                 <p className="mt-3 text-[12px] text-muted-foreground">Nessuna richiesta.</p>
               ) : (
                 <ul className="mt-3 space-y-3">
-                  {payouts.map((p) => (
+                  {payoutsList.items.map((p) => (
                     <li key={p.id} className="rounded-lg border border-border/50 p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -662,6 +735,12 @@ function AdminDashboard() {
                   ))}
                 </ul>
               )}
+              <AdminPagination
+                page={payoutsList.page}
+                pageCount={payoutsList.pageCount}
+                total={payoutsList.total}
+                onPage={payoutsList.setPage}
+              />
             </Card>
           )}
         </div>
