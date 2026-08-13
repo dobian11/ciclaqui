@@ -209,8 +209,10 @@ function CompanyDashboard() {
     { id: "coppe", label: "Coppe & maratone", icon: Trophy },
     { id: "badge", label: "Badge", icon: Award },
     { id: "premi", label: "Premi", icon: Gift },
+    { id: "prelievi", label: "Prelievi", icon: Wallet },
     { id: "abbonamento", label: "Abbonamento", icon: CreditCard },
   ];
+
 
   return (
     <CompanyShell
