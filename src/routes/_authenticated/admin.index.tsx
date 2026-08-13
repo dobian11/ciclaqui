@@ -52,6 +52,13 @@ export const Route = createFileRoute("/_authenticated/admin/")({
   ssr: false,
   component: AdminDashboard,
 });
+const AUDIT_ACTION_LABELS: Record<string, string> = {
+  document_viewed: "Documento visualizzato",
+  company_approved: "Ente approvato",
+  company_rejected: "Ente rifiutato",
+  review_submitted: "Revisione inviata",
+};
+
 
 function AdminDashboard() {
   const navigate = useNavigate();
