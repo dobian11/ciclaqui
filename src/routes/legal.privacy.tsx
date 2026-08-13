@@ -5,7 +5,15 @@ export const Route = createFileRoute("/legal/privacy")({
     meta: [
       { title: "Privacy Policy — Cicla Qui" },
       { name: "description", content: "Informativa sul trattamento dei dati personali ai sensi del Regolamento UE 2016/679 (GDPR)." },
+      { property: "og:title", content: "Privacy Policy — Cicla Qui" },
+      {
+        property: "og:description",
+        content: "Come Cicla Qui tratta i dati personali di utenti, aziende e comuni secondo il GDPR.",
+      },
+      { property: "og:type", content: "article" },
+      { property: "og:url", content: "https://ciclaqui.it/legal/privacy" },
     ],
+    links: [{ rel: "canonical", href: "https://ciclaqui.it/legal/privacy" }],
   }),
   component: PrivacyPage,
 });

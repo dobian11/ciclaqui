@@ -2,7 +2,24 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { MapPin, Bell, Activity, Camera } from "lucide-react";
 
 export const Route = createFileRoute("/legal/permessi")({
-  head: () => ({ meta: [{ title: "Permessi richiesti — Cicla Qui" }] }),
+  head: () => ({
+    meta: [
+      { title: "Permessi richiesti — Cicla Qui" },
+      {
+        name: "description",
+        content:
+          "Perché Cicla Qui chiede posizione, movimento, notifiche e fotocamera: a cosa servono, quando li usiamo e come revocarli in ogni momento.",
+      },
+      { property: "og:title", content: "Permessi richiesti — Cicla Qui" },
+      {
+        property: "og:description",
+        content: "Posizione, movimento, notifiche e fotocamera: a cosa servono nell'app Cicla Qui.",
+      },
+      { property: "og:type", content: "article" },
+      { property: "og:url", content: "https://ciclaqui.it/legal/permessi" },
+    ],
+    links: [{ rel: "canonical", href: "https://ciclaqui.it/legal/permessi" }],
+  }),
   component: PermessiPage,
 });
 
