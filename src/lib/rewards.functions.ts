@@ -41,6 +41,32 @@ export const redeemReward = createServerFn({ method: "POST" })
       _reward_id: data.rewardId,
     });
     if (error || !redemption) throw new Error("Impossibile riscattare il premio");
+
+    try {
+      const { notifyUsers } = await import("@/lib/notify.server");
+      const { data: reward } = await supabaseAdmin
+        .from("rewards_catalog")
+        .select("title, points_cost")
+        .eq("id", data.rewardId)
+        .maybeSingle();
+      await notifyUsers({
+        userIds: [context.userId],
+        topic: "rewards",
+        type: "reward_redeemed",
+        title: "Premio riscattato",
+        body: `Hai riscattato "${reward?.title ?? "il tuo premio"}". Conserva il codice per usarlo.`,
+        url: "/app/premi",
+        code: redemption.code,
+        ctaLabel: "Vedi i miei premi",
+        details: reward?.points_cost
+          ? [{ label: "Punti spesi", value: String(reward.points_cost) }]
+          : [],
+        payload: { reward_id: data.rewardId, ref: redemption.code },
+      });
+    } catch (e) {
+      console.error("[redeemReward] notify failed", e);
+    }
+
     return { code: redemption.code };
   });
 
