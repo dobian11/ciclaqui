@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate, useRouter, useSearch } from "@tanstack/react-router";
+import { emailLinkOrigin } from "@/lib/public-url";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
@@ -95,7 +96,7 @@ function CompanyAuthPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/azienda/onboarding`,
+        emailRedirectTo: `${emailLinkOrigin()}/azienda/onboarding`,
         data: { full_name: manager_name, phone, signup_kind: "company_manager" },
       },
     });

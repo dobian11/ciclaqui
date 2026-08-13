@@ -142,7 +142,7 @@ function AuthPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/app`,
+        emailRedirectTo: `${emailLinkOrigin()}/app`,
         data: {
           full_name,
           phone,
