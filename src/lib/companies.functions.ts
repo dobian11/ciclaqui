@@ -170,8 +170,13 @@ export const getMyCompany = createServerFn({ method: "GET" })
         .maybeSingle(),
     ]);
 
+    // Il codice ente esiste in DB fin dalla creazione, ma viene rivelato
+    // al titolare solo dopo l'approvazione dell'admin.
+    const isApproved = company.status === "approved";
+
     return {
       ...company,
+      code: isApproved ? company.code : "",
       employees_count: employees ?? 0,
       subscription: sub ?? null,
     };
