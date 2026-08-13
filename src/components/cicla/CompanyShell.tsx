@@ -84,13 +84,6 @@ export function CompanyShell({
                 </button>
               );
             })}
-
-            <Link
-              to="/azienda/documenti"
-              className="mt-1 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-secondary/60"
-            >
-              <FileText className="size-4" /> I miei documenti
-            </Link>
           </nav>
 
           <Button variant="outline" size="sm" className="mt-4 w-full gap-2" onClick={signOut}>
