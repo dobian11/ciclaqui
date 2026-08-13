@@ -52,8 +52,10 @@ export function NotificationsSection({
     await qc.invalidateQueries({ queryKey: ["my-notifications"] });
   }
 
+  const Wrapper: any = embedded ? "div" : Card;
+
   return (
-    <Card className="mt-4 p-5">
+    <Wrapper className={embedded ? "" : "mt-4 p-5"}>
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-muted-foreground">
           <Bell className="size-4" />
