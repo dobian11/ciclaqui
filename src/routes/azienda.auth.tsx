@@ -63,10 +63,25 @@ function CompanyAuthPage() {
       options: { emailRedirectTo: `${emailLinkOrigin()}/azienda/onboarding` },
     });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes("not found") || msg.includes("already") || msg.includes("confirmed")) {
+        toast.error("Questo indirizzo non risulta in attesa di conferma", {
+          description:
+            "Se l'account è già confermato prova ad accedere; altrimenti registrati di nuovo con questa email.",
+          duration: 9000,
+        });
+        setPendingEmail(null);
+        return;
+      }
+      return toast.error(error.message);
+    }
     setCooldown(60);
-    toast.success("Email di conferma inviata di nuovo");
+    toast.success("Email di conferma inviata di nuovo", {
+      description: "Controlla anche la cartella Spam/Promozioni: il mittente è notify.ciclaqui.it.",
+    });
   }
+
 
 
   useEffect(() => {
