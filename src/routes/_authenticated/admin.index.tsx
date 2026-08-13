@@ -164,6 +164,7 @@ function AdminDashboard() {
   const unreadCount = notifications?.filter((n) => !n.read_at).length ?? 0;
   const pendingCompaniesCount = companies?.filter((c) => c.status === "pending").length ?? 0;
   const pendingPayoutsCount = payouts?.filter((p) => p.status === "pending").length ?? 0;
+  const pendingFlagsCount = tripFlags?.filter((f) => f.status === "pending").length ?? 0;
 
   async function handleDecide(id: string, decision: "approved" | "rejected" | "paid") {
     try {
