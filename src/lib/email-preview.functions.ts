@@ -25,11 +25,13 @@ export const renderDecisionEmailPreview = createServerFn({ method: "POST" })
     });
     if (!admin) throw new Error("Solo gli admin possono vedere l'anteprima");
 
-    const { data: company } = await supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: company, error: companyError } = await supabaseAdmin
       .from("companies")
       .select("id, name, kind, code, contact_email")
       .eq("id", data.company_id)
       .maybeSingle();
+    if (companyError) throw new Error(`Lettura ente fallita: ${companyError.message}`);
     if (!company) throw new Error("Ente non trovato");
 
     const approved = data.decision === "approved";
