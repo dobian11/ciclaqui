@@ -208,7 +208,6 @@ function CompanyDashboard() {
     { id: "coppe", label: "Coppe & maratone", icon: Trophy },
     { id: "badge", label: "Badge", icon: Award },
     { id: "premi", label: "Premi", icon: Gift },
-    { id: "documenti", label: "Documenti", icon: FileText },
     { id: "abbonamento", label: "Abbonamento", icon: CreditCard },
   ];
 
