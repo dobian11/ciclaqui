@@ -11,6 +11,7 @@ import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { CompanyReviewDialog } from "@/components/cicla/CompanyReviewDialog";
 import { PendingCompanyDashboard } from "@/components/cicla/PendingCompanyDashboard";
 import { CompanyRejectionSection } from "@/components/cicla/CompanyRejectionSection";
+import { CompanyAccessStatus } from "@/components/cicla/CompanyAccessStatus";
 import { CompanyRewardsSection } from "@/components/cicla/CompanyRewardsSection";
 import { NotificationsSection } from "@/components/cicla/NotificationsSection";
 import { EmailLogSection } from "@/components/cicla/EmailLogSection";
@@ -159,6 +160,13 @@ function CompanyDashboard() {
             </Button>
           </div>
 
+          <CompanyAccessStatus
+            status={status}
+            subActive={subActive}
+            rejectionReason={(company as { rejection_reason?: string | null }).rejection_reason}
+            isMuni={isMuni}
+          />
+
           <NotificationsSection />
 
           <div className="mt-6">
@@ -205,6 +213,13 @@ function CompanyDashboard() {
           </Badge>
         </div>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">{company.name}</h1>
+
+        <CompanyAccessStatus
+          status={status}
+          subActive={subActive}
+          rejectionReason={(company as { rejection_reason?: string | null }).rejection_reason}
+          isMuni={isMuni}
+        />
 
         <Link to="/azienda/documenti" className="mt-4 block">
           <Card className="flex items-center gap-3 p-4 transition hover:bg-secondary/40">
