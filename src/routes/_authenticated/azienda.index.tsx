@@ -169,6 +169,13 @@ function CompanyDashboard() {
             />
           </div>
 
+          <CompanyRejectionSection
+            companyRejectionReason={(company as { rejection_reason?: string | null }).rejection_reason}
+            reviews={reviews as never}
+            onRequestReview={() => setReviewOpen(true)}
+          />
+
+
           <EmailLogSection companyId={company.id} title="Email di esito verifica" />
 
           <CompanyReviewDialog
