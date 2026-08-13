@@ -19,14 +19,14 @@ import {
   adminDecideTripFlag,
   isAdmin,
 } from "@/lib/admin.functions";
-import { getCompanyDocUrl } from "@/lib/companies.functions";
-import { CiclaLogo } from "@/components/cicla/CiclaLogo";
+import { AdminShell } from "@/components/cicla/AdminShell";
+import { DocumentViewerDialog, type DocTarget } from "@/components/cicla/DocumentViewerDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Loader2, LogOut, Users, Building2, Bike, Wallet, CreditCard, Shield, Check, X, Banknote, Bell, FileText, History, Download, AlertTriangle,
+  Loader2, Users, Building2, Bike, Wallet, CreditCard, Shield, Check, X, Banknote, Bell, History, Eye, AlertTriangle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
