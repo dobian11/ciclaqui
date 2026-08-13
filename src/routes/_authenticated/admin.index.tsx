@@ -19,6 +19,8 @@ import {
   isAdmin,
 } from "@/lib/admin.functions";
 import { AdminShell, type AdminTab } from "@/components/cicla/AdminShell";
+import { AdminListControls, AdminPagination } from "@/components/cicla/AdminListControls";
+import { useAdminList } from "@/hooks/use-admin-list";
 import { DocumentViewerDialog, type DocTarget } from "@/components/cicla/DocumentViewerDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -165,6 +167,32 @@ function AdminDashboard() {
   const pendingCompaniesCount = companies?.filter((c) => c.status === "pending").length ?? 0;
   const pendingPayoutsCount = payouts?.filter((p) => p.status === "pending").length ?? 0;
   const pendingFlagsCount = tripFlags?.filter((f) => f.status === "pending").length ?? 0;
+
+  // Ricerca, filtri, ordinamento e paginazione per le tre code operative
+  const companiesList = useAdminList({
+    items: companies,
+    searchText: (c) => `${c.name} ${c.vat ?? ""} ${c.contact_email} ${c.kind}`,
+    status: (c) => c.status,
+    date: (c) => c.created_at,
+    // più tempo in attesa = più urgente
+    urgency: (c) => -new Date(c.created_at).getTime() / 1e10,
+  });
+
+  const flagsList = useAdminList({
+    items: tripFlags,
+    searchText: (f) => `${f.user_name} ${f.declared_mode} ${f.predicted_mode} ${f.reason ?? ""}`,
+    status: (f) => f.status,
+    date: (f) => f.started_at,
+    urgency: (f) => Number(f.score) || 0,
+  });
+
+  const payoutsList = useAdminList({
+    items: payouts,
+    searchText: (p) => `${p.user_name} ${p.iban_snapshot ?? ""} ${p.amount_eur}`,
+    status: (p) => p.status,
+    date: (p) => p.created_at,
+    urgency: (p) => Number(p.amount_eur) || 0,
+  });
 
   async function handleDecide(id: string, decision: "approved" | "rejected" | "paid") {
     try {
