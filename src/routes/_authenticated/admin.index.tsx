@@ -283,35 +283,69 @@ function AdminDashboard() {
     );
   }
 
+  const tabs: AdminTab[] = [
+    { id: "panoramica", label: "Panoramica", icon: LayoutDashboard },
+    { id: "enti", label: "Enti", icon: Building2, count: pendingCompaniesCount },
+    { id: "antifrode", label: "Anti-frode", icon: AlertTriangle, count: pendingFlagsCount },
+    { id: "prelievi", label: "Prelievi", icon: Wallet, count: pendingPayoutsCount },
+    { id: "notifiche", label: "Notifiche", icon: Bell, count: unreadCount },
+  ];
+
   return (
     <AdminShell
-      title="Pannello amministratore"
+      title="Pannello admin"
       subtitle="Enti, verifiche, anti-frode e prelievi in un'unica vista"
       unread={unreadCount}
+      tabs={tabs}
+      activeTab={tab}
+      onTabChange={(id) => setTab(id as TabId)}
     >
       <div className="space-y-6">
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-          <Stat icon={<Users className="size-4" />} label="Utenti" value={stats?.users} />
-          <Stat icon={<Building2 className="size-4" />} label="Aziende" value={stats?.companies} />
-          <Stat icon={<Bike className="size-4" />} label="Bici" value={stats?.bikes} />
-          <Stat
-            icon={<CreditCard className="size-4" />}
-            label="Abb. attivi"
-            value={stats?.active_subscriptions}
-          />
-          <Stat
-            icon={<Wallet className="size-4" />}
-            label="Prelievi pending"
-            value={stats?.pending_payouts}
-            highlight
-          />
-        </div>
+        {tab === "panoramica" && (
+          <>
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+              <Stat icon={<Users className="size-4" />} label="Utenti" value={stats?.users} />
+              <Stat
+                icon={<Building2 className="size-4" />}
+                label="Aziende"
+                value={stats?.companies}
+              />
+              <Stat icon={<Bike className="size-4" />} label="Bici" value={stats?.bikes} />
+              <Stat
+                icon={<CreditCard className="size-4" />}
+                label="Abb. attivi"
+                value={stats?.active_subscriptions}
+              />
+              <Stat
+                icon={<Wallet className="size-4" />}
+                label="Prelievi pending"
+                value={stats?.pending_payouts}
+                highlight
+              />
+            </div>
+
+            {/* Centro verifiche enti */}
+            <Link to="/admin/verifiche" className="block">
+              <Card className="flex items-center justify-between p-5 transition hover:border-cicla/40">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Verifiche enti
+                  </div>
+                  <div className="mt-1 text-sm font-semibold">
+                    Coda, filtri, cronologia e documenti
+                  </div>
+                </div>
+                <Shield className="size-5 text-cicla" />
+              </Card>
+            </Link>
+          </>
+        )}
 
         <div className="grid items-start gap-6 xl:grid-cols-2">
           {/* Notifiche admin */}
-          {notifications && notifications.length > 0 && (
-            <Card className="mt-6 p-5">
+          {tab === "notifiche" && notifications && notifications.length > 0 && (
+            <Card className="p-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Bell className="size-4" />
