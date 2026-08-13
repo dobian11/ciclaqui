@@ -16,7 +16,13 @@ import { Bell, Check, CheckCheck, AlertTriangle, Dot, Undo2 } from "lucide-react
  * (approvazione / rifiuto) con data, motivazione e prossimo passo.
  * Supporta stato letto/non letto e filtro "solo non lette".
  */
-export function NotificationsSection({ alwaysShow = false }: { alwaysShow?: boolean }) {
+export function NotificationsSection({
+  alwaysShow = false,
+  embedded = false,
+}: {
+  alwaysShow?: boolean;
+  embedded?: boolean;
+}) {
   const list = useServerFn(listMyNotifications);
   const setRead = useServerFn(setNotificationRead);
   const markAll = useServerFn(markAllNotificationsRead);
