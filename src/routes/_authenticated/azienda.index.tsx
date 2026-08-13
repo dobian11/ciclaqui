@@ -282,10 +282,7 @@ function CompanyDashboard() {
             </Card>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-2">
-            <div>
-              <NotificationsSection />
-            </div>
+          <div className="grid gap-4">
             <Card className="p-5">
               <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Dati {isMuni ? "ente" : "aziendali"}
