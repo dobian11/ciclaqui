@@ -10,6 +10,7 @@ import { listMyEmployees } from "@/lib/admin.functions";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { CompanyReviewDialog } from "@/components/cicla/CompanyReviewDialog";
 import { PendingCompanyDashboard } from "@/components/cicla/PendingCompanyDashboard";
+import { CompanyRejectionSection } from "@/components/cicla/CompanyRejectionSection";
 import { CompanyRewardsSection } from "@/components/cicla/CompanyRewardsSection";
 import { NotificationsSection } from "@/components/cicla/NotificationsSection";
 import { EmailLogSection } from "@/components/cicla/EmailLogSection";
@@ -168,6 +169,13 @@ function CompanyDashboard() {
             />
           </div>
 
+          <CompanyRejectionSection
+            companyRejectionReason={(company as { rejection_reason?: string | null }).rejection_reason}
+            reviews={reviews as never}
+            onRequestReview={() => setReviewOpen(true)}
+          />
+
+
           <EmailLogSection companyId={company.id} title="Email di esito verifica" />
 
           <CompanyReviewDialog
@@ -201,6 +209,12 @@ function CompanyDashboard() {
         <NotificationsSection />
 
         <EmailLogSection companyId={company.id} title="Email di esito verifica" />
+
+        <CompanyRejectionSection
+          companyRejectionReason={(company as { rejection_reason?: string | null }).rejection_reason}
+          reviews={reviews as never}
+        />
+
 
         {reviews && reviews.length > 0 && (
           <Card className="mt-4 p-5">
