@@ -322,6 +322,7 @@ function AdminDashboard() {
   const tabs: AdminTab[] = [
     { id: "panoramica", label: "Panoramica", icon: LayoutDashboard },
     { id: "enti", label: "Enti", icon: Building2, count: pendingCompaniesCount },
+    { id: "utenti", label: "Utenti", icon: Users },
     { id: "antifrode", label: "Anti-frode", icon: AlertTriangle, count: pendingFlagsCount },
     { id: "prelievi", label: "Prelievi", icon: Wallet, count: pendingPayoutsCount },
     { id: "notifiche", label: "Notifiche", icon: Bell, count: unreadCount },
