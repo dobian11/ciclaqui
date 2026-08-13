@@ -264,12 +264,14 @@ function CompanyAuthPage() {
                   </span>
                 </label>
                 <Button type="submit" className="w-full" disabled={loading || !acceptTerms}>
-                  {loading ? <Loader2 className="size-4 animate-spin" /> : "Continua all'onboarding"}
+                  {loading ? <Loader2 className="size-4 animate-spin" /> : "Registrati"}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
+          )}
         </Card>
+
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
           <Link to="/" className="hover:text-foreground">← Torna al benvenuto</Link>
