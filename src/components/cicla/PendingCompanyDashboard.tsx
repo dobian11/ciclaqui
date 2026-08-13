@@ -1,11 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import {
   Building2, Landmark, Hash, Mail, CreditCard, FileText, Check, Clock,
-  AlertTriangle, Upload, Copy, Lock, History, RefreshCw, CalendarClock, Eye, EyeOff,
+  AlertTriangle, Upload, Lock, History, RefreshCw, CalendarClock,
 } from "lucide-react";
 import { COMPANY_DOCS, MUNI_DOCS, normalizeDocName as normalize } from "@/lib/company-docs";
 
