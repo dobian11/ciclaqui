@@ -46,6 +46,28 @@ function CompanyAuthPage() {
   const [loading, setLoading] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  async function handleResend() {
+    if (!pendingEmail || cooldown > 0) return;
+    setLoading(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: pendingEmail,
+      options: { emailRedirectTo: `${emailLinkOrigin()}/azienda/onboarding` },
+    });
+    setLoading(false);
+    if (error) return toast.error(error.message);
+    setCooldown(60);
+    toast.success("Email di conferma inviata di nuovo");
+  }
+
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
