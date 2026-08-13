@@ -17,7 +17,7 @@ import { CompanyRewardsSection } from "@/components/cicla/CompanyRewardsSection"
 import { CompanyChallengesSection } from "@/components/cicla/CompanyChallengesSection";
 import { CompanyBadgesSection } from "@/components/cicla/CompanyBadgesSection";
 import { CompanyShell, type CompanySection } from "@/components/cicla/CompanyShell";
-import { NotificationsSection } from "@/components/cicla/NotificationsSection";
+import { NotificationsBell } from "@/components/cicla/NotificationsBell";
 import { EmailLogSection } from "@/components/cicla/EmailLogSection";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
