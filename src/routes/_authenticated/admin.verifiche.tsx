@@ -247,29 +247,13 @@ function AdminVerificationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-secondary/40 to-background pb-16">
-      <div className="mx-auto max-w-md px-5 py-6">
-        <div className="flex items-center justify-between">
-          <CiclaLogo size="md" />
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/admin">
-              <ArrowLeft className="size-4" />
-            </Link>
-          </Button>
-        </div>
-
-        <div className="mt-6 flex items-center gap-2">
-          <Badge variant="secondary" className="bg-cicla/10 text-cicla">
-            <ShieldCheck className="mr-1 size-3" /> Verifiche enti
-          </Badge>
-        </div>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">Richieste di verifica</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {counts.pending} in attesa · {counts.approved} approvati · {counts.rejected} rifiutati
-        </p>
-
+    <AdminShell
+      title="Richieste di verifica"
+      subtitle={`${counts.pending} in attesa · ${counts.approved} approvati · ${counts.rejected} rifiutati`}
+    >
+      <div>
         {/* Tabs */}
-        <div className="mt-4 grid grid-cols-3 gap-1 rounded-lg bg-secondary/60 p-1">
+        <div className="grid max-w-md grid-cols-3 gap-1 rounded-lg bg-secondary/60 p-1">
           {(["queue", "history", "audit"] as const).map((t) => (
             <button
               key={t}
@@ -282,6 +266,8 @@ function AdminVerificationsPage() {
             </button>
           ))}
         </div>
+
+
 
         {/* Filtri */}
         {tab !== "audit" && (
