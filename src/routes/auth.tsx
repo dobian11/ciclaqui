@@ -70,7 +70,43 @@ function AuthPage() {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [companyName, setCompanyName] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
   const checkCode = useServerFn(checkCompanyCode);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  async function handleResend() {
+    if (!pendingEmail || cooldown > 0) return;
+    setLoading(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: pendingEmail,
+      options: { emailRedirectTo: `${emailLinkOrigin()}/app` },
+    });
+    setLoading(false);
+    if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes("not found") || msg.includes("already") || msg.includes("confirmed")) {
+        toast.error("Questo indirizzo non risulta in attesa di conferma", {
+          description:
+            "Se l'account è già confermato prova ad accedere; altrimenti registrati di nuovo con questa email.",
+          duration: 9000,
+        });
+        setPendingEmail(null);
+        return;
+      }
+      return toast.error(error.message);
+    }
+    setCooldown(60);
+    toast.success("Email di conferma inviata di nuovo", {
+      description: "Controlla anche la cartella Spam/Promozioni: il mittente è notify.ciclaqui.it.",
+    });
+  }
+
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -156,6 +192,7 @@ function AuthPage() {
     if (error) return toast.error(error.message);
     if (!signUpData.session) {
       setPendingEmail(email);
+      setCooldown(60);
       toast.success("Ti abbiamo inviato una email di conferma");
       return;
     }
@@ -180,16 +217,47 @@ function AuthPage() {
         </div>
 
         <Card className="border-border/60 p-6 shadow-cicla">
-          {pendingEmail && (
-            <div className="mb-5 rounded-xl border border-cicla/30 bg-cicla/10 p-4">
-              <p className="text-sm font-semibold">Conferma la tua email</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Abbiamo inviato un link di conferma a <strong>{pendingEmail}</strong>.
-                Aprilo per attivare l'account: verrai portato direttamente nell'app
-                {companyName ? ` come membro di ${companyName}` : ""}.
-              </p>
+          {pendingEmail ? (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-cicla/30 bg-cicla/10 p-4">
+                <p className="text-sm font-semibold">Conferma la tua email</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Abbiamo inviato un link di conferma a <strong>{pendingEmail}</strong>.
+                  Aprilo per attivare l'account: verrai portato direttamente nell'app
+                  {companyName ? ` come membro di ${companyName}` : ""}.
+                </p>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Non la trovi? Controlla <strong>Spam</strong> e <strong>Promozioni</strong>: il
+                  mittente è <strong>notify.ciclaqui.it</strong>.
+                </p>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleResend}
+                disabled={loading || cooldown > 0}
+              >
+                {loading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : cooldown > 0 ? (
+                  `Rinvia email tra ${cooldown}s`
+                ) : (
+                  "Rinvia email di conferma"
+                )}
+              </Button>
+
+              <button
+                type="button"
+                className="w-full text-center text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => setPendingEmail(null)}
+              >
+                ← Torna all'accesso
+              </button>
             </div>
-          )}
+          ) : (
+
 
           <Tabs defaultValue={defaultTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -274,6 +342,8 @@ function AuthPage() {
               </form>
             </TabsContent>
           </Tabs>
+          )}
+
         </Card>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
