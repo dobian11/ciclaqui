@@ -46,6 +46,28 @@ function CompanyAuthPage() {
   const [loading, setLoading] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  async function handleResend() {
+    if (!pendingEmail || cooldown > 0) return;
+    setLoading(true);
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: pendingEmail,
+      options: { emailRedirectTo: `${emailLinkOrigin()}/azienda/onboarding` },
+    });
+    setLoading(false);
+    if (error) return toast.error(error.message);
+    setCooldown(60);
+    toast.success("Email di conferma inviata di nuovo");
+  }
+
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -107,9 +129,11 @@ function CompanyAuthPage() {
     setLoading(false);
     if (!signUpData.session) {
       setPendingEmail(email);
+      setCooldown(60);
       toast.success("Ti abbiamo inviato una email di conferma");
       return;
     }
+
     toast.success("Account creato! Completa l'onboarding della tua azienda.");
     await redirectAfter();
   }
@@ -142,18 +166,46 @@ function CompanyAuthPage() {
         </div>
 
         <Card className="border-border/60 p-6 shadow-cicla">
-          {pendingEmail && (
-            <div className="mb-5 rounded-xl border border-cicla/30 bg-cicla/10 p-4">
-              <p className="text-sm font-semibold">Conferma la tua email</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Abbiamo inviato un link di conferma a <strong>{pendingEmail}</strong>.
-                Aprilo per attivare l'account: verrai portato al modulo di registrazione
-                dell'ente, che resterà in attesa di verifica da parte dell'admin.
-              </p>
-            </div>
-          )}
+          {pendingEmail ? (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-cicla/30 bg-cicla/10 p-4">
+                <p className="text-sm font-semibold">Conferma la tua email</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Abbiamo inviato un link di conferma a <strong>{pendingEmail}</strong>.
+                  Aprilo per attivare l'account: verrai portato al modulo dove inserire i dati
+                  dell'ente e caricare i documenti. Dopo l'invio, la richiesta resta in attesa di
+                  verifica dell'admin: all'approvazione riceverai un'email con il codice ente da
+                  distribuire.
+                </p>
+              </div>
 
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleResend}
+                disabled={loading || cooldown > 0}
+              >
+                {loading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : cooldown > 0 ? (
+                  `Rinvia email tra ${cooldown}s`
+                ) : (
+                  "Rinvia email di conferma"
+                )}
+              </Button>
+
+              <button
+                type="button"
+                className="w-full text-center text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => setPendingEmail(null)}
+              >
+                ← Torna all'accesso
+              </button>
+            </div>
+          ) : (
           <Tabs defaultValue={defaultTab} className="w-full">
+
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Accedi</TabsTrigger>
               <TabsTrigger value="signup">Inizia ora</TabsTrigger>
@@ -212,12 +264,14 @@ function CompanyAuthPage() {
                   </span>
                 </label>
                 <Button type="submit" className="w-full" disabled={loading || !acceptTerms}>
-                  {loading ? <Loader2 className="size-4 animate-spin" /> : "Continua all'onboarding"}
+                  {loading ? <Loader2 className="size-4 animate-spin" /> : "Registrati"}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
+          )}
         </Card>
+
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
           <Link to="/" className="hover:text-foreground">← Torna al benvenuto</Link>
