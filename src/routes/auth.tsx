@@ -274,6 +274,8 @@ function AuthPage() {
               </form>
             </TabsContent>
           </Tabs>
+          )}
+
         </Card>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
