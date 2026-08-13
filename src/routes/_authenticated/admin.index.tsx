@@ -283,36 +283,14 @@ function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-secondary/40 to-background pb-12">
-      <div className="mx-auto max-w-2xl px-5 py-6">
-        <div className="flex items-center justify-between">
-          <CiclaLogo size="md" />
-          <div className="flex items-center gap-2">
-            {unreadCount > 0 && (
-              <Badge variant="secondary" className="bg-warning/15 text-warning">
-                <Bell className="mr-1 size-3" /> {unreadCount}
-              </Badge>
-            )}
-            <Badge variant="secondary" className="bg-destructive/10 text-destructive">
-              <Shield className="mr-1 size-3" /> Admin
-            </Badge>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5 px-2.5"
-              onClick={handleSignOut}
-            >
-              <LogOut className="size-4" />
-              <span className="hidden sm:inline">Esci</span>
-            </Button>
-          </div>
-
-        </div>
-
-        <h1 className="mt-6 text-2xl font-bold tracking-tight">Pannello amministratore</h1>
-
+    <AdminShell
+      title="Pannello amministratore"
+      subtitle="Enti, verifiche, anti-frode e prelievi in un'unica vista"
+      unread={unreadCount}
+    >
+      <div className="space-y-6">
         {/* Stats */}
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
           <Stat icon={<Users className="size-4" />} label="Utenti" value={stats?.users} />
           <Stat icon={<Building2 className="size-4" />} label="Aziende" value={stats?.companies} />
           <Stat icon={<Bike className="size-4" />} label="Bici" value={stats?.bikes} />
@@ -320,6 +298,7 @@ function AdminDashboard() {
           <Stat icon={<Wallet className="size-4" />} label="Prelievi pending" value={stats?.pending_payouts} highlight />
         </div>
 
+        <div className="grid items-start gap-6 xl:grid-cols-2">
         {/* Notifiche admin */}
         {notifications && notifications.length > 0 && (
           <Card className="mt-6 p-5">
