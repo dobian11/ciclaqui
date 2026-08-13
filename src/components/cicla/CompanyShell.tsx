@@ -1,12 +1,12 @@
 import type { ComponentType, ReactNode } from "react";
-import { Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
 import { NotificationsBell } from "@/components/cicla/NotificationsBell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Landmark, LogOut, FileText } from "lucide-react";
+import { Building2, Landmark, LogOut } from "lucide-react";
 
 export type CompanySection = {
   id: string;
