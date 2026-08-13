@@ -210,6 +210,12 @@ function CompanyDashboard() {
 
         <EmailLogSection companyId={company.id} title="Email di esito verifica" />
 
+        <CompanyRejectionSection
+          companyRejectionReason={(company as { rejection_reason?: string | null }).rejection_reason}
+          reviews={reviews as never}
+        />
+
+
         {reviews && reviews.length > 0 && (
           <Card className="mt-4 p-5">
             <div className="flex items-center gap-2 text-muted-foreground">
