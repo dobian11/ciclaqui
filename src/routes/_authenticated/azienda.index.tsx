@@ -14,6 +14,9 @@ import { PendingCompanyDashboard } from "@/components/cicla/PendingCompanyDashbo
 import { CompanyRejectionSection } from "@/components/cicla/CompanyRejectionSection";
 import { CompanyAccessStatus } from "@/components/cicla/CompanyAccessStatus";
 import { CompanyRewardsSection } from "@/components/cicla/CompanyRewardsSection";
+import { CompanyChallengesSection } from "@/components/cicla/CompanyChallengesSection";
+import { CompanyBadgesSection } from "@/components/cicla/CompanyBadgesSection";
+import { CompanyShell, type CompanySection } from "@/components/cicla/CompanyShell";
 import { NotificationsSection } from "@/components/cicla/NotificationsSection";
 import { EmailLogSection } from "@/components/cicla/EmailLogSection";
 import { Button } from "@/components/ui/button";
@@ -22,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Loader2, Copy, Check, Users, CreditCard, Share2, LogOut, Building2, Landmark, Mail, Hash, Download, Bike, Clock, History, FileText,
+  LayoutDashboard, Trophy, Award, Gift,
 } from "lucide-react";
 
 
