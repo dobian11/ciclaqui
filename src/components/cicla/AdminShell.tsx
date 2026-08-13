@@ -112,7 +112,10 @@ export function AdminShell({
               </div>
               <div className="flex items-center gap-2">
                 {unread > 0 && (
-                  <Badge variant="secondary" className="hidden bg-warning/15 text-warning md:inline-flex">
+                  <Badge
+                    variant="secondary"
+                    className="hidden bg-warning/15 text-warning md:inline-flex"
+                  >
                     <Bell className="mr-1 size-3" /> {unread}
                   </Badge>
                 )}

@@ -3,11 +3,19 @@ import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { isAdmin, adminListVerifications, adminDecideCompany, adminListAuditLog } from "@/lib/admin.functions";
+import {
+  isAdmin,
+  adminListVerifications,
+  adminDecideCompany,
+  adminListAuditLog,
+} from "@/lib/admin.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { logCompanyDecisionEmail } from "@/lib/email-log.functions";
 import { EmailLogSection } from "@/components/cicla/EmailLogSection";
-import { DecisionEmailPreview, type DecisionPreviewTarget } from "@/components/cicla/DecisionEmailPreview";
+import {
+  DecisionEmailPreview,
+  type DecisionPreviewTarget,
+} from "@/components/cicla/DecisionEmailPreview";
 import { AdminShell } from "@/components/cicla/AdminShell";
 import { DocumentViewerDialog, type DocTarget } from "@/components/cicla/DocumentViewerDialog";
 import { Button } from "@/components/ui/button";
@@ -16,12 +24,29 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
-  Loader2, Search, FileText, Check, X, History,
-  Building2, Landmark, ChevronDown, ChevronRight, Clock, AlertTriangle, Eye, ScrollText,
+  Loader2,
+  Search,
+  FileText,
+  Check,
+  X,
+  History,
+  Building2,
+  Landmark,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  AlertTriangle,
+  Eye,
+  ScrollText,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/verifiche")({
@@ -38,7 +63,8 @@ export const Route = createFileRoute("/_authenticated/admin/verifiche")({
       { property: "og:title", content: "Verifiche enti — Admin Cicla Qui" },
       {
         property: "og:description",
-        content: "Approva o rifiuta le verifiche degli enti con filtri, cronologia azioni e documenti.",
+        content:
+          "Approva o rifiuta le verifiche degli enti con filtri, cronologia azioni e documenti.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -83,7 +109,9 @@ function AdminVerificationsPage() {
   const [q, setQ] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [tab, setTab] = useState<"queue" | "history" | "audit">("queue");
-  const [auditAction, setAuditAction] = useState<"all" | "document_viewed" | "company_approved" | "company_rejected">("all");
+  const [auditAction, setAuditAction] = useState<
+    "all" | "document_viewed" | "company_approved" | "company_rejected"
+  >("all");
   const [rejectFor, setRejectFor] = useState<{ id: string; name: string } | null>(null);
   const [previewFor, setPreviewFor] = useState<DecisionPreviewTarget | null>(null);
   const [reason, setReason] = useState("");
@@ -112,8 +140,7 @@ function AdminVerificationsPage() {
 
   const { data: auditRows, isLoading: auditLoading } = useQuery({
     queryKey: ["admin-audit-log", auditAction],
-    queryFn: () =>
-      listAudit({ data: auditAction === "all" ? {} : { action: auditAction } }),
+    queryFn: () => listAudit({ data: auditAction === "all" ? {} : { action: auditAction } }),
     enabled: adminCheck?.admin === true && tab === "audit",
   });
 
@@ -167,7 +194,9 @@ function AdminVerificationsPage() {
       const res = await decideCompanyFn({ data: { company_id: id, decision, reason: motivo } });
       toast.success(decision === "approved" ? "Ente approvato" : "Ente rifiutato");
 
-      const pushRes = (res as { push?: { configured: boolean; sent: number; failed: number } | null })?.push;
+      const pushRes = (
+        res as { push?: { configured: boolean; sent: number; failed: number } | null }
+      )?.push;
       if (pushRes?.configured && pushRes.sent > 0) {
         toast.success(`Notifica push inviata a ${pushRes.sent} dispositivo/i`);
       } else if (pushRes?.configured && pushRes.failed > 0) {
@@ -213,7 +242,6 @@ function AdminVerificationsPage() {
         }
       }
 
-
       await Promise.all([
         qc.invalidateQueries({ queryKey: ["admin-verifications"] }),
         qc.invalidateQueries({ queryKey: ["admin-companies"] }),
@@ -228,7 +256,6 @@ function AdminVerificationsPage() {
       setBusy(null);
     }
   }
-
 
   if (checking || adminCheck?.admin !== true) {
     return (
@@ -259,55 +286,59 @@ function AdminVerificationsPage() {
           ))}
         </div>
 
-
-
         {/* Filtri */}
         {tab !== "audit" && (
-        <Card className="mt-4 space-y-3 p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Cerca per nome, codice, P.IVA, email…"
-              className="pl-9"
-            />
-          </div>
+          <Card className="mt-4 space-y-3 p-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Cerca per nome, codice, P.IVA, email…"
+                className="pl-9"
+              />
+            </div>
 
-          <div className="flex flex-wrap gap-1.5">
-            {(["all", "pending", "approved", "rejected", "suspended"] as StatusFilter[]).map((s) => (
-              <button
-                key={s}
-                onClick={() => setStatus(s)}
-                className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
-                  status === s ? "bg-cicla text-cicla-foreground" : "bg-secondary text-muted-foreground"
-                }`}
-              >
-                {s === "all" ? "Tutti" : STATUS_LABEL[s]}
-              </button>
-            ))}
-          </div>
+            <div className="flex flex-wrap gap-1.5">
+              {(["all", "pending", "approved", "rejected", "suspended"] as StatusFilter[]).map(
+                (s) => (
+                  <button
+                    key={s}
+                    onClick={() => setStatus(s)}
+                    className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
+                      status === s
+                        ? "bg-cicla text-cicla-foreground"
+                        : "bg-secondary text-muted-foreground"
+                    }`}
+                  >
+                    {s === "all" ? "Tutti" : STATUS_LABEL[s]}
+                  </button>
+                ),
+              )}
+            </div>
 
-          <div className="flex flex-wrap gap-1.5">
-            {(
-              [
-                ["all", "Tutti gli enti"],
-                ["company", "Aziende"],
-                ["municipality", "Comuni"],
-              ] as [KindFilter, string][]
-            ).map(([k, label]) => (
-              <button
-                key={k}
-                onClick={() => setKind(k)}
-                className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
-                  kind === k ? "bg-foreground text-background" : "bg-secondary text-muted-foreground"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </Card>
+            <div className="flex flex-wrap gap-1.5">
+              {(
+                [
+                  ["all", "Tutti gli enti"],
+                  ["company", "Aziende"],
+                  ["municipality", "Comuni"],
+                ] as [KindFilter, string][]
+              ).map(([k, label]) => (
+                <button
+                  key={k}
+                  onClick={() => setKind(k)}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
+                    kind === k
+                      ? "bg-foreground text-background"
+                      : "bg-secondary text-muted-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </Card>
         )}
 
         {isLoading && tab !== "audit" && (
@@ -344,7 +375,10 @@ function AdminVerificationsPage() {
                         <span className="truncate text-sm font-semibold">{c.name}</span>
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                        <Badge variant="secondary" className={`text-[10px] ${statusClass(c.status)}`}>
+                        <Badge
+                          variant="secondary"
+                          className={`text-[10px] ${statusClass(c.status)}`}
+                        >
                           {STATUS_LABEL[c.status] ?? c.status}
                         </Badge>
                         <span className="text-[10px] text-muted-foreground">
@@ -404,25 +438,37 @@ function AdminVerificationsPage() {
                             <span className="text-[11px] font-semibold">
                               {r.kind === "resubmission" ? "Nuova revisione" : "Prima richiesta"}
                             </span>
-                            <Badge variant="secondary" className={`text-[10px] ${statusClass(r.status)}`}>
+                            <Badge
+                              variant="secondary"
+                              className={`text-[10px] ${statusClass(r.status)}`}
+                            >
                               {STATUS_LABEL[r.status] ?? r.status}
                             </Badge>
                           </div>
                           <div className="mt-1 text-[10px] text-muted-foreground">
                             Inviata {fmt(r.submitted_at)} da {r.submitted_by_name}
-                            {r.reviewed_at ? ` · Decisa ${fmt(r.reviewed_at)} da ${r.reviewed_by_name}` : ""}
+                            {r.reviewed_at
+                              ? ` · Decisa ${fmt(r.reviewed_at)} da ${r.reviewed_by_name}`
+                              : ""}
                           </div>
                           {r.notes && (
-                            <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">{r.notes}</p>
+                            <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground">
+                              {r.notes}
+                            </p>
                           )}
                           {r.reason && (
-                            <p className="mt-1.5 text-[11px] text-destructive">Motivo: {r.reason}</p>
+                            <p className="mt-1.5 text-[11px] text-destructive">
+                              Motivo: {r.reason}
+                            </p>
                           )}
 
                           {r.documents.length > 0 && (
                             <ul className="mt-2 space-y-1">
                               {r.documents.map((d) => (
-                                <li key={d.path} className="flex items-center justify-between gap-2">
+                                <li
+                                  key={d.path}
+                                  className="flex items-center justify-between gap-2"
+                                >
                                   <span className="flex min-w-0 items-center gap-1.5">
                                     <FileText className="size-3 shrink-0 text-muted-foreground" />
                                     <span className="truncate text-[11px]">{d.name}</span>
@@ -485,25 +531,34 @@ function AdminVerificationsPage() {
           <Card className="mt-4 p-4">
             <div className="flex items-center gap-2 text-muted-foreground">
               <History className="size-4" />
-              <span className="text-[11px] font-semibold uppercase tracking-wider">Cronologia azioni</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wider">
+                Cronologia azioni
+              </span>
             </div>
 
             {history.length === 0 ? (
-              <p className="mt-3 text-sm text-muted-foreground">Nessuna decisione registrata con questi filtri.</p>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Nessuna decisione registrata con questi filtri.
+              </p>
             ) : (
               <ul className="mt-3 space-y-2">
                 {history.map((h) => (
                   <li key={h.id} className="rounded-md border border-border/60 p-2.5">
                     <div className="flex items-start justify-between gap-2">
                       <span className="truncate text-[12px] font-semibold">{h.companyName}</span>
-                      <Badge variant="secondary" className={`shrink-0 text-[10px] ${statusClass(h.status)}`}>
+                      <Badge
+                        variant="secondary"
+                        className={`shrink-0 text-[10px] ${statusClass(h.status)}`}
+                      >
                         {STATUS_LABEL[h.status] ?? h.status}
                       </Badge>
                     </div>
                     <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
                       <Clock className="size-3" /> {fmt(h.at)} · {h.by} · {h.docs} doc
                     </div>
-                    {h.reason && <p className="mt-1 text-[11px] text-destructive">Motivo: {h.reason}</p>}
+                    {h.reason && (
+                      <p className="mt-1 text-[11px] text-destructive">Motivo: {h.reason}</p>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -518,11 +573,13 @@ function AdminVerificationsPage() {
             <Card className="mt-4 p-4">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <ScrollText className="size-4" />
-                <span className="text-[11px] font-semibold uppercase tracking-wider">Registro accessi e decisioni</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider">
+                  Registro accessi e decisioni
+                </span>
               </div>
               <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
-                Ogni apertura di un documento e ogni cambio di stato di verifica viene registrato in modo
-                permanente con autore, data e ora.
+                Ogni apertura di un documento e ogni cambio di stato di verifica viene registrato in
+                modo permanente con autore, data e ora.
               </p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {(
@@ -537,7 +594,9 @@ function AdminVerificationsPage() {
                     key={a}
                     onClick={() => setAuditAction(a)}
                     className={`rounded-full px-2.5 py-1 text-[11px] font-medium transition ${
-                      auditAction === a ? "bg-cicla text-cicla-foreground" : "bg-secondary text-muted-foreground"
+                      auditAction === a
+                        ? "bg-cicla text-cicla-foreground"
+                        : "bg-secondary text-muted-foreground"
                     }`}
                   >
                     {label}
@@ -591,7 +650,9 @@ function AdminVerificationsPage() {
 
                     <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
                       <Clock className="size-3" /> {fmt(r.created_at)} · {r.actor_name ?? "—"}
-                      {r.actor_role ? ` (${r.actor_role === "admin" ? "admin" : "referente ente"})` : ""}
+                      {r.actor_role
+                        ? ` (${r.actor_role === "admin" ? "admin" : "referente ente"})`
+                        : ""}
                     </div>
 
                     {r.document_name && (
@@ -600,7 +661,9 @@ function AdminVerificationsPage() {
                         <span className="truncate">{r.document_name}</span>
                       </div>
                     )}
-                    {r.reason && <p className="mt-1 text-[11px] text-destructive">Motivo: {r.reason}</p>}
+                    {r.reason && (
+                      <p className="mt-1 text-[11px] text-destructive">Motivo: {r.reason}</p>
+                    )}
                   </li>
                 );
               })}

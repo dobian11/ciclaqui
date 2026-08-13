@@ -3,8 +3,20 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Building2, Landmark, Hash, Mail, CreditCard, FileText, Check, Clock,
-  AlertTriangle, Upload, Lock, History, RefreshCw, CalendarClock,
+  Building2,
+  Landmark,
+  Hash,
+  Mail,
+  CreditCard,
+  FileText,
+  Check,
+  Clock,
+  AlertTriangle,
+  Upload,
+  Lock,
+  History,
+  RefreshCw,
+  CalendarClock,
 } from "lucide-react";
 import { COMPANY_DOCS, MUNI_DOCS, normalizeDocName as normalize } from "@/lib/company-docs";
 
@@ -32,7 +44,6 @@ export type PendingReview = {
   reviewed_at: string | null;
 };
 
-
 export function PendingCompanyDashboard({
   company,
   reviews,
@@ -42,7 +53,6 @@ export function PendingCompanyDashboard({
   reviews: PendingReview[] | undefined;
   onRequestReview: () => void;
 }) {
-  
   const isMuni = company.kind === "municipality";
   const isRejected = (company.status ?? "pending") === "rejected";
   const specs = isMuni ? MUNI_DOCS : COMPANY_DOCS;
@@ -63,7 +73,8 @@ export function PendingCompanyDashboard({
     () =>
       specs.map((spec) => ({
         ...spec,
-        matched: submittedDocs.find((d) => spec.match.some((m) => normalize(d.name).includes(m))) ?? null,
+        matched:
+          submittedDocs.find((d) => spec.match.some((m) => normalize(d.name).includes(m))) ?? null,
       })),
     [specs, submittedDocs],
   );
@@ -96,9 +107,15 @@ export function PendingCompanyDashboard({
           </div>
           <Badge
             variant="secondary"
-            className={isRejected ? "bg-destructive/15 text-destructive" : "bg-warning/15 text-warning"}
+            className={
+              isRejected ? "bg-destructive/15 text-destructive" : "bg-warning/15 text-warning"
+            }
           >
-            {isRejected ? <AlertTriangle className="mr-1 size-3" /> : <Clock className="mr-1 size-3" />}
+            {isRejected ? (
+              <AlertTriangle className="mr-1 size-3" />
+            ) : (
+              <Clock className="mr-1 size-3" />
+            )}
             {isRejected ? "Rifiutato" : "In verifica"}
           </Badge>
         </div>
@@ -114,8 +131,8 @@ export function PendingCompanyDashboard({
           </div>
         ) : (
           <p className="mt-3 text-[12px] leading-snug text-muted-foreground">
-            La richiesta è in coda di verifica. Un amministratore controlla dati e documenti,
-            di norma entro 24–48h. Riceverai una notifica appena la pratica sarà chiusa.
+            La richiesta è in coda di verifica. Un amministratore controlla dati e documenti, di
+            norma entro 24–48h. Riceverai una notifica appena la pratica sarà chiusa.
           </p>
         )}
 
@@ -166,8 +183,8 @@ export function PendingCompanyDashboard({
           <Lock className="size-4 shrink-0 text-muted-foreground" />
           <p className="text-[12px] leading-snug text-muted-foreground">
             Il codice riservato al tuo ente viene generato e mostrato qui
-            <strong className="text-foreground"> solo dopo l'approvazione dell'admin</strong>.
-            Da quel momento potrai distribuirlo ai tuoi {isMuni ? "cittadini" : "dipendenti"}.
+            <strong className="text-foreground"> solo dopo l'approvazione dell'admin</strong>. Da
+            quel momento potrai distribuirlo ai tuoi {isMuni ? "cittadini" : "dipendenti"}.
           </p>
         </div>
       </Card>
@@ -177,7 +194,9 @@ export function PendingCompanyDashboard({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-muted-foreground">
             <FileText className="size-4" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Documenti richiesti</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider">
+              Documenti richiesti
+            </span>
           </div>
           <span className="text-[11px] font-semibold text-muted-foreground">
             {requiredDone}/{requiredTotal} obbligatori
@@ -193,7 +212,10 @@ export function PendingCompanyDashboard({
 
         <ul className="mt-4 space-y-2.5">
           {checklist.map((item) => (
-            <li key={item.key} className="flex items-start gap-3 rounded-md border border-border/50 p-2.5">
+            <li
+              key={item.key}
+              className="flex items-start gap-3 rounded-md border border-border/50 p-2.5"
+            >
               <span
                 className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-full ${
                   item.matched ? "bg-cicla/15 text-cicla" : "bg-secondary text-muted-foreground"
@@ -205,7 +227,9 @@ export function PendingCompanyDashboard({
                 <div className="flex items-center gap-2">
                   <span className="truncate text-[13px] font-medium">{item.label}</span>
                   {!item.required && (
-                    <Badge variant="secondary" className="shrink-0 text-[9px]">Facoltativo</Badge>
+                    <Badge variant="secondary" className="shrink-0 text-[9px]">
+                      Facoltativo
+                    </Badge>
                   )}
                 </div>
                 <div className="text-[11px] leading-snug text-muted-foreground">
@@ -234,9 +258,21 @@ export function PendingCompanyDashboard({
           Dati inviati per la verifica
         </div>
         <dl className="mt-3 space-y-2 text-sm">
-          <SummaryRow icon={<Hash className="size-3.5" />} label="P.IVA / CF" value={company.vat ?? "—"} />
-          <SummaryRow icon={<Mail className="size-3.5" />} label="Email referente" value={company.contact_email ?? "—"} />
-          <SummaryRow icon={<CreditCard className="size-3.5" />} label="IBAN" value={company.iban ?? "—"} />
+          <SummaryRow
+            icon={<Hash className="size-3.5" />}
+            label="P.IVA / CF"
+            value={company.vat ?? "—"}
+          />
+          <SummaryRow
+            icon={<Mail className="size-3.5" />}
+            label="Email referente"
+            value={company.contact_email ?? "—"}
+          />
+          <SummaryRow
+            icon={<CreditCard className="size-3.5" />}
+            label="IBAN"
+            value={company.iban ?? "—"}
+          />
           <SummaryRow
             icon={<CalendarClock className="size-3.5" />}
             label="Registrato il"
@@ -250,7 +286,9 @@ export function PendingCompanyDashboard({
         <Card className="p-5">
           <div className="flex items-center gap-2 text-muted-foreground">
             <History className="size-4" />
-            <span className="text-[11px] font-semibold uppercase tracking-wider">Stato della verifica</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider">
+              Stato della verifica
+            </span>
           </div>
           <ul className="mt-3 space-y-2">
             {reviews.map((r) => {
@@ -258,22 +296,32 @@ export function PendingCompanyDashboard({
                 ? (r.documents as Array<{ name: string; path: string }>)
                 : [];
               const statusClass =
-                r.status === "approved" ? "bg-cicla/15 text-cicla"
-                : r.status === "rejected" ? "bg-destructive/15 text-destructive"
-                : "bg-warning/15 text-warning";
+                r.status === "approved"
+                  ? "bg-cicla/15 text-cicla"
+                  : r.status === "rejected"
+                    ? "bg-destructive/15 text-destructive"
+                    : "bg-warning/15 text-warning";
               const statusLabel =
-                r.status === "approved" ? "Approvata" : r.status === "rejected" ? "Rifiutata" : "In attesa";
+                r.status === "approved"
+                  ? "Approvata"
+                  : r.status === "rejected"
+                    ? "Rifiutata"
+                    : "In attesa";
               return (
                 <li key={r.id} className="rounded-md border border-border/50 p-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-[12px] font-medium">
                       {r.kind === "initial" ? "Registrazione iniziale" : "Nuova revisione"}
                     </div>
-                    <Badge variant="secondary" className={`text-[10px] ${statusClass}`}>{statusLabel}</Badge>
+                    <Badge variant="secondary" className={`text-[10px] ${statusClass}`}>
+                      {statusLabel}
+                    </Badge>
                   </div>
                   <div className="mt-0.5 text-[10px] text-muted-foreground">
                     Inviata: {new Date(r.submitted_at).toLocaleString("it-IT")}
-                    {r.reviewed_at && <> · Revisionata: {new Date(r.reviewed_at).toLocaleString("it-IT")}</>}
+                    {r.reviewed_at && (
+                      <> · Revisionata: {new Date(r.reviewed_at).toLocaleString("it-IT")}</>
+                    )}
                   </div>
                   {r.notes && <div className="mt-1 text-[11px]">{r.notes}</div>}
                   {r.status === "rejected" && r.reason && (
@@ -304,7 +352,12 @@ export function PendingCompanyDashboard({
 }
 
 function TimelineStep({
-  title, detail, done, active, error, last,
+  title,
+  detail,
+  done,
+  active,
+  error,
+  last,
 }: {
   title: string;
   detail: string;
@@ -322,7 +375,13 @@ function TimelineStep({
     <li className="flex gap-3">
       <div className="flex flex-col items-center">
         <span className={`grid size-5 place-items-center rounded-full border ${dot}`}>
-          {error ? <AlertTriangle className="size-3" /> : done ? <Check className="size-3" /> : <Clock className="size-3" />}
+          {error ? (
+            <AlertTriangle className="size-3" />
+          ) : done ? (
+            <Check className="size-3" />
+          ) : (
+            <Clock className="size-3" />
+          )}
         </span>
         {!last && <span className="mt-1 w-px flex-1 bg-border/60" />}
       </div>
@@ -334,7 +393,15 @@ function TimelineStep({
   );
 }
 
-function SummaryRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function SummaryRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-border/40 pb-2 last:border-0 last:pb-0">
       <div className="flex items-center gap-2 text-muted-foreground">

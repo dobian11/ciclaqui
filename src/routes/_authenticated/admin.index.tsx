@@ -11,7 +11,6 @@ import {
   adminDecidePayout,
   adminListPendingCompanies,
   adminDecideCompany,
-
   adminListNotifications,
   adminMarkNotificationRead,
   adminListCompanyReviews,
@@ -26,7 +25,20 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
-  Loader2, Users, Building2, Bike, Wallet, CreditCard, Shield, Check, X, Banknote, Bell, History, Eye, AlertTriangle,
+  Loader2,
+  Users,
+  Building2,
+  Bike,
+  Wallet,
+  CreditCard,
+  Shield,
+  Check,
+  X,
+  Banknote,
+  Bell,
+  History,
+  Eye,
+  AlertTriangle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
@@ -42,7 +54,6 @@ function AdminDashboard() {
   const listPayouts = useServerFn(adminListPayouts);
   const decide = useServerFn(adminDecidePayout);
   const [hasSession, setHasSession] = useState<boolean | null>(true);
-
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setHasSession(!!data.session));
@@ -107,15 +118,11 @@ function AdminDashboard() {
           }
         },
       )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "company_reviews" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["admin-company-reviews"] });
-          qc.invalidateQueries({ queryKey: ["admin-companies"] });
-          qc.invalidateQueries({ queryKey: ["admin-stats"] });
-        },
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "company_reviews" }, () => {
+        qc.invalidateQueries({ queryKey: ["admin-company-reviews"] });
+        qc.invalidateQueries({ queryKey: ["admin-companies"] });
+        qc.invalidateQueries({ queryKey: ["admin-stats"] });
+      })
 
       .subscribe();
     return () => {
@@ -135,7 +142,9 @@ function AdminDashboard() {
   async function handleFlagDecide(id: string, decision: "confirmed" | "dismissed") {
     try {
       await decideTripFlag({ data: { flag_id: id, decision } });
-      toast.success(decision === "confirmed" ? "Frode confermata, punti revocati" : "Viaggio validato");
+      toast.success(
+        decision === "confirmed" ? "Frode confermata, punti revocati" : "Viaggio validato",
+      );
       await qc.invalidateQueries({ queryKey: ["admin-trip-flags"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Errore");
@@ -154,7 +163,11 @@ function AdminDashboard() {
     try {
       await decide({ data: { payout_id: id, decision } });
       toast.success(
-        decision === "approved" ? "Approvato" : decision === "rejected" ? "Rifiutato (punti restituiti)" : "Segnato come pagato",
+        decision === "approved"
+          ? "Approvato"
+          : decision === "rejected"
+            ? "Rifiutato (punti restituiti)"
+            : "Segnato come pagato",
       );
       await qc.invalidateQueries({ queryKey: ["admin-payouts"] });
       await qc.invalidateQueries({ queryKey: ["admin-stats"] });
@@ -165,14 +178,17 @@ function AdminDashboard() {
 
   async function handleCompanyDecide(id: string, decision: "approved" | "rejected") {
     try {
-      const reason = decision === "rejected"
-        ? (window.prompt("Motivo del rifiuto (verrà mostrato all'ente):") ?? undefined)
-        : undefined;
+      const reason =
+        decision === "rejected"
+          ? (window.prompt("Motivo del rifiuto (verrà mostrato all'ente):") ?? undefined)
+          : undefined;
       const res = await decideCompanyFn({ data: { company_id: id, decision, reason } });
       toast.success(decision === "approved" ? "Ente approvato" : "Ente rifiutato");
 
       // Email di notifica all'ente (data, motivazione e prossimo passo)
-      const pushRes = (res as { push?: { configured: boolean; sent: number; failed: number } | null })?.push;
+      const pushRes = (
+        res as { push?: { configured: boolean; sent: number; failed: number } | null }
+      )?.push;
       if (pushRes?.configured && pushRes.sent > 0) {
         toast.success(`Notifica push inviata a ${pushRes.sent} dispositivo/i`);
       } else if (pushRes?.configured && pushRes.failed > 0) {
@@ -229,7 +245,6 @@ function AdminDashboard() {
     }
   }
 
-
   async function markAllRead() {
     await markRead({ data: { all: true } });
     await qc.invalidateQueries({ queryKey: ["admin-notifications"] });
@@ -280,273 +295,343 @@ function AdminDashboard() {
           <Stat icon={<Users className="size-4" />} label="Utenti" value={stats?.users} />
           <Stat icon={<Building2 className="size-4" />} label="Aziende" value={stats?.companies} />
           <Stat icon={<Bike className="size-4" />} label="Bici" value={stats?.bikes} />
-          <Stat icon={<CreditCard className="size-4" />} label="Abb. attivi" value={stats?.active_subscriptions} />
-          <Stat icon={<Wallet className="size-4" />} label="Prelievi pending" value={stats?.pending_payouts} highlight />
+          <Stat
+            icon={<CreditCard className="size-4" />}
+            label="Abb. attivi"
+            value={stats?.active_subscriptions}
+          />
+          <Stat
+            icon={<Wallet className="size-4" />}
+            label="Prelievi pending"
+            value={stats?.pending_payouts}
+            highlight
+          />
         </div>
 
         <div className="grid items-start gap-6 xl:grid-cols-2">
-        {/* Notifiche admin */}
-        {notifications && notifications.length > 0 && (
+          {/* Notifiche admin */}
+          {notifications && notifications.length > 0 && (
+            <Card className="mt-6 p-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Bell className="size-4" />
+                  <span className="text-[11px] font-semibold uppercase tracking-wider">
+                    Notifiche
+                  </span>
+                  {unreadCount > 0 && (
+                    <Badge variant="secondary" className="bg-warning/15 text-warning text-[10px]">
+                      {unreadCount} nuove
+                    </Badge>
+                  )}
+                </div>
+                {unreadCount > 0 && (
+                  <Button size="sm" variant="ghost" onClick={markAllRead}>
+                    Segna tutte lette
+                  </Button>
+                )}
+              </div>
+              <ul className="mt-3 space-y-2">
+                {notifications.slice(0, 8).map((n) => (
+                  <li
+                    key={n.id}
+                    className={`rounded-md border border-border/50 p-2.5 text-[12px] ${!n.read_at ? "bg-warning/5" : ""}`}
+                    onClick={() => n.company_id && setExpandedCompanyId(n.company_id)}
+                    role="button"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{n.title}</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(n.created_at).toLocaleString("it-IT")}
+                      </span>
+                    </div>
+                    {n.body && (
+                      <div className="mt-0.5 text-[11px] text-muted-foreground">{n.body}</div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {/* Centro verifiche enti */}
+          <Link to="/admin/verifiche" className="mt-6 block">
+            <Card className="flex items-center justify-between p-5 transition hover:border-cicla/40">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Verifiche enti
+                </div>
+                <div className="mt-1 text-sm font-semibold">
+                  Coda, filtri, cronologia e documenti
+                </div>
+              </div>
+              <Shield className="size-5 text-cicla" />
+            </Card>
+          </Link>
+
+          {/* Enti (aziende/comuni) da approvare */}
+
           <Card className="mt-6 p-5">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Bell className="size-4" />
-                <span className="text-[11px] font-semibold uppercase tracking-wider">Notifiche</span>
-                {unreadCount > 0 && <Badge variant="secondary" className="bg-warning/15 text-warning text-[10px]">{unreadCount} nuove</Badge>}
-              </div>
-              {unreadCount > 0 && (
-                <Button size="sm" variant="ghost" onClick={markAllRead}>Segna tutte lette</Button>
-              )}
-            </div>
-            <ul className="mt-3 space-y-2">
-              {notifications.slice(0, 8).map((n) => (
-                <li
-                  key={n.id}
-                  className={`rounded-md border border-border/50 p-2.5 text-[12px] ${!n.read_at ? "bg-warning/5" : ""}`}
-                  onClick={() => n.company_id && setExpandedCompanyId(n.company_id)}
-                  role="button"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{n.title}</span>
-                    <span className="text-[10px] text-muted-foreground">{new Date(n.created_at).toLocaleString("it-IT")}</span>
-                  </div>
-                  {n.body && <div className="mt-0.5 text-[11px] text-muted-foreground">{n.body}</div>}
-                </li>
-              ))}
-            </ul>
-          </Card>
-        )}
-
-        {/* Centro verifiche enti */}
-        <Link to="/admin/verifiche" className="mt-6 block">
-          <Card className="flex items-center justify-between p-5 transition hover:border-cicla/40">
-            <div>
               <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Verifiche enti
+                Enti registrati
               </div>
-              <div className="mt-1 text-sm font-semibold">Coda, filtri, cronologia e documenti</div>
+              <span className="text-[11px] text-muted-foreground">
+                {companies?.filter((c) => c.status === "pending").length ?? 0} in attesa
+              </span>
             </div>
-            <Shield className="size-5 text-cicla" />
-          </Card>
-        </Link>
-
-        {/* Enti (aziende/comuni) da approvare */}
-
-        <Card className="mt-6 p-5">
-          <div className="flex items-center justify-between">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Enti registrati
-            </div>
-            <span className="text-[11px] text-muted-foreground">
-              {companies?.filter((c) => c.status === "pending").length ?? 0} in attesa
-            </span>
-          </div>
-          {!companies || companies.length === 0 ? (
-            <p className="mt-3 text-[12px] text-muted-foreground">Nessun ente registrato.</p>
-          ) : (
-            <ul className="mt-3 space-y-3">
-              {companies.map((c) => (
-                <li key={c.id} className="rounded-lg border border-border/50 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="truncate text-sm font-medium">{c.name}</span>
-                        <Badge variant="secondary" className="text-[10px]">
-                          {c.kind === "municipality" ? "Comune" : "Azienda"}
-                        </Badge>
-                      </div>
-                      <div className="mt-0.5 text-[11px] text-muted-foreground">
-                        P.IVA/CF: {c.vat ?? "—"} · {c.contact_email}
-                      </div>
-                      <div className="text-[10px] text-muted-foreground">
-                        {new Date(c.created_at).toLocaleString("it-IT")}
-                      </div>
-                      {c.status === "rejected" && c.rejection_reason && (
-                        <div className="mt-1 text-[10px] text-destructive">Motivo: {c.rejection_reason}</div>
-                      )}
-                    </div>
-                    <StatusBadge status={c.status} />
-                  </div>
-                  {c.status === "pending" && (
-                    <div className="mt-3 flex gap-2">
-                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleCompanyDecide(c.id, "approved")}>
-                        <Check className="mr-1 size-3.5" /> Approva
-                      </Button>
-                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleCompanyDecide(c.id, "rejected")}>
-                        <X className="mr-1 size-3.5" /> Rifiuta
-                      </Button>
-                    </div>
-                  )}
-                  <div className="mt-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 px-2 text-[11px]"
-                      onClick={() => setExpandedCompanyId(expandedCompanyId === c.id ? null : c.id)}
-                    >
-                      <History className="mr-1 size-3" />
-                      {expandedCompanyId === c.id ? "Nascondi storico" : "Vedi storico & documenti"}
-                    </Button>
-                  </div>
-                  {expandedCompanyId === c.id && (
-                    <div className="mt-2 space-y-2 rounded-md border border-border/50 bg-secondary/30 p-2">
-                      {!companyReviews || companyReviews.length === 0 ? (
-                        <p className="text-[11px] text-muted-foreground">Nessuna revisione registrata.</p>
-                      ) : (
-                        companyReviews.map((r) => {
-                          const docs = Array.isArray(r.documents) ? (r.documents as Array<{ name: string; path: string }>) : [];
-                          return (
-                            <div key={r.id} className="rounded border border-border/40 bg-background/60 p-2 text-[11px]">
-                              <div className="flex items-center justify-between">
-                                <span className="font-medium">{r.kind === "initial" ? "Iniziale" : "Nuova revisione"}</span>
-                                <Badge variant="secondary" className="text-[10px]">{r.status}</Badge>
-                              </div>
-                              <div className="text-[10px] text-muted-foreground">
-                                {new Date(r.submitted_at).toLocaleString("it-IT")}
-                              </div>
-                              {r.notes && <div className="mt-1">{r.notes}</div>}
-                              {r.reason && <div className="mt-1 text-destructive">Motivo: {r.reason}</div>}
-                              {docs.length > 0 && (
-                                <div className="mt-1.5 flex flex-wrap gap-1">
-                                  {docs.map((d) => (
-                                    <Button
-                                      key={d.path}
-                                      size="sm"
-                                      variant="outline"
-                                      className="h-6 px-1.5 text-[10px]"
-                                      onClick={() => setDocTarget({ name: d.name, path: d.path })}
-                                    >
-                                      <Eye className="mr-1 size-3" /> {d.name}
-                                    </Button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        {/* Coda anti-frode */}
-        <Card className="mt-6 p-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              <AlertTriangle className="size-4" /> Revisione anti-frode
-            </div>
-            <span className="text-[11px] text-muted-foreground">
-              {tripFlags?.filter((f) => f.status === "pending").length ?? 0} da esaminare
-            </span>
-          </div>
-
-          {!tripFlags || tripFlags.length === 0 ? (
-            <p className="mt-3 text-[12px] text-muted-foreground">Nessun viaggio segnalato.</p>
-          ) : (
-            <ul className="mt-3 space-y-3">
-              {tripFlags.map((f) => (
-                <li key={f.id} className="rounded-lg border border-border/50 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-medium">{f.user_name}</div>
-                      <div className="mt-0.5 text-[11px] text-muted-foreground">
-                        Dichiarato <b>{f.declared_mode}</b> · stimato <b>{f.predicted_mode}</b> · score{" "}
-                        {Number(f.score).toFixed(2)}
-                      </div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {f.distance_km.toFixed(1)} km · {f.points_earned} pt
-                      </div>
-                      {f.reason && <div className="mt-1 text-[10px] text-muted-foreground">{f.reason}</div>}
-                      <div className="mt-1 text-[10px] text-muted-foreground">
-                        {new Date(f.started_at).toLocaleString("it-IT")}
-                      </div>
-                    </div>
-                    <StatusBadge status={f.status} />
-                  </div>
-                  {f.status === "pending" && (
-                    <div className="mt-3 flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => handleFlagDecide(f.id, "dismissed")}
-                      >
-                        <Check className="mr-1 size-3.5" /> Legittimo
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => handleFlagDecide(f.id, "confirmed")}
-                      >
-                        <X className="mr-1 size-3.5" /> Frode (revoca punti)
-                      </Button>
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        {/* Payouts */}
-
-        <Card className="mt-6 p-5">
-          <div className="flex items-center justify-between">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Richieste di prelievo
-            </div>
-            <span className="text-[11px] text-muted-foreground">{payouts?.length ?? 0} totali</span>
-          </div>
-
-          {!payouts || payouts.length === 0 ? (
-            <p className="mt-3 text-[12px] text-muted-foreground">Nessuna richiesta.</p>
-          ) : (
-            <ul className="mt-3 space-y-3">
-              {payouts.map((p) => (
-                <li key={p.id} className="rounded-lg border border-border/50 p-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-medium">{p.user_name}</div>
-                      <div className="mt-0.5 text-[11px] text-muted-foreground">
-                        {p.points_redeemed} pt → € {Number(p.amount_eur).toFixed(2)}
-                      </div>
-                      {p.iban_snapshot && (
-                        <div className="mt-1 font-mono text-[10px] text-muted-foreground">
-                          {p.iban_snapshot}
+            {!companies || companies.length === 0 ? (
+              <p className="mt-3 text-[12px] text-muted-foreground">Nessun ente registrato.</p>
+            ) : (
+              <ul className="mt-3 space-y-3">
+                {companies.map((c) => (
+                  <li key={c.id} className="rounded-lg border border-border/50 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="truncate text-sm font-medium">{c.name}</span>
+                          <Badge variant="secondary" className="text-[10px]">
+                            {c.kind === "municipality" ? "Comune" : "Azienda"}
+                          </Badge>
                         </div>
-                      )}
-                      <div className="mt-1 text-[10px] text-muted-foreground">
-                        {new Date(p.created_at).toLocaleString("it-IT")}
+                        <div className="mt-0.5 text-[11px] text-muted-foreground">
+                          P.IVA/CF: {c.vat ?? "—"} · {c.contact_email}
+                        </div>
+                        <div className="text-[10px] text-muted-foreground">
+                          {new Date(c.created_at).toLocaleString("it-IT")}
+                        </div>
+                        {c.status === "rejected" && c.rejection_reason && (
+                          <div className="mt-1 text-[10px] text-destructive">
+                            Motivo: {c.rejection_reason}
+                          </div>
+                        )}
                       </div>
+                      <StatusBadge status={c.status} />
                     </div>
-                    <StatusBadge status={p.status} />
-                  </div>
+                    {c.status === "pending" && (
+                      <div className="mt-3 flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleCompanyDecide(c.id, "approved")}
+                        >
+                          <Check className="mr-1 size-3.5" /> Approva
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleCompanyDecide(c.id, "rejected")}
+                        >
+                          <X className="mr-1 size-3.5" /> Rifiuta
+                        </Button>
+                      </div>
+                    )}
+                    <div className="mt-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-[11px]"
+                        onClick={() =>
+                          setExpandedCompanyId(expandedCompanyId === c.id ? null : c.id)
+                        }
+                      >
+                        <History className="mr-1 size-3" />
+                        {expandedCompanyId === c.id
+                          ? "Nascondi storico"
+                          : "Vedi storico & documenti"}
+                      </Button>
+                    </div>
+                    {expandedCompanyId === c.id && (
+                      <div className="mt-2 space-y-2 rounded-md border border-border/50 bg-secondary/30 p-2">
+                        {!companyReviews || companyReviews.length === 0 ? (
+                          <p className="text-[11px] text-muted-foreground">
+                            Nessuna revisione registrata.
+                          </p>
+                        ) : (
+                          companyReviews.map((r) => {
+                            const docs = Array.isArray(r.documents)
+                              ? (r.documents as Array<{ name: string; path: string }>)
+                              : [];
+                            return (
+                              <div
+                                key={r.id}
+                                className="rounded border border-border/40 bg-background/60 p-2 text-[11px]"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium">
+                                    {r.kind === "initial" ? "Iniziale" : "Nuova revisione"}
+                                  </span>
+                                  <Badge variant="secondary" className="text-[10px]">
+                                    {r.status}
+                                  </Badge>
+                                </div>
+                                <div className="text-[10px] text-muted-foreground">
+                                  {new Date(r.submitted_at).toLocaleString("it-IT")}
+                                </div>
+                                {r.notes && <div className="mt-1">{r.notes}</div>}
+                                {r.reason && (
+                                  <div className="mt-1 text-destructive">Motivo: {r.reason}</div>
+                                )}
+                                {docs.length > 0 && (
+                                  <div className="mt-1.5 flex flex-wrap gap-1">
+                                    {docs.map((d) => (
+                                      <Button
+                                        key={d.path}
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-6 px-1.5 text-[10px]"
+                                        onClick={() => setDocTarget({ name: d.name, path: d.path })}
+                                      >
+                                        <Eye className="mr-1 size-3" /> {d.name}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
 
-                  {p.status === "pending" && (
-                    <div className="mt-3 flex gap-2">
-                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleDecide(p.id, "approved")}>
-                        <Check className="mr-1 size-3.5" /> Approva
-                      </Button>
-                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleDecide(p.id, "rejected")}>
-                        <X className="mr-1 size-3.5" /> Rifiuta
-                      </Button>
+          {/* Coda anti-frode */}
+          <Card className="mt-6 p-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <AlertTriangle className="size-4" /> Revisione anti-frode
+              </div>
+              <span className="text-[11px] text-muted-foreground">
+                {tripFlags?.filter((f) => f.status === "pending").length ?? 0} da esaminare
+              </span>
+            </div>
+
+            {!tripFlags || tripFlags.length === 0 ? (
+              <p className="mt-3 text-[12px] text-muted-foreground">Nessun viaggio segnalato.</p>
+            ) : (
+              <ul className="mt-3 space-y-3">
+                {tripFlags.map((f) => (
+                  <li key={f.id} className="rounded-lg border border-border/50 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-medium">{f.user_name}</div>
+                        <div className="mt-0.5 text-[11px] text-muted-foreground">
+                          Dichiarato <b>{f.declared_mode}</b> · stimato <b>{f.predicted_mode}</b> ·
+                          score {Number(f.score).toFixed(2)}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {f.distance_km.toFixed(1)} km · {f.points_earned} pt
+                        </div>
+                        {f.reason && (
+                          <div className="mt-1 text-[10px] text-muted-foreground">{f.reason}</div>
+                        )}
+                        <div className="mt-1 text-[10px] text-muted-foreground">
+                          {new Date(f.started_at).toLocaleString("it-IT")}
+                        </div>
+                      </div>
+                      <StatusBadge status={f.status} />
                     </div>
-                  )}
-                  {p.status === "approved" && (
-                    <Button size="sm" className="mt-3 w-full" onClick={() => handleDecide(p.id, "paid")}>
-                      <Banknote className="mr-1 size-3.5" /> Segna come pagato
-                    </Button>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+                    {f.status === "pending" && (
+                      <div className="mt-3 flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleFlagDecide(f.id, "dismissed")}
+                        >
+                          <Check className="mr-1 size-3.5" /> Legittimo
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleFlagDecide(f.id, "confirmed")}
+                        >
+                          <X className="mr-1 size-3.5" /> Frode (revoca punti)
+                        </Button>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
+          {/* Payouts */}
+
+          <Card className="mt-6 p-5">
+            <div className="flex items-center justify-between">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Richieste di prelievo
+              </div>
+              <span className="text-[11px] text-muted-foreground">
+                {payouts?.length ?? 0} totali
+              </span>
+            </div>
+
+            {!payouts || payouts.length === 0 ? (
+              <p className="mt-3 text-[12px] text-muted-foreground">Nessuna richiesta.</p>
+            ) : (
+              <ul className="mt-3 space-y-3">
+                {payouts.map((p) => (
+                  <li key={p.id} className="rounded-lg border border-border/50 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-medium">{p.user_name}</div>
+                        <div className="mt-0.5 text-[11px] text-muted-foreground">
+                          {p.points_redeemed} pt → € {Number(p.amount_eur).toFixed(2)}
+                        </div>
+                        {p.iban_snapshot && (
+                          <div className="mt-1 font-mono text-[10px] text-muted-foreground">
+                            {p.iban_snapshot}
+                          </div>
+                        )}
+                        <div className="mt-1 text-[10px] text-muted-foreground">
+                          {new Date(p.created_at).toLocaleString("it-IT")}
+                        </div>
+                      </div>
+                      <StatusBadge status={p.status} />
+                    </div>
+
+                    {p.status === "pending" && (
+                      <div className="mt-3 flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleDecide(p.id, "approved")}
+                        >
+                          <Check className="mr-1 size-3.5" /> Approva
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() => handleDecide(p.id, "rejected")}
+                        >
+                          <X className="mr-1 size-3.5" /> Rifiuta
+                        </Button>
+                      </div>
+                    )}
+                    {p.status === "approved" && (
+                      <Button
+                        size="sm"
+                        className="mt-3 w-full"
+                        onClick={() => handleDecide(p.id, "paid")}
+                      >
+                        <Banknote className="mr-1 size-3.5" /> Segna come pagato
+                      </Button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
         </div>
       </div>
 
