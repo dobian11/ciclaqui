@@ -388,12 +388,27 @@ export const adminDecideCompany = createServerFn({ method: "POST" })
       }
     }
 
+    // Email dell'account referente (può differire dall'email di contatto dell'ente)
+    let ownerEmail: string | null = null;
+    if (company?.created_by) {
+      try {
+        const { data: owner } = await supabaseAdmin.auth.admin.getUserById(company.created_by);
+        ownerEmail = owner?.user?.email ?? null;
+      } catch {
+        ownerEmail = null;
+      }
+    }
+    const emailRecipients: string[] = [
+      ...new Set([company?.contact_email, ownerEmail].filter((e): e is string => !!e)),
+    ];
+
     return {
       ok: true,
       push,
-      email: company?.contact_email
+      email: company && emailRecipients.length > 0
         ? {
-            recipient: company.contact_email,
+            recipient: emailRecipients[0],
+            recipients: emailRecipients,
             companyName: company.name,
             kind: company.kind,
             decision: data.decision,

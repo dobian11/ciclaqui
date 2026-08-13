@@ -250,33 +250,38 @@ function AdminDashboard() {
       }
 
       const email = (res as { email?: Record<string, unknown> | null })?.email;
-      if (email?.recipient) {
-        const idem = `company-decision-${id}-${decision}-${String(email.decidedAt ?? "")}`;
+      const targets = Array.isArray(email?.recipients)
+        ? (email.recipients as string[])
+        : email?.recipient
+          ? [String(email.recipient)]
+          : [];
+      for (const to of targets) {
+        const idem = `company-decision-${id}-${decision}-${to}-${String(email?.decidedAt ?? "")}`;
         let sendError: string | null = null;
         try {
           await sendTransactionalEmail({
             templateName: "company-decision",
-            recipientEmail: String(email.recipient),
+            recipientEmail: to,
             idempotencyKey: idem,
             templateData: {
-              companyName: email.companyName,
-              kind: email.kind,
-              decision: email.decision,
-              decidedAt: email.decidedAt,
-              reason: email.reason,
-              code: email.code,
+              companyName: email?.companyName,
+              kind: email?.kind,
+              decision: email?.decision,
+              decidedAt: email?.decidedAt,
+              reason: email?.reason,
+              code: email?.code,
               appUrl: PUBLIC_APP_URL,
             },
           });
         } catch (err) {
           sendError = err instanceof Error ? err.message : "Errore invio email";
-          toast.warning("Decisione salvata, ma l'email all'ente non è partita");
+          toast.warning(`Email non inviata a ${to}`);
         }
         try {
           await logEmailFn({
             data: {
               company_id: id,
-              recipient_email: String(email.recipient),
+              recipient_email: to,
               decision,
               status: sendError ? "failed" : "sent",
               error_message: sendError ? sendError.slice(0, 500) : null,
