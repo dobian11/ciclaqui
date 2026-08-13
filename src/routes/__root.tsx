@@ -104,9 +104,33 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Pedala, cammina, guadagna punti convertibili in denaro. Per ciclisti e aziende che credono nella mobilità verde.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Cicla Qui" },
+      { property: "og:locale", content: "it_IT" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Cicla Qui" },
       { name: "twitter:description", content: "Pedala, cammina, guadagna." },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: "Cicla Qui",
+              url: "https://ciclaqui.it",
+              logo: "https://ciclaqui.it/icons/icon-512.png",
+            },
+            {
+              "@type": "WebSite",
+              name: "Cicla Qui",
+              url: "https://ciclaqui.it",
+              inLanguage: "it-IT",
+            },
+          ],
+        }),
+      },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },

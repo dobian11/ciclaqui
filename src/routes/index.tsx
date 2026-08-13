@@ -21,6 +21,32 @@ export const Route = createFileRoute("/")({
         content:
           "Cicla Qui premia i tuoi spostamenti sostenibili. Per persone e aziende: punti, sicurezza e passaporto bici antifurto.",
       },
+      { property: "og:title", content: "Cicla Qui · Mobilità sostenibile che premia" },
+      {
+        property: "og:description",
+        content:
+          "Trasforma bici e passi in punti riscattabili con i premi della tua azienda o del tuo Comune.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://ciclaqui.it/" },
+    ],
+    links: [{ rel: "canonical", href: "https://ciclaqui.it/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Service",
+          name: "Cicla Qui",
+          serviceType: "Programma di mobilità sostenibile premiata",
+          url: "https://ciclaqui.it/",
+          areaServed: "IT",
+          provider: { "@type": "Organization", name: "Cicla Qui", url: "https://ciclaqui.it" },
+          audience: { "@type": "Audience", audienceType: "Dipendenti, cittadini, aziende e comuni" },
+          description:
+            "Tracciamento GPS degli spostamenti sostenibili, punti riscattabili in premi messi a disposizione da aziende e comuni, e passaporto bici antifurto.",
+        }),
+      },
     ],
   }),
   component: WelcomePage,
