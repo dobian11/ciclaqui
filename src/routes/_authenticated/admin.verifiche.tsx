@@ -1,3 +1,4 @@
+import { PUBLIC_APP_URL } from "@/lib/public-url";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
