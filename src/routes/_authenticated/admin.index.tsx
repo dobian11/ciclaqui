@@ -21,6 +21,7 @@ import {
 import { AdminShell, type AdminTab } from "@/components/cicla/AdminShell";
 import { AdminListControls, AdminPagination } from "@/components/cicla/AdminListControls";
 import { useAdminList } from "@/hooks/use-admin-list";
+import { AdminUsersPanel } from "@/components/cicla/AdminUsersPanel";
 import { DocumentViewerDialog, type DocTarget } from "@/components/cicla/DocumentViewerDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
