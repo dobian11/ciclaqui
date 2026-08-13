@@ -159,9 +159,12 @@ function CompanyDashboard() {
         <div className="mx-auto max-w-md px-5 py-6">
           <div className="flex items-center justify-between">
             <CiclaLogo size="md" />
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="size-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <NotificationsBell />
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="size-4" />
+              </Button>
+            </div>
           </div>
 
           <CompanyAccessStatus
@@ -171,7 +174,6 @@ function CompanyDashboard() {
             isMuni={isMuni}
           />
 
-          <NotificationsSection />
 
           <div className="mt-6">
             <PendingCompanyDashboard
