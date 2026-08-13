@@ -569,11 +569,22 @@ function AdminDashboard() {
                 </span>
               </div>
 
-              {!tripFlags || tripFlags.length === 0 ? (
+              <AdminListControls
+                query={flagsList.query}
+                onQuery={flagsList.setQuery}
+                statuses={flagsList.statuses}
+                statusFilter={flagsList.statusFilter}
+                onStatus={flagsList.setStatusFilter}
+                sort={flagsList.sort}
+                onSort={flagsList.setSort}
+                placeholder="Cerca per utente, modalità o motivo…"
+              />
+
+              {flagsList.total === 0 ? (
                 <p className="mt-3 text-[12px] text-muted-foreground">Nessun viaggio segnalato.</p>
               ) : (
                 <ul className="mt-3 space-y-3">
-                  {tripFlags.map((f) => (
+                  {flagsList.items.map((f) => (
                     <li key={f.id} className="rounded-lg border border-border/50 p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -618,6 +629,12 @@ function AdminDashboard() {
                   ))}
                 </ul>
               )}
+              <AdminPagination
+                page={flagsList.page}
+                pageCount={flagsList.pageCount}
+                total={flagsList.total}
+                onPage={flagsList.setPage}
+              />
             </Card>
           )}
 
