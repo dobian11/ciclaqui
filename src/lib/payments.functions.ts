@@ -191,7 +191,7 @@ export const listCompanyPayouts = createServerFn({ method: "GET" })
     const [{ data: payouts }, { data: cfg }] = await Promise.all([
       supabaseAdmin
         .from("payout_requests")
-        .select("id, user_id, points_redeemed, amount_eur, status, created_at")
+        .select("id, user_id, points_redeemed, amount_eur, status, created_at, iban_snapshot")
         .in("user_id", ids)
         .order("created_at", { ascending: false })
         .limit(200),
@@ -209,6 +209,7 @@ export const listCompanyPayouts = createServerFn({ method: "GET" })
       amount_eur: Number(p.amount_eur),
       status: p.status,
       created_at: p.created_at,
+      iban_snapshot: p.iban_snapshot as string | null,
     }));
 
     const totals = items.reduce(
