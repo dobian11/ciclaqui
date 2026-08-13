@@ -195,212 +195,228 @@ function CompanyDashboard() {
     );
   }
 
+  const sections: CompanySection[] = [
+    { id: "panoramica", label: "Panoramica", icon: LayoutDashboard },
+    { id: "membri", label: memberLabel, icon: Users, count: company.employees_count },
+    { id: "coppe", label: "Coppe & maratone", icon: Trophy },
+    { id: "badge", label: "Badge", icon: Award },
+    { id: "premi", label: "Premi", icon: Gift },
+    { id: "documenti", label: "Documenti", icon: FileText },
+    { id: "abbonamento", label: "Abbonamento", icon: CreditCard },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-secondary/40 to-background pb-12">
-      <div className="mx-auto max-w-md px-5 py-6">
-        <div className="flex items-center justify-between">
-          <CiclaLogo size="md" />
-          <Button variant="ghost" size="sm" onClick={handleSignOut}>
-            <LogOut className="size-4" />
-          </Button>
-        </div>
+    <CompanyShell
+      title={company.name}
+      subtitle={`Pannello ${isMuni ? "Comune" : "azienda"} · ${company.employees_count} ${memberLabel.toLowerCase()}`}
+      isMuni={isMuni}
+      sections={sections}
+      activeSection={section}
+      onSectionChange={setSection}
+      actions={
+        <Badge variant="secondary" className={subActive ? "bg-cicla/10 text-cicla" : "bg-warning/15 text-warning"}>
+          {subActive ? "Abbonamento attivo" : "Abbonamento non attivo"}
+        </Badge>
+      }
+    >
+      {section === "panoramica" && (
+        <div className="space-y-4">
+          <CompanyAccessStatus
+            status={status}
+            subActive={subActive}
+            rejectionReason={(company as { rejection_reason?: string | null }).rejection_reason}
+            isMuni={isMuni}
+          />
 
-        <div className="mt-6 flex items-center gap-2">
-          <Badge variant="secondary" className="bg-cicla/10 text-cicla">
-            {isMuni ? <Landmark className="mr-1 size-3" /> : <Building2 className="mr-1 size-3" />}
-            Pannello {isMuni ? "Comune" : "azienda"}
-          </Badge>
-        </div>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">{company.name}</h1>
-
-        <CompanyAccessStatus
-          status={status}
-          subActive={subActive}
-          rejectionReason={(company as { rejection_reason?: string | null }).rejection_reason}
-          isMuni={isMuni}
-        />
-
-        <Link to="/azienda/documenti" className="mt-4 block">
-          <Card className="flex items-center gap-3 p-4 transition hover:bg-secondary/40">
-            <FileText className="size-4 text-cicla" />
-            <div className="min-w-0 flex-1">
-              <div className="text-[13px] font-medium">I miei documenti</div>
-              <div className="text-[11px] text-muted-foreground">
-                Stato verifica, checklist mancanti e timeline revisioni
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Card className="p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Users className="size-4" />
+                <span className="text-[11px] uppercase tracking-wider">{memberLabel}</span>
               </div>
-            </div>
-          </Card>
-        </Link>
-
-        <NotificationsSection />
-
-        <EmailLogSection companyId={company.id} title="Email di esito verifica" />
-
-
-        <CompanyRejectionSection
-          companyRejectionReason={(company as { rejection_reason?: string | null }).rejection_reason}
-          reviews={reviews as never}
-        />
-
-
-        {reviews && reviews.length > 0 && (
-          <Card className="mt-4 p-5">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <History className="size-4" />
-              <span className="text-[11px] font-semibold uppercase tracking-wider">Storico revisioni</span>
-            </div>
-            <ul className="mt-3 space-y-2">
-              {reviews.map((r) => {
-                const docs = Array.isArray(r.documents) ? (r.documents as Array<{ name: string; path: string }>) : [];
-                const statusClass =
-                  r.status === "approved" ? "bg-cicla/15 text-cicla"
-                  : r.status === "rejected" ? "bg-destructive/15 text-destructive"
-                  : "bg-warning/15 text-warning";
-                const statusLabel = r.status === "approved" ? "Approvata" : r.status === "rejected" ? "Rifiutata" : "In attesa";
-                return (
-                  <li key={r.id} className="rounded-md border border-border/50 p-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-[12px] font-medium">
-                        {r.kind === "initial" ? "Registrazione iniziale" : "Nuova revisione"}
-                      </div>
-                      <Badge variant="secondary" className={`text-[10px] ${statusClass}`}>{statusLabel}</Badge>
+              <div className="mt-2 font-display text-2xl font-bold">{company.employees_count}</div>
+            </Card>
+            <Card className="p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <CreditCard className="size-4" />
+                <span className="text-[11px] uppercase tracking-wider">Abbonamento</span>
+              </div>
+              <div className="mt-2 text-sm font-semibold">
+                {subActive ? <span className="text-cicla">Attivo</span> : <span className="text-muted-foreground">Non attivo</span>}
+              </div>
+            </Card>
+            <Card className="p-4 sm:col-span-2">
+              {canShowCode ? (
+                <>
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-cicla">
+                    Codice {isMuni ? "Comune" : "azienda"}
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <div className="font-display text-3xl font-bold tracking-wider">{company.code}</div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={copyCode} aria-label="Copia codice">
+                        {copied ? <Check className="size-4 text-cicla" /> : <Copy className="size-4" />}
+                      </Button>
+                      <Button size="sm" variant="secondary" onClick={shareInvite}>
+                        <Share2 className="mr-1 size-4" /> Invita
+                      </Button>
                     </div>
-                    <div className="mt-0.5 text-[10px] text-muted-foreground">
-                      Inviata: {new Date(r.submitted_at).toLocaleString("it-IT")}
-                      {r.reviewed_at && <> · Revisionata: {new Date(r.reviewed_at).toLocaleString("it-IT")}</>}
-                    </div>
-                    {r.notes && <div className="mt-1 text-[11px]">{r.notes}</div>}
-                    {r.status === "rejected" && r.reason && (
-                      <div className="mt-1 rounded bg-destructive/10 px-2 py-1 text-[11px] text-destructive">
-                        Motivo: {r.reason}
-                      </div>
-                    )}
-                    {docs.length > 0 && (
-                      <div className="mt-1.5 flex flex-wrap gap-1">
-                        {docs.map((d) => (
-                          <span key={d.path} className="inline-flex items-center gap-1 rounded bg-secondary/60 px-1.5 py-0.5 text-[10px]">
-                            <FileText className="size-3" /> {d.name}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </Card>
-        )}
-
-        {/* Dialog: richiedi nuova revisione */}
-        <CompanyReviewDialog
-          companyId={company.id}
-          open={reviewOpen}
-          onOpenChange={setReviewOpen}
-        />
-
-        {/* Codice — visibile solo dopo approvazione + abbonamento */}
-        {canShowCode ? (
-        <Card className="mt-6 border-cicla/30 bg-cicla/5 p-5 shadow-cicla">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-cicla">
-            Codice {isMuni ? "Comune" : "azienda"}
-          </div>
-          <div className="mt-2 flex items-center justify-between gap-3">
-            <div className="font-display text-3xl font-bold tracking-wider">{company.code}</div>
-            <Button size="sm" variant="outline" onClick={copyCode}>
-              {copied ? <Check className="size-4 text-cicla" /> : <Copy className="size-4" />}
-            </Button>
-          </div>
-          <p className="mt-3 text-[12px] leading-snug text-muted-foreground">
-            Condividi questo codice con i tuoi {isMuni ? "cittadini" : "dipendenti"}: lo inseriranno
-            in fase di registrazione per essere associati e ricevere i premi.
-          </p>
-          <Button onClick={shareInvite} className="mt-4 w-full" variant="secondary">
-            <Share2 className="mr-2 size-4" /> Condividi invito
-          </Button>
-        </Card>
-        ) : isApproved && !subActive ? (
-          <Card className="mt-6 border-cicla/30 bg-cicla/5 p-5">
-            <div className="text-sm font-semibold text-cicla">✓ Ente approvato</div>
-            <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
-              Per <strong>generare e ricevere il codice</strong> da distribuire ai tuoi {isMuni ? "cittadini" : "dipendenti"}, attiva l'abbonamento mensile qui sotto.
-            </p>
-          </Card>
-        ) : null}
-
-        {/* Statistiche */}
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <Card className="p-4">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Users className="size-4" />
-              <span className="text-[11px] uppercase tracking-wider">{memberLabel}</span>
-            </div>
-            <div className="mt-2 font-display text-2xl font-bold">{company.employees_count}</div>
-          </Card>
-          <Card className="p-4">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <CreditCard className="size-4" />
-              <span className="text-[11px] uppercase tracking-wider">Abbonamento</span>
-            </div>
-            <div className="mt-2 text-sm font-semibold">
-              {subActive ? (
-                <span className="text-cicla">Attivo</span>
+                  </div>
+                  <p className="mt-2 text-[12px] leading-snug text-muted-foreground">
+                    Condividilo con i tuoi {memberLabel.toLowerCase()}: lo inseriranno in fase di registrazione.
+                  </p>
+                </>
               ) : (
-                <span className="text-muted-foreground">Non attivo</span>
+                <>
+                  <div className="text-sm font-semibold text-cicla">✓ Ente approvato</div>
+                  <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
+                    Attiva l'abbonamento nella sezione <strong>Abbonamento</strong> per generare il codice.
+                  </p>
+                </>
               )}
-            </div>
-          </Card>
-        </div>
-
-        {/* Abbonamento — piani e codice sconto */}
-        {!subActive && (
-          <Card className="mt-4 border-warning/40 bg-warning/5 p-5">
-            <div className="text-sm font-semibold">Attiva l'abbonamento per generare il codice</div>
-            <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
-              Per riconoscere i premi (denaro, voucher o altri incentivi) ai punti accumulati
-              dai tuoi {isMuni ? "cittadini" : "dipendenti"} serve un abbonamento mensile.
-              Il numero di account collegati al tuo codice è limitato al piano scelto.
-            </p>
-            <div className="mt-4">
-              <PlanPicker
-                memberLabel={isMuni ? "cittadini" : "dipendenti"}
-                onActivated={async () => {
-                  await qc.invalidateQueries({ queryKey: ["my-company"] });
-                }}
-              />
-            </div>
-          </Card>
-        )}
-
-        {/* Dipendenti & tracking — solo quando il codice è attivo */}
-        {canShowCode && (
-          <>
-            <EmployeesSection />
-            <TrackingWindowSection
-              initial={{
-                tracking_start: company.tracking_start ?? null,
-                tracking_end: company.tracking_end ?? null,
-                tracking_days: (company.tracking_days as number[] | null) ?? [1,2,3,4,5],
-              }}
-              isMuni={isMuni}
-            />
-          </>
-        )}
-
-        <CompanyRewardsSection />
-
-        {/* Dati azienda */}
-        <Card className="mt-4 p-5">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Dati aziendali
+            </Card>
           </div>
-          <dl className="mt-3 space-y-2 text-sm">
-            <Row icon={<Hash className="size-3.5" />} label="P.IVA / CF" value={company.vat ?? "—"} />
-            <Row icon={<Mail className="size-3.5" />} label="Email" value={company.contact_email ?? "—"} />
-            <Row icon={<CreditCard className="size-3.5" />} label="IBAN" value={company.iban ?? "—"} />
-          </dl>
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            <div>
+              <NotificationsSection />
+            </div>
+            <Card className="p-5">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Dati {isMuni ? "ente" : "aziendali"}
+              </div>
+              <dl className="mt-3 space-y-2 text-sm">
+                <Row icon={<Hash className="size-3.5" />} label="P.IVA / CF" value={company.vat ?? "—"} />
+                <Row icon={<Mail className="size-3.5" />} label="Email" value={company.contact_email ?? "—"} />
+                <Row icon={<CreditCard className="size-3.5" />} label="IBAN" value={company.iban ?? "—"} />
+              </dl>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {section === "membri" && (
+        <div className="space-y-4">
+          {canShowCode ? (
+            <>
+              <EmployeesSection />
+              <TrackingWindowSection
+                initial={{
+                  tracking_start: company.tracking_start ?? null,
+                  tracking_end: company.tracking_end ?? null,
+                  tracking_days: (company.tracking_days as number[] | null) ?? [1, 2, 3, 4, 5],
+                }}
+                isMuni={isMuni}
+              />
+            </>
+          ) : (
+            <Card className="p-5 text-[13px] text-muted-foreground">
+              Attiva l'abbonamento per generare il codice e iniziare a collegare i tuoi {memberLabel.toLowerCase()}.
+            </Card>
+          )}
+        </div>
+      )}
+
+      {section === "coppe" && <CompanyChallengesSection memberLabel={memberLabel.toLowerCase()} />}
+
+      {section === "badge" && <CompanyBadgesSection memberLabel={memberLabel.toLowerCase()} />}
+
+      {section === "premi" && <CompanyRewardsSection />}
+
+      {section === "documenti" && (
+        <div className="space-y-4">
+          <Link to="/azienda/documenti" className="block">
+            <Card className="flex items-center gap-3 p-4 transition hover:bg-secondary/40">
+              <FileText className="size-4 text-cicla" />
+              <div className="min-w-0 flex-1">
+                <div className="text-[13px] font-medium">I miei documenti</div>
+                <div className="text-[11px] text-muted-foreground">
+                  Stato verifica, checklist mancanti e timeline revisioni
+                </div>
+              </div>
+            </Card>
+          </Link>
+
+          <CompanyRejectionSection
+            companyRejectionReason={(company as { rejection_reason?: string | null }).rejection_reason}
+            reviews={reviews as never}
+            onRequestReview={() => setReviewOpen(true)}
+          />
+
+          {reviews && reviews.length > 0 && (
+            <Card className="p-5">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <History className="size-4" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider">Storico revisioni</span>
+              </div>
+              <ul className="mt-3 space-y-2">
+                {reviews.map((r) => {
+                  const docs = Array.isArray(r.documents) ? (r.documents as Array<{ name: string; path: string }>) : [];
+                  const statusClass =
+                    r.status === "approved" ? "bg-cicla/15 text-cicla"
+                    : r.status === "rejected" ? "bg-destructive/15 text-destructive"
+                    : "bg-warning/15 text-warning";
+                  const statusLabel =
+                    r.status === "approved" ? "Approvata" : r.status === "rejected" ? "Rifiutata" : "In attesa";
+                  return (
+                    <li key={r.id} className="rounded-md border border-border/50 p-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-[12px] font-medium">
+                          {r.kind === "initial" ? "Registrazione iniziale" : "Nuova revisione"}
+                        </div>
+                        <Badge variant="secondary" className={`text-[10px] ${statusClass}`}>{statusLabel}</Badge>
+                      </div>
+                      <div className="mt-0.5 text-[10px] text-muted-foreground">
+                        Inviata: {new Date(r.submitted_at).toLocaleString("it-IT")}
+                        {r.reviewed_at && <> · Revisionata: {new Date(r.reviewed_at).toLocaleString("it-IT")}</>}
+                      </div>
+                      {r.notes && <div className="mt-1 text-[11px]">{r.notes}</div>}
+                      {r.status === "rejected" && r.reason && (
+                        <div className="mt-1 rounded bg-destructive/10 px-2 py-1 text-[11px] text-destructive">
+                          Motivo: {r.reason}
+                        </div>
+                      )}
+                      {docs.length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap gap-1">
+                          {docs.map((d) => (
+                            <span key={d.path} className="inline-flex items-center gap-1 rounded bg-secondary/60 px-1.5 py-0.5 text-[10px]">
+                              <FileText className="size-3" /> {d.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </Card>
+          )}
+
+          <EmailLogSection companyId={company.id} title="Email di esito verifica" />
+
+          <CompanyReviewDialog companyId={company.id} open={reviewOpen} onOpenChange={setReviewOpen} />
+        </div>
+      )}
+
+      {section === "abbonamento" && (
+        <Card className="p-5">
+          <div className="text-sm font-semibold">
+            {subActive ? "Il tuo piano" : "Attiva l'abbonamento per generare il codice"}
+          </div>
+          <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
+            Il numero di account collegati al tuo codice è limitato al piano scelto.
+          </p>
+          <div className="mt-4 max-w-3xl">
+            <PlanPicker
+              memberLabel={isMuni ? "cittadini" : "dipendenti"}
+              onActivated={async () => {
+                await qc.invalidateQueries({ queryKey: ["my-company"] });
+              }}
+            />
+          </div>
         </Card>
-      </div>
-    </div>
+      )}
+    </CompanyShell>
   );
 }
 
