@@ -26,25 +26,85 @@ export const startConnectOnboarding = createServerFn({ method: "POST" })
   });
 
 /**
- * Richiesta di prelievo punti → euro. Conversione 10 pt = 0,10 €.
- * - Valida saldo
- * - Atomica: scala punti dal wallet e crea payout_request "pending"
- * - Anti-frode base: minimo 50 punti, IBAN obbligatorio
+ * Riepilogo prelievi dell'utente: configurazione conversione (letta da
+ * app_config lato server), saldo, IBAN salvato e richieste aperte.
+ */
+export const getPayoutSummary = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const [{ data: cfg }, { data: wallet }, { data: profile }, { data: payouts }] =
+      await Promise.all([
+        supabaseAdmin
+          .from("app_config")
+          .select("eur_per_point, payout_threshold_eur")
+          .eq("id", 1)
+          .maybeSingle(),
+        supabase
+          .from("wallets")
+          .select("points_balance, eur_balance, lifetime_points")
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabase.from("profiles").select("iban").eq("id", userId).maybeSingle(),
+        supabase
+          .from("payout_requests")
+          .select("points_redeemed, amount_eur, status")
+          .eq("user_id", userId),
+      ]);
+
+    const eurPerPoint = Number(cfg?.eur_per_point ?? 0.01);
+    const thresholdEur = Number(cfg?.payout_threshold_eur ?? 0.5);
+    const minPoints = Math.max(1, Math.ceil(thresholdEur / (eurPerPoint || 0.01)));
+
+    const points = wallet?.points_balance ?? 0;
+    const all = payouts ?? [];
+    const openRequest = all.some((p) => p.status === "pending" || p.status === "approved");
+    const paidEur = all
+      .filter((p) => p.status === "paid")
+      .reduce((s, p) => s + Number(p.amount_eur), 0);
+
+    const iban = profile?.iban ?? null;
+    return {
+      eur_per_point: eurPerPoint,
+      threshold_eur: thresholdEur,
+      min_points: minPoints,
+      points_balance: points,
+      eur_available: Number((points * eurPerPoint).toFixed(2)),
+      missing_points: Math.max(0, minPoints - points),
+      can_request: points >= minPoints && !openRequest,
+      has_open_request: openRequest,
+      paid_eur: Number(paidEur.toFixed(2)),
+      saved_iban_masked: iban ? `${iban.slice(0, 4)}••••${iban.slice(-4)}` : null,
+      has_saved_iban: !!iban,
+    };
+  });
+
+/**
+ * Richiesta di prelievo punti → euro. La conversione e la soglia minima sono
+ * definite in app_config e applicate atomicamente dalla RPC SECURITY DEFINER
+ * (scala punti dal wallet, registra la transazione e crea la richiesta).
  */
 const payoutSchema = z
   .object({
-    points: z.number().int().min(50, "Minimo 50 punti per prelevare (0,50 €)"),
-    iban: z.string().trim().min(15, "IBAN troppo corto").max(42, "IBAN troppo lungo"),
+    points: z.number().int().positive("Inserisci i punti da convertire"),
+    iban: z.string().trim().max(42, "IBAN troppo lungo").optional(),
+    use_saved_iban: z.boolean().optional(),
   })
-  .transform((d) => ({ ...d, iban: d.iban.replace(/\s+/g, "").toUpperCase() }))
+  .transform((d) => ({
+    ...d,
+    iban: d.iban ? d.iban.replace(/\s+/g, "").toUpperCase() : undefined,
+  }))
   .superRefine((d, ctx) => {
-    const r = validateIban(d.iban);
-    if (!r.ok) {
-      ctx.addIssue({ code: "custom", path: ["iban"], message: r.reason });
+    if (d.use_saved_iban) return;
+    if (!d.iban) {
+      ctx.addIssue({ code: "custom", path: ["iban"], message: "IBAN obbligatorio" });
+      return;
     }
+    const r = validateIban(d.iban);
+    if (!r.ok) ctx.addIssue({ code: "custom", path: ["iban"], message: r.reason });
   });
-
-
 
 export const requestPayout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -52,15 +112,18 @@ export const requestPayout = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: wallet, error: wErr } = await supabase
-      .from("wallets")
-      .select("points_balance")
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (wErr || !wallet) throw new Error("Wallet non trovato");
-
-    if (wallet.points_balance < data.points) {
-      throw new Error(`Saldo insufficiente: hai ${wallet.points_balance} punti`);
+    let iban = data.iban ?? null;
+    if (data.use_saved_iban || !iban) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("iban")
+        .eq("id", userId)
+        .maybeSingle();
+      iban = profile?.iban ?? null;
+      if (!iban) throw new Error("Nessun IBAN salvato: inseriscilo per continuare");
+      const check = validateIban(iban);
+      if (!check.ok) throw new Error(`IBAN salvato non valido: ${check.reason}`);
+      iban = check.iban;
     }
 
     // La mutazione del wallet è vietata al ruolo authenticated: passa dalla RPC
@@ -69,7 +132,7 @@ export const requestPayout = createServerFn({ method: "POST" })
     const { data: payout, error: pErr } = await supabaseAdmin.rpc("request_payout_for_user", {
       _user_id: userId,
       _points: data.points,
-      _iban: data.iban,
+      _iban: iban,
     });
     if (pErr || !payout) {
       throw new Error(pErr?.message ?? "Impossibile creare la richiesta di prelievo");
@@ -87,12 +150,91 @@ export const listMyPayouts = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data } = await context.supabase
       .from("payout_requests")
-      .select("id, points_redeemed, amount_eur, status, created_at, iban_snapshot")
+      .select("id, points_redeemed, amount_eur, status, created_at, iban_snapshot, admin_notes")
       .eq("user_id", context.userId)
       .order("created_at", { ascending: false })
       .limit(20);
     return data ?? [];
   });
+
+/**
+ * Prelievi dei membri dell'ente (azienda o Comune): elenco + totali, per dare
+ * al titolare visibilità sui punti convertiti in denaro dai suoi iscritti.
+ */
+export const listCompanyPayouts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("company_id")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!profile?.company_id) throw new Error("Nessun ente associato");
+    const { data: owns } = await supabase.rpc("owns_company", {
+      _company_id: profile.company_id,
+    });
+    if (!owns) throw new Error("Accesso riservato al titolare dell'ente");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: members } = await supabaseAdmin
+      .from("profiles")
+      .select("id, full_name")
+      .eq("company_id", profile.company_id);
+
+    const ids = (members ?? []).map((m) => m.id);
+    if (ids.length === 0) {
+      return { items: [], totals: { pending: 0, paid_eur: 0, pending_eur: 0, points: 0 } };
+    }
+    const names = new Map((members ?? []).map((m) => [m.id, m.full_name ?? "—"]));
+
+    const [{ data: payouts }, { data: cfg }] = await Promise.all([
+      supabaseAdmin
+        .from("payout_requests")
+        .select("id, user_id, points_redeemed, amount_eur, status, created_at")
+        .in("user_id", ids)
+        .order("created_at", { ascending: false })
+        .limit(200),
+      supabaseAdmin
+        .from("app_config")
+        .select("eur_per_point")
+        .eq("id", 1)
+        .maybeSingle(),
+    ]);
+
+    const items = (payouts ?? []).map((p) => ({
+      id: p.id,
+      user_name: names.get(p.user_id) ?? "—",
+      points_redeemed: p.points_redeemed,
+      amount_eur: Number(p.amount_eur),
+      status: p.status,
+      created_at: p.created_at,
+    }));
+
+    const totals = items.reduce(
+      (acc, p) => {
+        if (p.status === "paid") acc.paid_eur += p.amount_eur;
+        if (p.status === "pending" || p.status === "approved") {
+          acc.pending += 1;
+          acc.pending_eur += p.amount_eur;
+        }
+        acc.points += p.points_redeemed;
+        return acc;
+      },
+      { pending: 0, paid_eur: 0, pending_eur: 0, points: 0 },
+    );
+
+    return {
+      items,
+      totals: {
+        ...totals,
+        paid_eur: Number(totals.paid_eur.toFixed(2)),
+        pending_eur: Number(totals.pending_eur.toFixed(2)),
+      },
+      eur_per_point: Number(cfg?.eur_per_point ?? 0.01),
+    };
+  });
+
 
 /**
  * STUB abbonamento B2B. Crea/aggiorna un record company_subscriptions a "trial"

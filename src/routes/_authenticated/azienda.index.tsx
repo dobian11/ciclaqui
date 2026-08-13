@@ -16,6 +16,7 @@ import { CompanyAccessStatus } from "@/components/cicla/CompanyAccessStatus";
 import { CompanyRewardsSection } from "@/components/cicla/CompanyRewardsSection";
 import { CompanyChallengesSection } from "@/components/cicla/CompanyChallengesSection";
 import { CompanyBadgesSection } from "@/components/cicla/CompanyBadgesSection";
+import { CompanyPayoutsSection } from "@/components/cicla/CompanyPayoutsSection";
 import { CompanyShell, type CompanySection } from "@/components/cicla/CompanyShell";
 import { CompanyMemberDialog } from "@/components/cicla/CompanyMemberDialog";
 import { NotificationsBell } from "@/components/cicla/NotificationsBell";
@@ -26,7 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Loader2, Copy, Check, Users, CreditCard, Share2, LogOut, Building2, Landmark, Mail, Hash, Download, Bike, Clock,
-  LayoutDashboard, Trophy, Award, Gift, RefreshCw,
+  LayoutDashboard, Trophy, Award, Gift, RefreshCw, Wallet,
 } from "lucide-react";
 
 
@@ -209,8 +210,10 @@ function CompanyDashboard() {
     { id: "coppe", label: "Coppe & maratone", icon: Trophy },
     { id: "badge", label: "Badge", icon: Award },
     { id: "premi", label: "Premi", icon: Gift },
+    { id: "prelievi", label: "Prelievi", icon: Wallet },
     { id: "abbonamento", label: "Abbonamento", icon: CreditCard },
   ];
+
 
   return (
     <CompanyShell
@@ -326,6 +329,10 @@ function CompanyDashboard() {
       {section === "badge" && <CompanyBadgesSection memberLabel={memberLabel.toLowerCase()} />}
 
       {section === "premi" && <CompanyRewardsSection />}
+
+      {section === "prelievi" && <CompanyPayoutsSection memberLabel={memberLabel} />}
+
+
 
       {section === "abbonamento" && (
         <Card className="p-5">
