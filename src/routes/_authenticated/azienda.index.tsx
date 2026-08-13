@@ -330,6 +330,10 @@ function CompanyDashboard() {
 
       {section === "premi" && <CompanyRewardsSection />}
 
+      {section === "prelievi" && <CompanyPayoutsSection memberLabel={memberLabel} />}
+
+
+
       {section === "abbonamento" && (
         <Card className="p-5">
           <div className="text-sm font-semibold">
