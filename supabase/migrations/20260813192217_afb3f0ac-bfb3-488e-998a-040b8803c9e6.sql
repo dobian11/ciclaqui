@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.prevent_wallet_balance_tamper() FROM PUBLIC, anon, authenticated;
