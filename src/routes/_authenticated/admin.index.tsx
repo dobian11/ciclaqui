@@ -633,11 +633,22 @@ function AdminDashboard() {
                 </span>
               </div>
 
-              {!payouts || payouts.length === 0 ? (
+              <AdminListControls
+                query={payoutsList.query}
+                onQuery={payoutsList.setQuery}
+                statuses={payoutsList.statuses}
+                statusFilter={payoutsList.statusFilter}
+                onStatus={payoutsList.setStatusFilter}
+                sort={payoutsList.sort}
+                onSort={payoutsList.setSort}
+                placeholder="Cerca per utente, IBAN o importo…"
+              />
+
+              {payoutsList.total === 0 ? (
                 <p className="mt-3 text-[12px] text-muted-foreground">Nessuna richiesta.</p>
               ) : (
                 <ul className="mt-3 space-y-3">
-                  {payouts.map((p) => (
+                  {payoutsList.items.map((p) => (
                     <li key={p.id} className="rounded-lg border border-border/50 p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
