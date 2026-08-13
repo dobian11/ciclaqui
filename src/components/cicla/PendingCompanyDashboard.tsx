@@ -7,6 +7,7 @@ import {
   Building2, Landmark, Hash, Mail, CreditCard, FileText, Check, Clock,
   AlertTriangle, Upload, Copy, Lock, History, RefreshCw, CalendarClock, Eye, EyeOff,
 } from "lucide-react";
+import { COMPANY_DOCS, MUNI_DOCS, normalizeDocName as normalize } from "@/lib/company-docs";
 
 export type PendingCompany = {
   id: string;
@@ -32,25 +33,6 @@ export type PendingReview = {
   reviewed_at: string | null;
 };
 
-type DocSpec = { key: string; label: string; hint: string; required: boolean; match: string[] };
-
-const COMPANY_DOCS: DocSpec[] = [
-  { key: "visura", label: "Visura camerale", hint: "Non più vecchia di 6 mesi", required: true, match: ["visura", "camera", "cciaa"] },
-  { key: "identita", label: "Documento del legale rappresentante", hint: "Carta d'identità o passaporto in corso di validità", required: true, match: ["identita", "identità", "carta", "passaporto", "cie", "documento"] },
-  { key: "statuto", label: "Statuto o atto costitutivo", hint: "Solo per società e associazioni", required: false, match: ["statuto", "atto", "costitut"] },
-  { key: "iban", label: "Certificazione IBAN", hint: "Coordinate bancarie intestate all'azienda", required: false, match: ["iban", "banca", "coordinate", "conto"] },
-];
-
-const MUNI_DOCS: DocSpec[] = [
-  { key: "nomina", label: "Atto di nomina / delibera", hint: "Delibera o determina che autorizza l'adesione", required: true, match: ["nomina", "delibera", "determina", "atto"] },
-  { key: "identita", label: "Documento del referente", hint: "Carta d'identità del responsabile del progetto", required: true, match: ["identita", "identità", "carta", "passaporto", "cie", "documento"] },
-  { key: "protocollo", label: "Protocollo o PEC di richiesta", hint: "Comunicazione ufficiale dell'ente", required: false, match: ["protocollo", "pec", "richiesta"] },
-  { key: "iban", label: "IBAN di tesoreria", hint: "Coordinate della tesoreria comunale", required: false, match: ["iban", "tesoreria", "banca", "conto"] },
-];
-
-function normalize(s: string) {
-  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
 
 export function PendingCompanyDashboard({
   company,
@@ -171,47 +153,24 @@ export function PendingCompanyDashboard({
         </Button>
       </Card>
 
-      {/* Codice ente (bloccato) */}
+      {/* Codice ente: assegnato solo dopo l'approvazione */}
       <Card className="p-5">
         <div className="flex items-center justify-between gap-2">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Codice {isMuni ? "Comune" : "azienda"}
           </div>
           <Badge variant="secondary" className="bg-secondary/70 text-[10px] text-muted-foreground">
-            <Lock className="mr-1 size-3" /> Non ancora attivo
+            <Lock className="mr-1 size-3" /> Non ancora assegnato
           </Badge>
         </div>
-        <div className="mt-2 flex items-center justify-between gap-3">
-          <div
-            className={`font-display text-3xl font-bold tracking-wider transition ${
-              revealCode ? "" : "select-none blur-sm"
-            }`}
-          >
-            {company.code}
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => setRevealCode((v) => !v)}>
-              {revealCode ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={async () => {
-                await navigator.clipboard.writeText(company.code);
-                toast.success("Codice copiato", {
-                  description: "Sarà utilizzabile dai membri solo dopo l'approvazione.",
-                });
-              }}
-            >
-              <Copy className="size-4" />
-            </Button>
-          </div>
+        <div className="mt-3 flex items-center gap-3 rounded-md border border-dashed border-border/70 bg-secondary/30 p-4">
+          <Lock className="size-4 shrink-0 text-muted-foreground" />
+          <p className="text-[12px] leading-snug text-muted-foreground">
+            Il codice riservato al tuo ente viene generato e mostrato qui
+            <strong className="text-foreground"> solo dopo l'approvazione dell'admin</strong>.
+            Da quel momento potrai distribuirlo ai tuoi {isMuni ? "cittadini" : "dipendenti"}.
+          </p>
         </div>
-        <p className="mt-3 text-[12px] leading-snug text-muted-foreground">
-          Questo è il codice riservato al tuo ente. Non distribuirlo ancora: le registrazioni con
-          questo codice funzioneranno solo dopo l'approvazione dell'admin e l'attivazione
-          dell'abbonamento.
-        </p>
       </Card>
 
       {/* Documenti richiesti */}
