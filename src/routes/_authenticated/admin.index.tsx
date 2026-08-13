@@ -576,6 +576,9 @@ function AdminDashboard() {
             </Card>
           )}
 
+          {/* Utenti e ruoli */}
+          {tab === "utenti" && <AdminUsersPanel />}
+
           {/* Coda anti-frode */}
           {tab === "antifrode" && (
             <Card className="p-5">
