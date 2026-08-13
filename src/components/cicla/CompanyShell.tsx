@@ -118,6 +118,7 @@ export function CompanyShell({
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
+                  <NotificationsBell />
                   {actions}
                   <Button variant="outline" size="sm" className="h-8 px-2 md:hidden" onClick={signOut}>
                     <LogOut className="size-4" />
