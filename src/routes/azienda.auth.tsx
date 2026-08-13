@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, User } from "lucide-react";
 import { getPostLoginRedirect } from "@/lib/auth-redirect";
+import { ForgotPasswordDialog } from "@/components/cicla/ForgotPasswordDialog";
 
 type Search = { mode?: "login" | "signup"; manager?: boolean };
 
@@ -164,7 +165,10 @@ function CompanyAuthPage() {
                   <Input id="caz-email" name="email" type="email" required autoComplete="email" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="caz-pwd">Password</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="caz-pwd">Password</Label>
+                    <ForgotPasswordDialog />
+                  </div>
                   <Input id="caz-pwd" name="password" type="password" required autoComplete="current-password" />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>

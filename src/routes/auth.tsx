@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
+import { ForgotPasswordDialog } from "@/components/cicla/ForgotPasswordDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -202,7 +203,10 @@ function AuthPage() {
                   <Input id="login-email" name="email" type="email" required autoComplete="email" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="login-password">Password</Label>
+                    <ForgotPasswordDialog />
+                  </div>
                   <Input id="login-password" name="password" type="password" required autoComplete="current-password" />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
