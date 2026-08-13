@@ -470,3 +470,77 @@ export const requestManagerRole = createServerFn({ method: "POST" })
     if (error) throw new Error("Impossibile attivare l'area enti");
     return { ok: true as const, alreadyManager: false };
   });
+
+/**
+ * Allega i documenti obbligatori alla pratica iniziale dell'ente (passo 2
+ * dell'onboarding). Aggiorna la review `initial` in stato pending e notifica
+ * l'admin che la pratica è completa.
+ */
+export const submitInitialDocuments = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => requestReviewSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: profile } = await supabase
+      .from("profiles").select("company_id").eq("id", userId).maybeSingle();
+    if (!profile?.company_id) throw new Error("Nessun ente associato");
+    const { data: ownsCompany } = await supabase.rpc("owns_company", {
+      _company_id: profile.company_id,
+    });
+    if (!ownsCompany) throw new Error("Accesso riservato al titolare dell'ente");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: company } = await supabaseAdmin
+      .from("companies")
+      .select("id, name, kind")
+      .eq("id", profile.company_id)
+      .maybeSingle();
+    if (!company) throw new Error("Ente non trovato");
+
+    const { data: review } = await supabaseAdmin
+      .from("company_reviews")
+      .select("id")
+      .eq("company_id", company.id)
+      .eq("kind", "initial")
+      .order("submitted_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let reviewId = review?.id ?? null;
+    if (reviewId) {
+      await supabaseAdmin
+        .from("company_reviews")
+        .update({
+          documents: data.documents,
+          notes: data.notes ?? "Registrazione iniziale",
+          status: "pending",
+        })
+        .eq("id", reviewId);
+    } else {
+      const { data: created } = await supabaseAdmin
+        .from("company_reviews")
+        .insert({
+          company_id: company.id,
+          kind: "initial",
+          status: "pending",
+          submitted_by: userId,
+          notes: data.notes ?? "Registrazione iniziale",
+          documents: data.documents,
+        })
+        .select("id")
+        .single();
+      reviewId = created?.id ?? null;
+    }
+
+    await supabaseAdmin.from("admin_notifications").insert({
+      type: "company_review_submitted",
+      title: `Documenti ricevuti (${company.kind === "municipality" ? "Comune" : "Azienda"})`,
+      body: `${company.name} ha completato la registrazione con ${data.documents.length} documento/i.`,
+      company_id: company.id,
+      payload: { review_id: reviewId, kind: "initial", doc_count: data.documents.length },
+    });
+
+    return { ok: true as const, review_id: reviewId };
+  });
