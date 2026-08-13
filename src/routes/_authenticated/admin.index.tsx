@@ -14,6 +14,7 @@ import {
   adminListNotifications,
   adminMarkNotificationRead,
   adminListCompanyReviews,
+  adminListAuditLog,
   adminListTripFlags,
   adminDecideTripFlag,
   isAdmin,
