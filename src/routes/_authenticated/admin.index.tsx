@@ -18,7 +18,7 @@ import {
   adminDecideTripFlag,
   isAdmin,
 } from "@/lib/admin.functions";
-import { AdminShell } from "@/components/cicla/AdminShell";
+import { AdminShell, type AdminTab } from "@/components/cicla/AdminShell";
 import { DocumentViewerDialog, type DocTarget } from "@/components/cicla/DocumentViewerDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -39,7 +39,10 @@ import {
   History,
   Eye,
   AlertTriangle,
+  LayoutDashboard,
 } from "lucide-react";
+
+type TabId = "panoramica" | "enti" | "antifrode" | "prelievi" | "notifiche";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   ssr: false,
@@ -54,6 +57,7 @@ function AdminDashboard() {
   const listPayouts = useServerFn(adminListPayouts);
   const decide = useServerFn(adminDecidePayout);
   const [hasSession, setHasSession] = useState<boolean | null>(true);
+  const [tab, setTab] = useState<TabId>("panoramica");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setHasSession(!!data.session));
