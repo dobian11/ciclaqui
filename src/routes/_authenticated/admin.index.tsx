@@ -165,6 +165,15 @@ function AdminDashboard() {
     enabled: adminCheck?.admin === true && !!expandedCompanyId,
   });
 
+  const listAuditLog = useServerFn(adminListAuditLog);
+  const { data: companyAudit } = useQuery({
+    queryKey: ["admin-company-audit", expandedCompanyId],
+    queryFn: () => listAuditLog({ data: { company_id: expandedCompanyId!, limit: 50 } }),
+    enabled: adminCheck?.admin === true && !!expandedCompanyId,
+  });
+
+
+
   const unreadCount = notifications?.filter((n) => !n.read_at).length ?? 0;
   const pendingCompaniesCount = companies?.filter((c) => c.status === "pending").length ?? 0;
   const pendingPayoutsCount = payouts?.filter((p) => p.status === "pending").length ?? 0;
