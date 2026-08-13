@@ -136,3 +136,121 @@ export const startCompanySubscription = createServerFn({ method: "POST" })
         "Trial 14 giorni attivato (stub). Con la chiave Stripe collegata partirà il checkout reale.",
     };
   });
+
+/**
+ * Verifica un codice sconto per il piano scelto (anteprima prezzo, non consuma
+ * il codice). Riservata ai titolari di un ente autenticati.
+ */
+export const previewDiscountCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        code: z.string().trim().min(3).max(40),
+        plan: z.enum(["starter", "pro", "enterprise"]),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { checkDiscountCode } = await import("@/lib/discounts.server");
+    const res = await checkDiscountCode(data.code, data.plan);
+    if (!res.ok) return { valid: false as const, reason: res.reason };
+    return {
+      valid: true as const,
+      percent_off: res.percent_off,
+      final_price_eur: res.final_price_eur,
+      label: res.label,
+    };
+  });
+
+/**
+ * Attiva l'abbonamento dell'ente sul piano scelto. Con un codice sconto 100%
+ * (partner in fase di test) l'attivazione è immediata e gratuita; senza Stripe
+ * collegato e senza codice, si attiva un trial di 14 giorni.
+ */
+export const activateCompanySubscription = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        plan: z.enum(["starter", "pro", "enterprise"]),
+        discount_code: z.string().trim().max(40).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { getPlan } = await import("@/lib/plans");
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("company_id")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!profile?.company_id) throw new Error("Nessun ente associato");
+    const { data: owns } = await supabase.rpc("owns_company", {
+      _company_id: profile.company_id,
+    });
+    if (!owns) throw new Error("Accesso riservato al titolare dell'ente");
+
+    const plan = getPlan(data.plan);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    let discountCode: string | null = null;
+    let price = plan.priceEur;
+    let status: "active" | "trial" = "trial";
+
+    if (data.discount_code) {
+      const { checkDiscountCode } = await import("@/lib/discounts.server");
+      const res = await checkDiscountCode(data.discount_code, data.plan);
+      if (!res.ok) throw new Error(res.reason);
+      discountCode = res.code;
+      price = res.final_price_eur;
+      if (price === 0) status = "active";
+      await supabaseAdmin
+        .from("discount_codes")
+        .update({ redeemed_count: (await supabaseAdmin
+          .from("discount_codes")
+          .select("redeemed_count")
+          .eq("id", res.id)
+          .single()).data!.redeemed_count + 1 })
+        .eq("id", res.id);
+    }
+
+    const periodEnd = new Date();
+    if (status === "active") periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+    else periodEnd.setDate(periodEnd.getDate() + 14);
+
+    const { error } = await supabaseAdmin
+      .from("company_subscriptions")
+      .upsert(
+        {
+          company_id: profile.company_id,
+          status,
+          plan: data.plan,
+          seats: plan.seats,
+          monthly_price_eur: price,
+          discount_code: discountCode,
+          current_period_end: periodEnd.toISOString(),
+        },
+        { onConflict: "company_id" },
+      );
+    if (error) throw new Error("Impossibile attivare l'abbonamento");
+
+    await supabaseAdmin
+      .from("companies")
+      .update({ plan: data.plan, employee_cap: plan.seats, subscription_status: status })
+      .eq("id", profile.company_id);
+
+    return {
+      status,
+      plan: data.plan,
+      monthly_price_eur: price,
+      discount_code: discountCode,
+      current_period_end: periodEnd.toISOString(),
+      message:
+        status === "active"
+          ? `Abbonamento ${plan.name} attivato gratuitamente con il codice ${discountCode}.`
+          : `Trial 14 giorni attivato sul piano ${plan.name}.`,
+    };
+  });
