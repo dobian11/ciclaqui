@@ -1,3 +1,4 @@
+import { PUBLIC_APP_URL } from "@/lib/public-url";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -264,7 +265,7 @@ function AdminDashboard() {
               decidedAt: email.decidedAt,
               reason: email.reason,
               code: email.code,
-              appUrl: window.location.origin,
+              appUrl: PUBLIC_APP_URL,
             },
           });
         } catch (err) {

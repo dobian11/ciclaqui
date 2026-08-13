@@ -1,3 +1,4 @@
+import { PUBLIC_APP_URL } from "@/lib/public-url";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -220,7 +221,7 @@ function AdminVerificationsPage() {
               decidedAt: email.decidedAt,
               reason: email.reason,
               code: email.code,
-              appUrl: window.location.origin,
+              appUrl: PUBLIC_APP_URL,
             },
           });
         } catch (err) {
