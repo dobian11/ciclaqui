@@ -9,8 +9,6 @@ export type DocSpec = {
 export const COMPANY_DOCS: DocSpec[] = [
   { key: "visura", label: "Visura camerale", hint: "Non più vecchia di 6 mesi", required: true, match: ["visura", "camera", "cciaa"] },
   { key: "identita", label: "Documento del legale rappresentante", hint: "Carta d'identità o passaporto in corso di validità", required: true, match: ["identita", "identità", "carta", "passaporto", "cie", "documento"] },
-  { key: "statuto", label: "Statuto o atto costitutivo", hint: "Per società e associazioni", required: true, match: ["statuto", "atto", "costitut"] },
-  { key: "iban", label: "Certificazione IBAN", hint: "Coordinate bancarie intestate all'azienda", required: true, match: ["iban", "banca", "coordinate", "conto"] },
 ];
 
 export const MUNI_DOCS: DocSpec[] = [
