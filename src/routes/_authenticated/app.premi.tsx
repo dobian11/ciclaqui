@@ -100,7 +100,7 @@ function PremiPage() {
         </div>
       </header>
 
-      <div className="space-y-3 px-4 py-4">
+      <div className="app-container space-y-3 py-4">
         {loading && <p className="text-xs text-muted-foreground">Caricamento…</p>}
         {!loading && rewards.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">

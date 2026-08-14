@@ -105,7 +105,7 @@ function NotifichePage() {
         <span className="ml-auto text-[11px] text-muted-foreground">{saving ? "Salvataggio…" : loading ? "" : "Salvato ✓"}</span>
       </header>
 
-      <div className="space-y-4 px-4 py-4">
+      <div className="app-container space-y-4 py-4">
         <p className="text-xs text-muted-foreground">
           Scegli per ogni tipo di avviso se riceverlo dentro l'app (centro notifiche e push) oppure via email.
         </p>

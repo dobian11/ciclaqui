@@ -48,7 +48,7 @@ function PrivacyPage() {
         <h1 className="font-display text-lg font-bold">Privacy & dati</h1>
       </header>
 
-      <div className="space-y-4 px-4 py-4">
+      <div className="app-container space-y-4 py-4">
         <Card icon={Download} title="Scarica i tuoi dati" desc="Esporta in formato JSON tutto ciò che abbiamo su di te (account, viaggi, bici, punti).">
           <button onClick={doExport} disabled={exporting} className="rounded-full bg-cicla px-4 py-2 text-xs font-bold text-cicla-foreground disabled:opacity-50">
             {exporting ? "Preparazione…" : "Scarica export"}
