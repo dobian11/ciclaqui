@@ -85,7 +85,7 @@ function PremiPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-background pb-6">
+    <div className="app-page bg-background">
       <header className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
         <div className="flex items-baseline justify-between">
           <h1 className="font-display text-lg font-bold">Premi</h1>

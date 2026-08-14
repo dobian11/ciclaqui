@@ -96,7 +96,7 @@ function NotifichePage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-background pb-24">
+    <div className="app-page bg-background">
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
         <button onClick={() => router.history.back()} aria-label="Indietro" className="grid size-9 place-items-center rounded-full bg-card">
           <ChevronLeft size={18} />

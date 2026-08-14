@@ -40,8 +40,8 @@ function BiciPage() {
 
   if (hasSession === false) {
     return (
-      <div className="h-full overflow-y-auto bg-background">
-        <div className="mx-auto max-w-md px-5 py-8 text-center">
+      <div className="app-page bg-background">
+        <div className="app-container py-4 text-center">
           <h1 className="text-2xl font-bold tracking-tight">Le tue bici</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Accedi per registrare il passaporto delle tue bici.
@@ -58,8 +58,8 @@ function BiciPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-background pb-32">
-      <div className="mx-auto max-w-md px-5 py-6">
+    <div className="app-page bg-background">
+      <div className="app-container py-2">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-bold tracking-tight">Passaporto bici</h1>
