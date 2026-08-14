@@ -29,7 +29,7 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-[1100] px-4 pb-3"
       style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)" }}
     >
-      <div className="relative mx-auto flex h-[62px] max-w-md items-center justify-around rounded-[26px] app-glass-strong px-2 shadow-2xl">
+      <div className="relative mx-auto grid h-[62px] w-full max-w-md grid-cols-5 items-center rounded-[26px] app-glass-strong px-1 shadow-2xl">
         {items.map((it) => (
           <NavItem
             key={it.to}
@@ -65,12 +65,12 @@ function NavItem({
       preload="render"
       activeOptions={{ exact }}
       onClick={() => onNavStart(to)}
-      className="group flex flex-col items-center gap-1 px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors data-[status=active]:text-cicla"
+      className="group flex min-w-0 flex-col items-center gap-1 px-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors data-[status=active]:text-cicla"
     >
-      <span className="grid size-10 place-items-center rounded-2xl transition-colors group-data-[status=active]:bg-cicla group-data-[status=active]:text-cicla-foreground group-data-[status=active]:shadow-[0_8px_20px_-6px_var(--cicla)]">
-        <Icon size={20} strokeWidth={2.2} />
+      <span className="grid size-9 shrink-0 place-items-center rounded-2xl transition-colors group-data-[status=active]:bg-cicla group-data-[status=active]:text-cicla-foreground group-data-[status=active]:shadow-[0_8px_20px_-6px_var(--cicla)]">
+        <Icon size={19} strokeWidth={2.2} />
       </span>
-      <span className="font-display">{label}</span>
+      <span className="w-full truncate text-center font-display text-[9px]">{label}</span>
     </Link>
   );
 }
