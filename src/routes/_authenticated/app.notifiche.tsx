@@ -3,7 +3,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Bell, BellRing, ChevronLeft, Mail, Smartphone, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { usePush } from "@/hooks/use-push";
+import { getPushDiagnostics, sendTestPush } from "@/lib/push.functions";
 import { NotificationsSection } from "@/components/cicla/NotificationsSection";
 
 export const Route = createFileRoute("/_authenticated/app/notifiche")({
@@ -50,7 +53,6 @@ const ROWS: Row[] = [
 
 function NotifichePage() {
   const router = useRouter();
-  const push = usePush();
   const [prefs, setPrefs] = useState<Prefs>(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -195,6 +197,83 @@ function NotifichePage() {
         <Link to="/app/privacy" preload="intent" className="flex items-center gap-2 rounded-2xl border border-border bg-card/50 px-4 py-3 text-xs font-semibold">
           <ShieldCheck size={16} className="text-cicla" /> Privacy e dati personali
         </Link>
+      </div>
+    </div>
+  );
+}
+
+function PushCard() {
+  const push = usePush();
+  const diagFn = useServerFn(getPushDiagnostics);
+  const testFn = useServerFn(sendTestPush);
+
+  const diag = useQuery({
+    queryKey: ["push-diagnostics"],
+    queryFn: () => diagFn({ data: undefined as never }),
+    staleTime: 30_000,
+  });
+
+  const test = useMutation({
+    mutationFn: () => testFn({ data: undefined as never }),
+    onSuccess: (r) => {
+      if (!r.configured) toast.error("Push non ancora configurate lato server");
+      else if (!r.tokens) toast.error("Nessun dispositivo registrato: attiva le push dall'app");
+      else if (r.sent > 0) toast.success(`Push di prova inviata a ${r.sent} dispositivo/i`);
+      else toast.error(r.error ?? "Invio push fallito");
+      void diag.refetch();
+    },
+    onError: () => toast.error("Invio push fallito"),
+  });
+
+  const devices = diag.data?.devices ?? [];
+
+  return (
+    <div className="rounded-2xl border border-border bg-card/50 p-4">
+      <div className="flex items-center gap-3">
+        <div className="grid size-9 place-items-center rounded-xl bg-cicla/15 text-cicla"><BellRing size={18} /></div>
+        <h2 className="font-display text-sm font-bold">Push su questo dispositivo</h2>
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        Le notifiche in-app diventano push solo se autorizzi il dispositivo dall'app iOS o Android.
+      </p>
+
+      <div className="mt-3 space-y-1 text-[11px] text-muted-foreground">
+        <p>
+          Servizio push:{" "}
+          <span className={diag.data?.configured ? "text-cicla" : "text-destructive"}>
+            {diag.isLoading ? "…" : diag.data?.configured ? "configurato" : "non configurato"}
+          </span>
+        </p>
+        <p>
+          Dispositivi registrati: <span className="text-foreground">{devices.length}</span>
+          {devices.length > 0 && ` (${devices.map((d) => d.platform).join(", ")})`}
+        </p>
+        {push.error && <p className="text-destructive">Errore: {push.error}</p>}
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          onClick={() => void push.register().then(() => diag.refetch())}
+          disabled={push.status === "registering"}
+          className="rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold disabled:opacity-50"
+        >
+          {push.status === "registered"
+            ? "Push attive ✓"
+            : push.status === "registering"
+              ? "Attivazione…"
+              : push.status === "unsupported"
+                ? "Disponibile solo su app nativa"
+                : push.status === "denied"
+                  ? "Permesso negato — apri Impostazioni"
+                  : "Attiva push"}
+        </button>
+        <button
+          onClick={() => test.mutate()}
+          disabled={test.isPending || devices.length === 0}
+          className="rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold disabled:opacity-40"
+        >
+          {test.isPending ? "Invio…" : "Invia push di prova"}
+        </button>
       </div>
     </div>
   );
