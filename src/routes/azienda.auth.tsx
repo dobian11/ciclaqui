@@ -137,11 +137,13 @@ function CompanyAuthPage() {
         data: { full_name: manager_name, phone, signup_kind: "company_manager" },
       },
     });
+    setLoading(false);
+    if (isEmailAlreadyRegistered(signUpData, error)) {
+      return toast.error(EMAIL_EXISTS_TITLE, { description: EMAIL_EXISTS_DESCRIPTION, duration: 8000 });
+    }
     if (error) {
-      setLoading(false);
       return toast.error(error.message);
     }
-    setLoading(false);
     if (!signUpData.session) {
       setPendingEmail(email);
       setCooldown(60);
