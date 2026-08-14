@@ -67,10 +67,10 @@ function NavItem({
       onClick={() => onNavStart(to)}
       className="group flex min-w-0 flex-col items-center gap-1 px-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors data-[status=active]:text-cicla"
     >
-      <span className="grid size-10 place-items-center rounded-2xl transition-colors group-data-[status=active]:bg-cicla group-data-[status=active]:text-cicla-foreground group-data-[status=active]:shadow-[0_8px_20px_-6px_var(--cicla)]">
-        <Icon size={20} strokeWidth={2.2} />
+      <span className="grid size-9 shrink-0 place-items-center rounded-2xl transition-colors group-data-[status=active]:bg-cicla group-data-[status=active]:text-cicla-foreground group-data-[status=active]:shadow-[0_8px_20px_-6px_var(--cicla)]">
+        <Icon size={19} strokeWidth={2.2} />
       </span>
-      <span className="font-display">{label}</span>
+      <span className="w-full truncate text-center font-display text-[9px]">{label}</span>
     </Link>
   );
 }
