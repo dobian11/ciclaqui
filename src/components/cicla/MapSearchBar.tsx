@@ -180,7 +180,7 @@ export function MapSearchBar({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="pointer-events-auto flex flex-1 items-center gap-2 rounded-full app-glass px-2.5 py-1.5 text-left shadow-lg"
+        className="pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full app-glass px-2.5 py-1.5 text-left shadow-lg"
         aria-label="Cerca un luogo o un indirizzo"
       >
         <span className="grid size-6 shrink-0 place-items-center rounded-full bg-cicla text-cicla-foreground">
