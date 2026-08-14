@@ -176,6 +176,9 @@ export const getMyCompany = createServerFn({ method: "GET" })
         .maybeSingle(),
     ]);
 
+    // I manager/titolari dell'ente non contano come dipendenti.
+    const managerIds = new Set((managerRows ?? []).map((r) => r.user_id));
+    const employees = (memberRows ?? []).filter((m) => !managerIds.has(m.id)).length;
 
     // Il codice ente esiste in DB fin dalla creazione, ma viene rivelato
     // al titolare solo dopo l'approvazione dell'admin.
