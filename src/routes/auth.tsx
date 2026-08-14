@@ -1,3 +1,4 @@
+import { isEmailAlreadyRegistered, EMAIL_EXISTS_TITLE, EMAIL_EXISTS_DESCRIPTION } from "@/lib/signup-errors";
 import { createFileRoute, Link, useNavigate, useRouter, useSearch } from "@tanstack/react-router";
 import { emailLinkOrigin } from "@/lib/public-url";
 import { useEffect, useState } from "react";
