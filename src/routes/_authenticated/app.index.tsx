@@ -561,8 +561,8 @@ function MapHome() {
                       : "var(--mode-car)",
                 }}
               />
-              <span className="text-[11px] font-semibold leading-none">{MODE_LABEL[liveMode]}</span>
-              <span className="text-[10px] leading-none text-muted-foreground">
+              <span className="truncate text-[11px] font-semibold leading-none">{MODE_LABEL[liveMode]}</span>
+              <span className="shrink-0 text-[10px] leading-none text-muted-foreground">
                 {geo.speedKmh.toFixed(0)} km/h
               </span>
             </>
