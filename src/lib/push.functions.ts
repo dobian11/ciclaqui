@@ -28,3 +28,35 @@ export const sendPushToUser = createServerFn({ method: "POST" })
       data: data.data,
     });
   });
+
+/** Stato dell'integrazione push per l'utente corrente (secret + device registrati). */
+export const getPushDiagnostics = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const configured = Boolean(process.env["FCM_SERVICE_ACCOUNT_JSON"]);
+    const { data } = await context.supabase
+      .from("device_tokens")
+      .select("platform, last_seen")
+      .eq("user_id", context.userId);
+    const devices = (data ?? []) as { platform: string | null; last_seen: string | null }[];
+    return {
+      configured,
+      devices: devices.map((d) => ({
+        platform: d.platform ?? "unknown",
+        lastSeen: d.last_seen,
+      })),
+    };
+  });
+
+/** Invia una push di prova ai dispositivi dell'utente corrente. */
+export const sendTestPush = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { sendPushToUsers } = await import("@/lib/push.server");
+    return await sendPushToUsers({
+      userIds: [context.userId],
+      title: "Cicla Qui",
+      body: "Notifiche push attive: ci siamo! 🚲",
+      data: { url: "/app/notifiche", type: "test" },
+    });
+  });
