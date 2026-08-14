@@ -33,11 +33,21 @@ export const listMyEmployees = createServerFn({ method: "GET" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: employees } = await supabaseAdmin
+    // Gli account manager/titolari dell'ente non sono dipendenti: vanno esclusi
+    // dall'elenco e dai conteggi.
+    const { data: managerRows } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "company_manager");
+    const managerIds = new Set((managerRows ?? []).map((r) => r.user_id));
+
+    const { data: allProfiles } = await supabaseAdmin
       .from("profiles")
       .select("id, full_name, created_at")
       .eq("company_id", profile.company_id)
       .order("created_at", { ascending: false });
+
+    const employees = (allProfiles ?? []).filter((e) => !managerIds.has(e.id));
 
     if (!employees || employees.length === 0) return [];
 
