@@ -189,18 +189,8 @@ function NotifichePage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card/50 p-4">
-          <div className="flex items-center gap-3">
-            <div className="grid size-9 place-items-center rounded-xl bg-cicla/15 text-cicla"><BellRing size={18} /></div>
-            <h2 className="font-display text-sm font-bold">Push su questo dispositivo</h2>
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Le notifiche in-app diventano push solo se autorizzi il dispositivo.
-          </p>
-          <button onClick={() => push.register()} className="mt-3 rounded-full border border-border px-3 py-1.5 text-[11px] font-semibold">
-            {push.status === "registered" ? "Push attive ✓" : push.status === "unsupported" ? "Disponibile solo su app nativa" : "Attiva push"}
-          </button>
-        </div>
+        <PushCard />
+
 
         <Link to="/app/privacy" preload="intent" className="flex items-center gap-2 rounded-2xl border border-border bg-card/50 px-4 py-3 text-xs font-semibold">
           <ShieldCheck size={16} className="text-cicla" /> Privacy e dati personali
