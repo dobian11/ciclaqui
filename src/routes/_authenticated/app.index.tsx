@@ -542,7 +542,7 @@ function MapHome() {
           onMapInteractionLockChange={setMapInteractionsLocked}
         />
 
-        <div className="pointer-events-auto inline-flex shrink-0 items-center gap-1.5 rounded-full app-glass px-2.5 py-1.5 shadow-lg">
+        <div className="pointer-events-auto inline-flex min-w-0 max-w-[45%] shrink items-center gap-1.5 overflow-hidden rounded-full app-glass px-2.5 py-1.5 shadow-lg">
           {geo.loading ? (
             <>
               <Loader2 size={10} className="animate-spin text-muted-foreground" />
