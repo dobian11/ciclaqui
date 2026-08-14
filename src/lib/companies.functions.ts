@@ -158,13 +158,17 @@ export const getMyCompany = createServerFn({ method: "GET" })
 
     if (!company) return null;
 
-    const [{ count: employees }, { data: sub }] = await Promise.all([
+    const [{ data: memberRows }, { data: managerRows }, { data: sub }] = await Promise.all([
       // Il conteggio passa dall'admin client: le RLS di `profiles` limitano la
       // SELECT lato utente e restituirebbero sempre 0/1.
       supabaseAdmin
         .from("profiles")
-        .select("id", { count: "exact", head: true })
+        .select("id")
         .eq("company_id", company.id),
+      supabaseAdmin
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "company_manager"),
       supabase
         .from("company_subscriptions")
         .select("status, current_period_end, plan")
