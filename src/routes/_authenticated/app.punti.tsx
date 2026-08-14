@@ -88,8 +88,8 @@ function PuntiPage() {
   const progress = Math.min(100, Math.round((points / Math.max(1, minPoints)) * 100));
 
   return (
-    <div className="h-full overflow-y-auto bg-background">
-      <div className="mx-auto max-w-md px-5 py-6 pb-32">
+    <div className="app-page bg-background">
+      <div className="app-container py-2">
         <h1 className="text-2xl font-bold tracking-tight">Punti & premi</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           I punti si trasformano in premi (denaro, voucher o incentivi) decisi dalla

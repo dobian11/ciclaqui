@@ -96,7 +96,7 @@ function NotifichePage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-background pb-24">
+    <div className="app-page bg-background">
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
         <button onClick={() => router.history.back()} aria-label="Indietro" className="grid size-9 place-items-center rounded-full bg-card">
           <ChevronLeft size={18} />
@@ -105,7 +105,7 @@ function NotifichePage() {
         <span className="ml-auto text-[11px] text-muted-foreground">{saving ? "Salvataggio…" : loading ? "" : "Salvato ✓"}</span>
       </header>
 
-      <div className="space-y-4 px-4 py-4">
+      <div className="app-container space-y-4 py-4">
         <p className="text-xs text-muted-foreground">
           Scegli per ogni tipo di avviso se riceverlo dentro l'app (centro notifiche e push) oppure via email.
         </p>

@@ -36,8 +36,8 @@ function SfidePage() {
 
   if (authed === false) {
     return (
-      <div className="min-h-dvh bg-background pb-32 pt-4">
-        <div className="mx-auto max-w-md px-4">
+      <div className="app-page bg-background">
+        <div className="app-container">
           <h1 className="font-display text-2xl font-black tracking-tight">Sfide & premi</h1>
           <div className="mt-6 rounded-3xl app-glass p-6 text-center text-sm text-muted-foreground shadow-xl">
             Accedi con il tuo codice azienda o Comune per vedere sfide, streak e classifica.
@@ -48,8 +48,8 @@ function SfidePage() {
   }
 
   return (
-    <div className="min-h-dvh bg-background pb-32 pt-4">
-      <div className="mx-auto max-w-md px-4">
+    <div className="app-page bg-background">
+      <div className="app-container">
         <h1 className="font-display text-2xl font-black tracking-tight">Sfide & premi</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Completa obiettivi, mantieni la streak e scala la classifica del tuo ente.

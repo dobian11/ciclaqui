@@ -149,8 +149,8 @@ function ProfiloPage() {
   const isAdmin = profileQ.data?.roles.includes("admin");
 
   return (
-    <div className="h-full overflow-y-auto bg-background">
-      <div className="mx-auto max-w-md px-5 py-6">
+    <div className="app-page bg-background">
+      <div className="app-container py-2">
         <CiclaLogo size="md" />
 
         {/* Identità + foto */}

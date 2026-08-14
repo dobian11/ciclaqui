@@ -85,7 +85,7 @@ function PremiPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-background pb-6">
+    <div className="app-page bg-background">
       <header className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
         <div className="flex items-baseline justify-between">
           <h1 className="font-display text-lg font-bold">Premi</h1>
@@ -100,7 +100,7 @@ function PremiPage() {
         </div>
       </header>
 
-      <div className="space-y-3 px-4 py-4">
+      <div className="app-container space-y-3 py-4">
         {loading && <p className="text-xs text-muted-foreground">Caricamento…</p>}
         {!loading && rewards.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">

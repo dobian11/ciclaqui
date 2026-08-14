@@ -47,10 +47,7 @@ function AppLayout() {
       className="fixed inset-x-0 top-0 flex w-full max-w-full flex-col overflow-x-hidden"
       style={{ height: "var(--app-shell-h, 100dvh)" }}
     >
-      <main
-        className="relative w-full max-w-full flex-1 overflow-hidden"
-        style={{ paddingBottom: "calc(64px + env(safe-area-inset-bottom, 0))" }}
-      >
+      <main className="relative w-full max-w-full flex-1 overflow-hidden">
         <Outlet />
       </main>
       <BottomNav />
