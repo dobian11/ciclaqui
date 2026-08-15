@@ -80,6 +80,9 @@ function MapHome() {
   const [layerError, setLayerError] = useState<string | null>(null);
   const [lastSummary, setLastSummary] = useState<TripSummary | null>(null);
   const [mapInteractionsLocked, setMapInteractionsLocked] = useState(false);
+  // Ricerca aperta: su schermi stretti il chip GPS si ritira per non comprimere l'input.
+  const [searchOpen, setSearchOpen] = useState(false);
+
 
   // POI selection + in-app navigation
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
