@@ -20,12 +20,15 @@ export function MapSearchBar({
   origin,
   onSelect,
   onMapInteractionLockChange,
+  onOpenChange,
 }: {
   origin: [number, number] | null;
   onSelect: (poi: Poi) => void;
   onMapInteractionLockChange?: (locked: boolean) => void;
+  /** Notifica il parent quando la ricerca si apre/chiude (per liberare spazio). */
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpenState] = useState(false);
   const [value, setValue] = useState("");
   const [items, setItems] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
@@ -35,6 +38,11 @@ export function MapSearchBar({
   const debounceRef = useRef<number | null>(null);
   const reqIdRef = useRef(0);
 
+  const setOpen = (v: boolean) => {
+    setOpenState(v);
+    onOpenChange?.(v);
+  };
+
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
@@ -42,6 +50,7 @@ export function MapSearchBar({
   useEffect(() => {
     return () => onMapInteractionLockChange?.(false);
   }, [onMapInteractionLockChange]);
+
 
   useEffect(() => {
     if (!open) return;
