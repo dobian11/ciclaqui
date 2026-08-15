@@ -20,12 +20,15 @@ export function MapSearchBar({
   origin,
   onSelect,
   onMapInteractionLockChange,
+  onOpenChange,
 }: {
   origin: [number, number] | null;
   onSelect: (poi: Poi) => void;
   onMapInteractionLockChange?: (locked: boolean) => void;
+  /** Notifica il parent quando la ricerca si apre/chiude (per liberare spazio). */
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpenState] = useState(false);
   const [value, setValue] = useState("");
   const [items, setItems] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(false);
@@ -35,6 +38,11 @@ export function MapSearchBar({
   const debounceRef = useRef<number | null>(null);
   const reqIdRef = useRef(0);
 
+  const setOpen = (v: boolean) => {
+    setOpenState(v);
+    onOpenChange?.(v);
+  };
+
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
@@ -42,6 +50,7 @@ export function MapSearchBar({
   useEffect(() => {
     return () => onMapInteractionLockChange?.(false);
   }, [onMapInteractionLockChange]);
+
 
   useEffect(() => {
     if (!open) return;
@@ -180,13 +189,14 @@ export function MapSearchBar({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="pointer-events-auto flex min-w-0 flex-1 items-center gap-2 rounded-full app-glass px-2.5 py-1.5 text-left shadow-lg"
+        className="pointer-events-auto flex h-9 min-w-0 flex-1 items-center gap-2 rounded-full app-glass px-2 text-left shadow-lg sm:px-3"
         aria-label="Cerca un luogo o un indirizzo"
       >
-        <span className="grid size-6 shrink-0 place-items-center rounded-full bg-cicla text-cicla-foreground">
-          <Search size={12} strokeWidth={2.8} />
+        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-cicla text-cicla-foreground">
+          <Search size={13} strokeWidth={2.8} />
         </span>
-        <span className="truncate text-[11px] font-medium text-foreground/80">
+        {/* Su schermi molto stretti resta solo l'icona: niente testo compresso. */}
+        <span className="hidden min-w-0 truncate text-[11px] font-medium text-foreground/80 min-[340px]:inline">
           Cerca percorsi…
         </span>
       </button>
@@ -195,9 +205,9 @@ export function MapSearchBar({
 
   return (
     <div className="pointer-events-auto min-w-0 flex-1">
-      <div className="flex items-center gap-2 rounded-full app-glass px-2.5 py-1.5 shadow-lg">
-        <span className="grid size-6 shrink-0 place-items-center rounded-full bg-cicla text-cicla-foreground">
-          <Search size={12} strokeWidth={2.8} />
+      <div className="flex h-9 items-center gap-2 rounded-full app-glass px-2 shadow-lg sm:px-3">
+        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-cicla text-cicla-foreground">
+          <Search size={13} strokeWidth={2.8} />
         </span>
         <input
           ref={inputRef}
@@ -207,12 +217,12 @@ export function MapSearchBar({
           onBlur={() => onMapInteractionLockChange?.(false)}
           maxLength={120}
           enterKeyHint="search"
-          placeholder="Indirizzo, luogo, negozio…"
+          placeholder="Indirizzo o luogo…"
           /* 16px: sotto questa soglia iOS zooma automaticamente al focus */
           className="min-w-0 flex-1 bg-transparent text-[16px] font-medium leading-tight text-foreground outline-none placeholder:text-muted-foreground"
 
         />
-        {loading && <Loader2 size={12} className="animate-spin text-muted-foreground" />}
+        {loading && <Loader2 size={13} className="shrink-0 animate-spin text-muted-foreground" />}
         <button
           type="button"
           onClick={() => {
@@ -223,11 +233,12 @@ export function MapSearchBar({
             setError(null);
           }}
           aria-label="Chiudi ricerca"
-          className="grid size-5 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground"
+          className="grid size-7 shrink-0 place-items-center rounded-full text-muted-foreground hover:text-foreground"
         >
-          <X size={13} />
+          <X size={14} />
         </button>
       </div>
+
 
       {(items.length > 0 || error) && (
         <div className="mt-1.5 overflow-hidden rounded-2xl app-glass-strong shadow-2xl">

@@ -80,6 +80,9 @@ function MapHome() {
   const [layerError, setLayerError] = useState<string | null>(null);
   const [lastSummary, setLastSummary] = useState<TripSummary | null>(null);
   const [mapInteractionsLocked, setMapInteractionsLocked] = useState(false);
+  // Ricerca aperta: su schermi stretti il chip GPS si ritira per non comprimere l'input.
+  const [searchOpen, setSearchOpen] = useState(false);
+
 
   // POI selection + in-app navigation
   const [selectedPoi, setSelectedPoi] = useState<Poi | null>(null);
@@ -533,25 +536,30 @@ function MapHome() {
 
       {/* Top bar — pill compatte */}
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-[1000] flex items-center gap-2 px-3 pt-2"
+        className="pointer-events-none absolute inset-x-0 top-0 z-[1000] grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 px-3 pt-2"
         style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 8px)" }}
       >
         <MapSearchBar
           origin={geo.position}
           onSelect={(p) => setSelectedPoi(p)}
           onMapInteractionLockChange={setMapInteractionsLocked}
+          onOpenChange={setSearchOpen}
         />
 
-        <div className="pointer-events-auto inline-flex min-w-0 max-w-[45%] shrink items-center gap-1.5 overflow-hidden rounded-full app-glass px-2.5 py-1.5 shadow-lg">
+        <div
+          className={`pointer-events-auto inline-flex h-9 shrink-0 items-center gap-1.5 overflow-hidden rounded-full app-glass px-2.5 shadow-lg sm:flex ${
+            searchOpen ? "hidden" : "flex"
+          }`}
+        >
           {geo.loading ? (
             <>
-              <Loader2 size={10} className="animate-spin text-muted-foreground" />
-              <span className="text-[11px] text-muted-foreground">Live…</span>
+              <Loader2 size={11} className="shrink-0 animate-spin text-muted-foreground" />
+              <span className="text-[11px] leading-none text-muted-foreground">Live…</span>
             </>
           ) : geo.position ? (
             <>
               <span
-                className={`inline-block size-1.5 rounded-full ring-2 ${MODE_RING[liveMode]}/30`}
+                className={`inline-block size-1.5 shrink-0 rounded-full ring-2 ${MODE_RING[liveMode]}/30`}
                 style={{
                   background:
                     liveMode === "bike"
@@ -561,8 +569,11 @@ function MapHome() {
                       : "var(--mode-car)",
                 }}
               />
-              <span className="truncate text-[11px] font-semibold leading-none">{MODE_LABEL[liveMode]}</span>
-              <span className="shrink-0 text-[10px] leading-none text-muted-foreground">
+              {/* Sotto i 360px teniamo solo pallino + velocità: niente testo troncato. */}
+              <span className="hidden text-[11px] font-semibold leading-none min-[360px]:inline">
+                {MODE_LABEL[liveMode]}
+              </span>
+              <span className="shrink-0 whitespace-nowrap text-[10px] leading-none text-muted-foreground">
                 {geo.speedKmh.toFixed(0)} km/h
               </span>
             </>
@@ -575,11 +586,12 @@ function MapHome() {
             />
           ) : (
             <>
-              <Loader2 size={10} className="animate-spin text-muted-foreground" />
-              <span className="text-[11px] text-muted-foreground">GPS…</span>
+              <Loader2 size={11} className="shrink-0 animate-spin text-muted-foreground" />
+              <span className="text-[11px] leading-none text-muted-foreground">GPS…</span>
             </>
           )}
         </div>
+
       </div>
 
       {/* Badge viaggio in corso (auto) */}
