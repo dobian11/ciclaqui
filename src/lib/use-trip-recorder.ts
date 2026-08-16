@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { TripMode } from "@/components/cicla/GoogleMapView";
+import {
+  clearActiveTrip,
+  createWakeLockKeeper,
+  loadActiveTrip,
+  saveActiveTrip,
+} from "@/lib/trip-persistence";
 
 export interface TripPoint {
   lat: number;
@@ -46,6 +52,8 @@ export function useTripRecorder(currentMode: TripMode) {
 
   const watchIdRef = useRef<number | null>(null);
   const tickRef = useRef<number | null>(null);
+  const wakeLockRef = useRef<ReturnType<typeof createWakeLockKeeper> | null>(null);
+  const stateRef = useRef<TripRecorderState | null>(null);
   const modeCountsRef = useRef<Record<TripMode, number>>({ foot: 0, bike: 0, car: 0 });
   const modeAtFixRef = useRef<TripMode>(currentMode);
 
@@ -54,19 +62,9 @@ export function useTripRecorder(currentMode: TripMode) {
     modeAtFixRef.current = currentMode;
   }, [currentMode]);
 
-  const start = useCallback(() => {
+  const armWatch = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) return;
-    modeCountsRef.current = { foot: 0, bike: 0, car: 0 };
-    const startedAt = Date.now();
-    setState({
-      recording: true,
-      startedAt,
-      path: [],
-      distanceKm: 0,
-      durationS: 0,
-      dominantMode: currentMode,
-    });
-
+    if (watchIdRef.current != null) navigator.geolocation.clearWatch(watchIdRef.current);
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
         const acc = pos.coords.accuracy ?? 999;
@@ -79,6 +77,7 @@ export function useTripRecorder(currentMode: TripMode) {
         };
         modeCountsRef.current[modeAtFixRef.current] += 1;
         setState((prev) => {
+          if (!prev.recording) return prev;
           const last = prev.path[prev.path.length - 1];
           let dist = prev.distanceKm;
           if (last) {
@@ -99,7 +98,10 @@ export function useTripRecorder(currentMode: TripMode) {
       () => {},
       { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 },
     );
+  }, []);
 
+  const armTicker = useCallback(() => {
+    if (tickRef.current != null) clearInterval(tickRef.current);
     tickRef.current = window.setInterval(() => {
       setState((prev) =>
         prev.recording && prev.startedAt
@@ -107,7 +109,25 @@ export function useTripRecorder(currentMode: TripMode) {
           : prev,
       );
     }, 1000);
-  }, [currentMode]);
+  }, []);
+
+  const start = useCallback(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    modeCountsRef.current = { foot: 0, bike: 0, car: 0 };
+    const startedAt = Date.now();
+    setState({
+      recording: true,
+      startedAt,
+      path: [],
+      distanceKm: 0,
+      durationS: 0,
+      dominantMode: currentMode,
+    });
+    armWatch();
+    armTicker();
+    wakeLockRef.current = wakeLockRef.current ?? createWakeLockKeeper();
+    void wakeLockRef.current.acquire();
+  }, [currentMode, armWatch, armTicker]);
 
   const stop = useCallback(() => {
     if (watchIdRef.current != null && navigator.geolocation) {
@@ -118,10 +138,13 @@ export function useTripRecorder(currentMode: TripMode) {
       clearInterval(tickRef.current);
       tickRef.current = null;
     }
+    void wakeLockRef.current?.release();
+    clearActiveTrip();
     setState((prev) => ({ ...prev, recording: false }));
   }, []);
 
   const reset = useCallback(() => {
+    clearActiveTrip();
     setState({
       recording: false,
       startedAt: null,
@@ -140,6 +163,62 @@ export function useTripRecorder(currentMode: TripMode) {
       if (tickRef.current != null) clearInterval(tickRef.current);
     };
   }, []);
+
+  // Persistenza continua: se il browser sospende/chiude la pagina il viaggio
+  // non va perso e viene ripreso alla riapertura.
+  useEffect(() => {
+    stateRef.current = state;
+    if (state.recording && state.startedAt) {
+      saveActiveTrip({
+        startedAt: state.startedAt,
+        path: state.path,
+        distanceKm: state.distanceKm,
+        dominantMode: state.dominantMode,
+        modeCounts: modeCountsRef.current,
+        savedAt: Date.now(),
+      });
+    }
+  }, [state]);
+
+  // Ripresa automatica all'avvio (reload, tab sospesa, PWA riaperta).
+  useEffect(() => {
+    const stored = loadActiveTrip();
+    if (!stored) return;
+    modeCountsRef.current = stored.modeCounts ?? { foot: 0, bike: 0, car: 0 };
+    setState({
+      recording: true,
+      startedAt: stored.startedAt,
+      path: stored.path,
+      distanceKm: stored.distanceKm,
+      durationS: Math.round((Date.now() - stored.startedAt) / 1000),
+      dominantMode: stored.dominantMode,
+    });
+    armWatch();
+    armTicker();
+    wakeLockRef.current = wakeLockRef.current ?? createWakeLockKeeper();
+    void wakeLockRef.current.acquire();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Il watch GPS può essere ucciso dal browser in background: lo riarmiamo
+  // appena la pagina torna visibile o viene ripristinata dalla bfcache.
+  useEffect(() => {
+    const revive = () => {
+      if (!stateRef.current?.recording) return;
+      if (document.visibilityState !== "visible") return;
+      armWatch();
+      armTicker();
+      void wakeLockRef.current?.acquire();
+    };
+    document.addEventListener("visibilitychange", revive);
+    window.addEventListener("pageshow", revive);
+    window.addEventListener("focus", revive);
+    return () => {
+      document.removeEventListener("visibilitychange", revive);
+      window.removeEventListener("pageshow", revive);
+      window.removeEventListener("focus", revive);
+    };
+  }, [armWatch, armTicker]);
 
   return { ...state, start, stop, reset };
 }
