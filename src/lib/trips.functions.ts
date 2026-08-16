@@ -110,7 +110,13 @@ export const endTrip = createServerFn({ method: "POST" })
     const kmToday = (todayTrips ?? []).reduce((s, t: any) => s + (t.distance_km ?? 0), 0);
     const eligibleKm = Math.max(0, Math.min(distance, dailyCapKm - kmToday));
 
-    let points = anomaly ? 0 : Math.floor(eligibleKm * pointsPerKm[data.mode]);
+    // A piedi: 3 punti ogni 100 m completati (blocchi da 0,1 km).
+    // Bici/auto: punti per km secondo app_config.
+    let points = anomaly
+      ? 0
+      : data.mode === "foot"
+        ? Math.floor(eligibleKm * 10) * pointsPerKm.foot
+        : Math.floor(eligibleKm * pointsPerKm[data.mode]);
     const calories = Math.round((MET[data.mode] * 3.5 * 70 * (durationMs / 60000)) / 200);
     const co2Saved = data.mode === "car" ? 0 : distance * CO2_KG_PER_KM_CAR_AVOIDED;
 
