@@ -378,6 +378,8 @@ function EmployeesSection({ memberLabel }: { memberLabel: string }) {
     retry: false,
     refetchOnWindowFocus: true,
     staleTime: 15_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
   });
 
   async function refreshAll() {
