@@ -83,7 +83,16 @@ export const endTrip = createServerFn({ method: "POST" })
       if (s > maxSpeed) maxSpeed = s;
     }
 
-    const durationMs = new Date(data.ended_at).getTime() - new Date(data.started_at).getTime();
+    // Durata "attiva": somma degli intervalli tra fix GPS, escludendo le pause
+    // (app sospesa / viaggio ripreso) più lunghe di IDLE_GAP_MS.
+    const IDLE_GAP_MS = 120000;
+    let activeMs = 0;
+    for (let i = 1; i < cleaned.length; i++) {
+      const dt = cleaned[i].t - cleaned[i - 1].t;
+      if (dt > 0 && dt <= IDLE_GAP_MS) activeMs += dt;
+    }
+    const wallMs = new Date(data.ended_at).getTime() - new Date(data.started_at).getTime();
+    const durationMs = Math.max(1000, Math.min(activeMs > 0 ? activeMs : wallMs, wallMs));
     const durationH = Math.max(0.001, durationMs / 3600000);
     const avgSpeed = distance / durationH;
 
