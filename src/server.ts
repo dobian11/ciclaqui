@@ -37,18 +37,65 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
   });
 }
 
+/**
+ * Aggiunge gli header di sicurezza a ogni risposta HTTP.
+ *
+ * - X-Frame-Options: DENY + CSP frame-ancestors 'none' → protezione ClickJacking
+ * - Content-Security-Policy: limita sorgenti di script, oggetti, base-uri e frame
+ * - Referrer-Policy: no-referrer-when-downgrade
+ * - X-Content-Type-Options: nosniff
+ */
+function addSecurityHeaders(response: Response): Response {
+  // Non sovrascrivere header già presenti; non aggiungere CSP a risposte non HTML/XML
+  // (asset statici, JSON, XML sitemap, ecc.) per evitare conflitti con i loro content-type.
+  const contentType = response.headers.get("content-type") ?? "";
+  const isDocument = contentType.includes("text/html") || contentType.includes("application/xml") || contentType.includes("text/xml");
+
+  const headers = new Headers(response.headers);
+
+  // Protezione ClickJacking: sia header legacy che CSP moderna
+  headers.set("X-Frame-Options", "DENY");
+  headers.set("Referrer-Policy", "no-referrer-when-downgrade");
+  headers.set("X-Content-Type-Options", "nosniff");
+
+  if (isDocument) {
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.googleapis.com https://*.gstatic.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://*.openstreetmap.org https://*.tile.openstreetmap.org https://maps.mail.ru",
+      "font-src 'self' https://fonts.gstatic.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://connector-gateway.lovable.dev https://*.googleapis.com https://oauth2.googleapis.com https://routes.googleapis.com https://places.googleapis.com https://fcm.googleapis.com https://air-quality-api.open-meteo.com https://*.openstreetmap.org https://overpass.openstreetmap.fr https://overpass.kumi.systems https://overpass-api.de https://nominatim.openstreetmap.org https://router.project-osrm.org https://pay.google.com",
+      "frame-src 'self' https://*.google.com https://accounts.google.com https://pay.google.com",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+    ].join("; ");
+    headers.set("Content-Security-Policy", csp);
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      const normalized = await normalizeCatastrophicSsrResponse(response);
+      return addSecurityHeaders(normalized);
     } catch (error) {
       console.error(error);
-      return new Response(renderErrorPage(), {
+      const response = new Response(renderErrorPage(), {
         status: 500,
         headers: { "content-type": "text/html; charset=utf-8" },
       });
+      return addSecurityHeaders(response);
     }
   },
 };
