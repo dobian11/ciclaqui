@@ -134,7 +134,7 @@ export function CompanyReviewDialog({
               <Input
                 type="file"
                 multiple
-                accept="application/pdf,image/*"
+                accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp,application/pdf,image/*"
                 className="hidden"
                 disabled={uploading}
                 onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }}
