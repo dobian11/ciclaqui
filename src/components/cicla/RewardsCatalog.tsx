@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Gift, Tag, Heart, Banknote, Building2 } from "lucide-react";
+import { Gift, Tag, Heart, Banknote, Building2, Ticket } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { redeemReward } from "@/lib/rewards.functions";
 import { toast } from "sonner";
