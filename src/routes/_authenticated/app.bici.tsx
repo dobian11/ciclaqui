@@ -340,7 +340,7 @@ function QrModal({ bike, onClose }: { bike: BikeRow; onClose: () => void }) {
   }, [passportUrl]);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[1200] grid place-items-center overflow-y-auto bg-black/70 backdrop-blur-sm p-4">
       <div className="w-full max-w-sm rounded-3xl border border-border bg-card p-6 text-center">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg font-semibold">Passaporto QR</h2>

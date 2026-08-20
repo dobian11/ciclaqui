@@ -386,13 +386,14 @@ function PayoutModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-end bg-black/60 backdrop-blur-sm sm:place-items-center"
+      className="fixed inset-0 z-[1200] grid place-items-end bg-black/60 backdrop-blur-sm sm:place-items-center"
       onClick={onClose}
     >
       <form
         onSubmit={handleSubmit}
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-3xl border bg-card p-6 shadow-2xl sm:rounded-3xl"
+        className="max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-3xl border bg-card p-6 shadow-2xl sm:rounded-3xl"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1.5rem)" }}
       >
         <h3 className="font-display text-xl font-bold">Converti punti in denaro</h3>
         <p className="mt-1 text-sm text-muted-foreground">
