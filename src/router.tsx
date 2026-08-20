@@ -1,5 +1,7 @@
 import { QueryClient, QueryCache, MutationCache } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { createRouter } from "@tanstack/react-router";
+import { routeTree } from "./routeTree.gen";
 
 /** Messaggio leggibile per l'utente a partire da un errore di serverFn/rete. */
 function friendlyMessage(error: unknown): string {
@@ -12,8 +14,6 @@ function friendlyMessage(error: unknown): string {
     return "Connessione assente o lenta. Riprova tra poco.";
   return raw.slice(0, 160) || "Si è verificato un errore. Riprova.";
 }
-import { createRouter } from "@tanstack/react-router";
-import { routeTree } from "./routeTree.gen";
 
 export const getRouter = () => {
   const queryClient = new QueryClient({
