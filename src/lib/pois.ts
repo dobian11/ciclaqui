@@ -29,6 +29,67 @@ function clampBbox(b: [number, number, number, number]): [number, number, number
   return [cLat - halfLat, cLng - halfLng, cLat + halfLat, cLng + halfLng];
 }
 
+interface OverpassElement {
+  type: string;
+  id: number;
+  lat?: number;
+  lon?: number;
+  center?: { lat: number; lon: number };
+  tags?: Record<string, string>;
+}
+
+const BROWSER_ENDPOINTS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+];
+
+const BROWSER_QUERIES: Record<"water" | "parking" | "pump", (b: string) => string> = {
+  water: (b) =>
+    `nwr["amenity"="drinking_water"](${b});nwr["man_made"="water_tap"]["drinking_water"!~"no"](${b});nwr["fountain"="drinking"](${b});`,
+  parking: (b) => `nwr["amenity"="bicycle_parking"](${b});`,
+  pump: (b) =>
+    `nwr["amenity"="bicycle_repair_station"](${b});nwr["amenity"="compressed_air"](${b});nwr["shop"="bicycle"](${b});`,
+};
+
+/** Interroga Overpass direttamente dal browser (CORS abilitato sui mirror). */
+async function fetchPoisFromBrowser(
+  bbox: [number, number, number, number],
+  categories: PoiCategory[],
+  signal?: AbortSignal,
+): Promise<OverpassElement[]> {
+  const b = bbox.map((n) => n.toFixed(4)).join(",");
+  const parts = categories
+    .filter((c): c is "water" | "parking" | "pump" => c in BROWSER_QUERIES)
+    .map((c) => BROWSER_QUERIES[c](b))
+    .join("");
+  if (!parts) return [];
+  const body = "data=" + encodeURIComponent(`[out:json][timeout:12];(${parts});out center 250;`);
+
+  let lastErr: unknown = null;
+  for (const url of BROWSER_ENDPOINTS) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        body,
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        signal: signal ?? AbortSignal.timeout(10_000),
+      });
+      if (!res.ok) {
+        lastErr = new Error(`Overpass ${res.status}`);
+        continue;
+      }
+      const json = (await res.json()) as { elements?: OverpassElement[] };
+      return json.elements ?? [];
+    } catch (e) {
+      if (signal?.aborted) throw e;
+      lastErr = e;
+    }
+  }
+  console.warn("Overpass non raggiungibile dal browser:", lastErr);
+  return [];
+}
+
 const cache = new Map<string, { ts: number; data: Poi[] }>();
 const TTL_MS = 10 * 60_000;
 
@@ -46,10 +107,17 @@ export async function fetchPois(
 
   if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
 
-  const { elements } = await fetchPoisServer({
-    data: { bbox, categories },
-    signal,
-  });
+  let elements: OverpassElement[];
+  try {
+    const res = await fetchPoisServer({ data: { bbox, categories }, signal });
+    elements = res.elements as OverpassElement[];
+  } catch (err) {
+    if (signal?.aborted) throw err;
+    // Fallback lato client: se la serverFn non è disponibile (nessuna sessione,
+    // offline dal worker, errore 401/500) interroghiamo Overpass dal browser.
+    console.warn("POI server fallback:", err);
+    elements = await fetchPoisFromBrowser(bbox, categories, signal);
+  }
 
   const pois: Poi[] = [];
   for (const el of elements) {
