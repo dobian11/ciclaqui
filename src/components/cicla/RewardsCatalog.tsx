@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Gift, Tag, Heart, Banknote, Building2 } from "lucide-react";
+import { Gift, Tag, Heart, Banknote, Building2, Ticket } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { redeemReward } from "@/lib/rewards.functions";
 import { toast } from "sonner";
@@ -19,9 +19,19 @@ type Reward = {
   company_id: string | null;
 };
 
+type Redemption = {
+  id: string;
+  code: string;
+  points_spent: number;
+  status: string;
+  redeemed_at: string;
+  rewards_catalog: { title: string; category: string } | null;
+};
+
 export function RewardsCatalog() {
-  const [tab, setTab] = useState<"national" | "local" | "cash" | "donation" | "company">("company");
+  const [tab, setTab] = useState<"national" | "local" | "cash" | "donation" | "company" | "mine">("company");
   const [rewards, setRewards] = useState<Reward[]>([]);
+  const [mine, setMine] = useState<Redemption[]>([]);
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -34,6 +44,21 @@ export function RewardsCatalog() {
         setBalance(w?.points_balance ?? 0);
       } else {
         setBalance(0);
+      }
+      if (tab === "mine") {
+        if (!user) {
+          setMine([]);
+          setLoading(false);
+          return;
+        }
+        const { data } = await supabase
+          .from("reward_redemptions")
+          .select("id, code, points_spent, status, redeemed_at, rewards_catalog(title, category)")
+          .eq("user_id", user.id)
+          .order("redeemed_at", { ascending: false });
+        setMine((data ?? []) as unknown as Redemption[]);
+        setLoading(false);
+        return;
       }
       if (tab === "company") {
         let companyId: string | null = null;
@@ -88,17 +113,53 @@ export function RewardsCatalog() {
         <Tab active={tab === "local"} onClick={() => setTab("local")} icon={Gift}>Locali</Tab>
         <Tab active={tab === "cash"} onClick={() => setTab("cash")} icon={Banknote}>Cash</Tab>
         <Tab active={tab === "donation"} onClick={() => setTab("donation")} icon={Heart}>Donazioni</Tab>
+        <Tab active={tab === "mine"} onClick={() => setTab("mine")} icon={Ticket}>I miei</Tab>
       </div>
 
       {loading && <p className="text-xs text-muted-foreground">Caricamento…</p>}
-      {!loading && rewards.length === 0 && (
+
+      {!loading && tab === "mine" && (
+        mine.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+            Non hai ancora premi riscattati o vinti sul podio.
+          </div>
+        ) : (
+          mine.map((m) => (
+            <div key={m.id} className="rounded-2xl border border-border bg-card/50 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-display text-sm font-bold">{m.rewards_catalog?.title ?? "Premio"}</h3>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      {rewardCategoryMeta(m.rewards_catalog?.category ?? "voucher").emoji}{" "}
+                      {rewardCategoryMeta(m.rewards_catalog?.category ?? "voucher").label}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {m.points_spent === 0 ? "Vinto sul podio" : `${m.points_spent} punti`}
+                    </span>
+                  </div>
+                </div>
+                <span className="rounded-full bg-cicla/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-cicla">
+                  {m.status}
+                </span>
+              </div>
+              <div className="mt-3 rounded-xl bg-black/30 px-3 py-2 font-mono text-sm tracking-widest">{m.code}</div>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {new Date(m.redeemed_at).toLocaleDateString("it-IT")}
+              </p>
+            </div>
+          ))
+        )
+      )}
+
+      {!loading && tab !== "mine" && rewards.length === 0 && (
         <div className="rounded-2xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
           {tab === "company"
             ? "Nessun premio dal tuo ente. Se il tuo ente ne ha pubblicati e non li vedi, verifica di esserti registrato con il suo codice."
             : "Nessun premio disponibile in questa categoria. Stiamo aggiungendo nuovi partner ogni settimana."}
         </div>
       )}
-      {rewards.map((r) => (
+      {tab !== "mine" && rewards.map((r) => (
         <div key={r.id} className="rounded-2xl border border-border bg-card/50 p-4">
           <div className="flex items-start gap-3">
             {r.image_url ? <img src={r.image_url} alt="" className="size-14 rounded-xl object-cover" /> : <div className="grid size-14 place-items-center rounded-xl bg-cicla/15"><Gift size={20} className="text-cicla" /></div>}
