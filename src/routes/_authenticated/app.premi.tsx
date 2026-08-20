@@ -4,6 +4,7 @@ import { Gift, Tag, Heart, Banknote, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { redeemReward } from "@/lib/rewards.functions";
 import { toast } from "sonner";
+import { rewardCategoryMeta } from "@/lib/reward-categories";
 
 type Reward = {
   id: string;
@@ -104,7 +105,9 @@ function PremiPage() {
         {loading && <p className="text-xs text-muted-foreground">Caricamento…</p>}
         {!loading && rewards.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-            Nessun premio disponibile in questa categoria. Stiamo aggiungendo nuovi partner ogni settimana.
+            {tab === "company"
+              ? "Nessun premio dal tuo ente. Se il tuo ente ne ha pubblicati e non li vedi, verifica di esserti registrato con il suo codice."
+              : "Nessun premio disponibile in questa categoria. Stiamo aggiungendo nuovi partner ogni settimana."}
           </div>
         )}
         {rewards.map((r) => (
@@ -113,7 +116,12 @@ function PremiPage() {
               {r.image_url ? <img src={r.image_url} alt="" className="size-14 rounded-xl object-cover" /> : <div className="grid size-14 place-items-center rounded-xl bg-cicla/15"><Gift size={20} className="text-cicla" /></div>}
               <div className="flex-1">
                 <h3 className="font-display text-sm font-bold">{r.title}</h3>
-                {r.partner && <p className="text-[11px] text-muted-foreground">{r.partner}</p>}
+                <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                  <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {rewardCategoryMeta(r.category).emoji} {rewardCategoryMeta(r.category).label}
+                  </span>
+                  {r.partner && <span className="text-[11px] text-muted-foreground">{r.partner}</span>}
+                </div>
                 {r.description && <p className="mt-1 text-xs text-muted-foreground">{r.description}</p>}
               </div>
             </div>
