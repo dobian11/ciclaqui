@@ -44,12 +44,13 @@ export function CompanyReviewDialog({
         }
         const safeName = file.name.replace(/[^A-Za-z0-9._-]/g, "_");
         const path = `${companyId}/draft/${Date.now()}-${safeName}`;
+        const isPdf = /\.pdf$/i.test(file.name);
         const { error } = await supabase.storage.from("company-docs").upload(path, file, {
-          contentType: file.type || undefined,
+          contentType: file.type || (isPdf ? "application/pdf" : "application/octet-stream"),
           upsert: false,
         });
         if (error) {
-          toast.error(`Upload fallito: ${file.name}`);
+          toast.error(`Upload fallito: ${file.name}`, { description: error.message });
           continue;
         }
         next.push({ name: file.name, path, size: file.size, content_type: file.type });
@@ -133,7 +134,7 @@ export function CompanyReviewDialog({
               <Input
                 type="file"
                 multiple
-                accept="application/pdf,image/*"
+                accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp,application/pdf,image/*"
                 className="hidden"
                 disabled={uploading}
                 onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }}
