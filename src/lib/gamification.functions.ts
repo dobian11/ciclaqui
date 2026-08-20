@@ -55,6 +55,25 @@ export const listActiveChallenges = createServerFn({ method: "GET" })
       teamTotals.set(r.challenge_id, cur);
     }
 
+    const { data: prizeRows } = ids.length
+      ? await supabaseAdmin
+          .from("challenge_prizes")
+          .select("challenge_id, rank_position, points, label, reward_id, awarded_user_id")
+          .in("challenge_id", ids)
+          .order("rank_position")
+      : { data: [] as any[] };
+
+    const rewardIds = Array.from(
+      new Set((prizeRows ?? []).map((p: any) => p.reward_id).filter(Boolean)),
+    );
+    const { data: rewardRows } = rewardIds.length
+      ? await supabaseAdmin
+          .from("rewards_catalog")
+          .select("id, title, category")
+          .in("id", rewardIds as string[])
+      : { data: [] as any[] };
+    const rewardMap = new Map((rewardRows ?? []).map((r: any) => [r.id, r]));
+
     const map = new Map((progress ?? []).map((p: any) => [p.challenge_id, p]));
     return (challenges ?? []).map((c: any) => ({
       ...c,
@@ -62,6 +81,16 @@ export const listActiveChallenges = createServerFn({ method: "GET" })
       completed_at: map.get(c.id)?.completed_at ?? null,
       team_progress: teamTotals.get(c.id)?.total ?? 0,
       team_participants: teamTotals.get(c.id)?.participants ?? 0,
+      prizes: (prizeRows ?? [])
+        .filter((p: any) => p.challenge_id === c.id)
+        .map((p: any) => ({
+          position: p.rank_position,
+          points: p.points,
+          label: p.label,
+          reward_title: p.reward_id ? rewardMap.get(p.reward_id)?.title ?? null : null,
+          reward_category: p.reward_id ? rewardMap.get(p.reward_id)?.category ?? null : null,
+          won_by_me: p.awarded_user_id === userId,
+        })),
     }));
   });
 
