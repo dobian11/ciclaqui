@@ -194,6 +194,8 @@ function RootComponent() {
       </PerfProvider>
       <Toaster richColors position="top-center" />
       <CookieBanner />
+      <BootSplash />
     </QueryClientProvider>
   );
 }
+
