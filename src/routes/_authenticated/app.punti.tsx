@@ -285,6 +285,7 @@ function PuntiPage() {
           })}
         </div>
       </>
+    )}
     </div>
 
       {open && summary && (
