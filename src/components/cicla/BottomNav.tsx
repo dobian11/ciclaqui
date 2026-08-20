@@ -26,8 +26,8 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-[1100] px-4 pb-3"
-      style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 12px)" }}
+      className="fixed inset-x-0 bottom-0 z-[1100] px-4"
+      style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 10px)" }}
     >
       <div className="relative mx-auto grid h-[62px] w-full max-w-md grid-cols-5 items-center rounded-[26px] app-glass-strong px-1 shadow-2xl">
         {items.map((it) => (

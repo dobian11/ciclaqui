@@ -219,7 +219,7 @@
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
   padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6.5rem);
+  padding-bottom: calc(max(env(safe-area-inset-bottom, 0px), 10px) + 5.25rem);
 }
 
 /* Contenitore fluido: stretto su telefono, largo su tablet e desktop.

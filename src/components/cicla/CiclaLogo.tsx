@@ -49,7 +49,7 @@ export function CiclaLogo({
         </div>
         {showTagline ? (
           <div className="hidden truncate text-[10px] uppercase tracking-[0.18em] text-muted-foreground xs:block">
-            la tua sicurezza in bici
+            mobilità sostenibile, misurabile
           </div>
         ) : null}
       </div>
