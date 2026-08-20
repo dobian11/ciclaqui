@@ -56,7 +56,7 @@ export const redeemReward = createServerFn({ method: "POST" })
         type: "reward_redeemed",
         title: "Premio riscattato",
         body: `Hai riscattato "${reward?.title ?? "il tuo premio"}". Conserva il codice per usarlo.`,
-        url: "/app/premi",
+        url: "/app/punti?tab=rewards",
         code: redemption.code,
         ctaLabel: "Vedi i miei premi",
         details: reward?.points_cost
