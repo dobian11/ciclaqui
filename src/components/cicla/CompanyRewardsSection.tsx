@@ -14,20 +14,19 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Gift, Plus, Trash2, Loader2, Pencil } from "lucide-react";
 
-const CATEGORIES = [
-  { value: "voucher", label: "Voucher" },
-  { value: "cash", label: "Denaro" },
-  { value: "donation", label: "Donazione" },
-  { value: "experience", label: "Esperienza" },
-  { value: "merch", label: "Gadget" },
-] as const;
+import { REWARD_CATEGORIES } from "@/lib/reward-categories";
+
+const CATEGORIES = REWARD_CATEGORIES.map((c) => ({
+  value: c.value,
+  label: `${c.emoji} ${c.label}`,
+}));
 
 type Draft = {
   id?: string;
   title: string;
   description: string;
   partner: string;
-  category: (typeof CATEGORIES)[number]["value"];
+  category: (typeof REWARD_CATEGORIES)[number]["value"];
   points_cost: string;
   cash_value_eur: string;
   stock: string;

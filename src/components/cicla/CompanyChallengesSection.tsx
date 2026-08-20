@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Trophy, Plus, Trash2, Loader2, Pencil, Users, User } from "lucide-react";
+import { Trophy, Plus, Trash2, Loader2, Pencil, Users, User, Medal } from "lucide-react";
+import { ChallengePodiumEditor } from "@/components/cicla/ChallengePodiumEditor";
 
 const TYPES = [
   { value: "km_bike", label: "Km in bici", unit: "km" },
@@ -73,6 +74,7 @@ export function CompanyChallengesSection({ memberLabel }: { memberLabel: string 
 
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
+  const [podiumFor, setPodiumFor] = useState<string | null>(null);
 
   const { data: challenges, isLoading } = useQuery({
     queryKey: ["company-challenges"],
@@ -365,6 +367,15 @@ export function CompanyChallengesSection({ memberLabel }: { memberLabel: string 
                       size="sm"
                       variant="ghost"
                       className="size-7 p-0"
+                      aria-label="Premi del podio"
+                      onClick={() => setPodiumFor(podiumFor === c.id ? null : c.id)}
+                    >
+                      <Medal className="size-3.5" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="size-7 p-0"
                       aria-label="Modifica coppa"
                       onClick={() =>
                         setDraft({
@@ -414,6 +425,10 @@ export function CompanyChallengesSection({ memberLabel }: { memberLabel: string 
                   <div className="mt-3 text-[11px] text-muted-foreground">
                     {c.participants} partecipanti · {c.completed} completata/e
                   </div>
+                )}
+
+                {podiumFor === c.id && (
+                  <ChallengePodiumEditor challengeId={c.id} unit={unitOf(c.type)} />
                 )}
               </Card>
             );

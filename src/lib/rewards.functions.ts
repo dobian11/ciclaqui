@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { REWARD_CATEGORY_VALUES } from "@/lib/reward-categories";
 
 /**
  * Gestione del catalogo premi riservato ai manager di un ente (azienda/comune).
@@ -90,7 +91,7 @@ const rewardInput = z.object({
   title: z.string().trim().min(2).max(120),
   description: z.string().trim().max(500).optional().nullable(),
   partner: z.string().trim().max(120).optional().nullable(),
-  category: z.enum(["voucher", "cash", "donation", "experience", "merch"]),
+  category: z.enum(REWARD_CATEGORY_VALUES),
   points_cost: z.number().int().min(1).max(1_000_000),
   cash_value_eur: z.number().min(0).max(100_000).optional().nullable(),
   stock: z.number().int().min(0).max(1_000_000).optional().nullable(),
