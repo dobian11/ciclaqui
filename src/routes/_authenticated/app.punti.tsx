@@ -301,6 +301,30 @@ function PuntiPage() {
   );
 }
 
+function Tab({
+  active,
+  onClick,
+  icon: Icon,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ComponentType<{ size?: number }>;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 font-semibold transition-colors ${
+        active ? "bg-cicla text-cicla-foreground" : "bg-card text-muted-foreground"
+      }`}
+    >
+      <Icon size={12} /> {children}
+    </button>
+  );
+}
+
 function PayoutModal({
   max,
   minPoints,
