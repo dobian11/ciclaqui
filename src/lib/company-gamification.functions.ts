@@ -254,3 +254,160 @@ export const revokeCompanyBadge = createServerFn({ method: "POST" })
     if (error) throw new Error("Rimozione badge fallita");
     return { ok: true as const };
   });
+
+/** Podio: premi 1°/2°/3° classificato ---------------------------------------- */
+
+async function assertChallengeOfCompany(supabaseAdmin: any, challengeId: string, companyId: string) {
+  const { data } = await supabaseAdmin
+    .from("challenges")
+    .select("id, company_id, title, ends_at")
+    .eq("id", challengeId)
+    .maybeSingle();
+  if (!data || data.company_id !== companyId) throw new Error("Coppa non trovata per il tuo ente");
+  return data;
+}
+
+/** Premi del podio + classifica corrente di una coppa. */
+export const getChallengePodium = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ challengeId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const companyId = await assertManagerCompany(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertChallengeOfCompany(supabaseAdmin, data.challengeId, companyId);
+
+    const { data: prizes } = await supabaseAdmin
+      .from("challenge_prizes")
+      .select("id, rank_position, points, reward_id, label, awarded_user_id, awarded_at, awarded_code")
+      .eq("challenge_id", data.challengeId)
+      .order("rank_position");
+
+    const { data: rows } = await supabaseAdmin
+      .from("user_challenges")
+      .select("user_id, progress, completed_at")
+      .eq("challenge_id", data.challengeId)
+      .order("progress", { ascending: false })
+      .limit(10);
+
+    const ids = Array.from(
+      new Set([
+        ...(rows ?? []).map((r: any) => r.user_id),
+        ...(prizes ?? []).map((p: any) => p.awarded_user_id).filter(Boolean),
+      ]),
+    );
+    const { data: profs } = ids.length
+      ? await supabaseAdmin.from("profiles").select("id, full_name").in("id", ids)
+      : { data: [] as any[] };
+    const names = new Map((profs ?? []).map((p: any) => [p.id, p.full_name]));
+
+    const { data: rewards } = await supabaseAdmin
+      .from("rewards_catalog")
+      .select("id, title, category")
+      .eq("company_id", companyId)
+      .eq("active", true);
+
+    return {
+      prizes: (prizes ?? []).map((p: any) => ({
+        ...p,
+        awarded_name: p.awarded_user_id ? names.get(p.awarded_user_id) ?? "Utente" : null,
+      })),
+      standings: (rows ?? []).map((r: any, i: number) => ({
+        rank: i + 1,
+        user_id: r.user_id,
+        full_name: names.get(r.user_id) ?? "Utente",
+        progress: Number(r.progress ?? 0),
+        completed: !!r.completed_at,
+      })),
+      rewards: rewards ?? [],
+    };
+  });
+
+const prizeInput = z.object({
+  challengeId: z.string().uuid(),
+  prizes: z
+    .array(
+      z.object({
+        position: z.number().int().min(1).max(3),
+        points: z.number().int().min(0).max(1_000_000),
+        reward_id: z.string().uuid().nullable().optional(),
+        label: z.string().trim().max(160).nullable().optional(),
+      }),
+    )
+    .max(3),
+});
+
+/** Salva/aggiorna i premi del podio (posizioni già assegnate non si toccano). */
+export const saveChallengePodium = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => prizeInput.parse(d))
+  .handler(async ({ data, context }) => {
+    const companyId = await assertManagerCompany(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertChallengeOfCompany(supabaseAdmin, data.challengeId, companyId);
+
+    const { data: existing } = await supabaseAdmin
+      .from("challenge_prizes")
+      .select("id, rank_position, awarded_at")
+      .eq("challenge_id", data.challengeId);
+    const locked = new Set(
+      (existing ?? []).filter((p: any) => p.awarded_at).map((p: any) => p.rank_position),
+    );
+
+    // se un premio del catalogo è indicato, deve appartenere all'ente
+    const rewardIds = data.prizes.map((p) => p.reward_id).filter(Boolean) as string[];
+    if (rewardIds.length) {
+      const { data: ok } = await supabaseAdmin
+        .from("rewards_catalog")
+        .select("id")
+        .in("id", rewardIds)
+        .eq("company_id", companyId);
+      const allowed = new Set((ok ?? []).map((r: any) => r.id));
+      for (const id of rewardIds) {
+        if (!allowed.has(id)) throw new Error("Premio non valido per il tuo ente");
+      }
+    }
+
+    for (const p of data.prizes) {
+      if (locked.has(p.position)) continue;
+      const row = {
+        challenge_id: data.challengeId,
+        rank_position: p.position,
+        points: p.points,
+        reward_id: p.reward_id ?? null,
+        label: p.label ?? null,
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await supabaseAdmin
+        .from("challenge_prizes")
+        .upsert(row, { onConflict: "challenge_id,rank_position" });
+      if (error) throw new Error("Salvataggio premi podio fallito");
+    }
+
+    // posizioni rimosse dal manager
+    const keep = new Set(data.prizes.map((p) => p.position));
+    const toDelete = (existing ?? [])
+      .filter((p: any) => !p.awarded_at && !keep.has(p.rank_position))
+      .map((p: any) => p.id);
+    if (toDelete.length) {
+      await supabaseAdmin.from("challenge_prizes").delete().in("id", toDelete);
+    }
+
+    return { ok: true as const };
+  });
+
+/** Assegna i premi ai primi 3 in classifica (idempotente). */
+export const awardChallengePodium = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ challengeId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const companyId = await assertManagerCompany(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertChallengeOfCompany(supabaseAdmin, data.challengeId, companyId);
+
+    const { data: awarded, error } = await supabaseAdmin.rpc("award_challenge_podium", {
+      _challenge_id: data.challengeId,
+    } as any);
+    if (error) throw new Error(error.message || "Assegnazione podio fallita");
+
+    return { ok: true as const, awarded: (awarded ?? []) as any[] };
+  });
