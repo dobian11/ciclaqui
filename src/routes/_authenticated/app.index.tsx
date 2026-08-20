@@ -642,7 +642,7 @@ function MapHome() {
       {authed && (
         <div
           className="absolute inset-x-0 z-[1000]"
-          style={{ top: `calc(env(safe-area-inset-top, 0px) + ${trip.recording ? 82 : 50}px)` }}
+          style={{ top: `calc(env(safe-area-inset-top, 0px) + ${trip.recording || !inWindow ? 82 : 50}px)` }}
         >
           <ActiveCupsBanner
             challenges={activeChallenges as any}

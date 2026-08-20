@@ -14,6 +14,8 @@ export interface TripSummary {
   pointsEarned: number;
   anomaly: boolean;
   anomalyReason: string | null;
+  /** Coppe/maratone a cui questo viaggio ha contribuito */
+  challenges?: { id: string; title: string; icon?: string | null; delta: number; unit: string; goal: number }[];
 }
 
 interface Props {
@@ -159,6 +161,25 @@ export function TripSummarySheet({ summary, onClose }: Props) {
             <> · Punti GPS: <span className="text-foreground">{summary.path.length}</span></>
           )}
         </div>
+
+        {!summary.anomaly && (summary.challenges?.length ?? 0) > 0 && (
+          <div className="mx-5 mb-3 rounded-2xl border border-cicla/30 bg-cicla/10 p-3">
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold text-cicla">
+              <Trophy size={12} /> Progressi nelle coppe
+            </p>
+            <ul className="mt-1.5 space-y-1">
+              {summary.challenges!.map((c) => (
+                <li key={c.id} className="flex items-center gap-1.5 text-[11px] text-foreground">
+                  <span>{c.icon || "🏆"}</span>
+                  <span className="min-w-0 flex-1 truncate">{c.title}</span>
+                  <span className="shrink-0 font-semibold tabular-nums text-cicla">
+                    +{c.delta < 1 ? c.delta.toFixed(2) : c.delta.toFixed(1)} {c.unit}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {summary.anomaly && (
           <div className="mx-5 mb-3 flex items-start gap-2 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-3 text-amber-300">
