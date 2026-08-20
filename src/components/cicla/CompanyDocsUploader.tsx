@@ -117,7 +117,7 @@ export function CompanyDocsUploader({
                     <span>{busy === spec.key ? "Caricamento…" : "Seleziona file (PDF o immagine)"}</span>
                     <Input
                       type="file"
-                      accept="application/pdf,image/*"
+                      accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,.webp,application/pdf,image/*"
                       className="hidden"
                       disabled={busy !== null}
                       onChange={(e) => {
