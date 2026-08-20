@@ -98,7 +98,7 @@ export function CompanyShell({
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 py-3">
                 <div className="flex min-w-0 items-center gap-3">
                   <span className="md:hidden">
-                    <CiclaLogo size="sm" />
+                    <CiclaLogo size="sm" showTagline={false} />
                   </span>
                   <div className="min-w-0">
                     <h1 className="truncate text-lg font-bold tracking-tight md:text-2xl lg:text-3xl">
