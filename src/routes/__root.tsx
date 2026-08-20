@@ -16,6 +16,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { CookieBanner } from "@/components/cicla/CookieBanner";
 import { PerfProvider } from "@/components/cicla/PerfPanel";
 import { BootSplash } from "@/components/cicla/BootSplash";
+import { friendlyMessage } from "@/lib/error-message";
+import { toast } from "sonner";
 
 
 function NotFoundComponent() {
@@ -188,6 +190,17 @@ function RootComponent() {
       sub.subscription.unsubscribe();
     };
   }, [router, queryClient]);
+
+  // Errori asincroni non gestiti (es. serverFn chiamate fuori da React Query):
+  // mostra un toast invece di lasciare l'utente davanti a una schermata vuota.
+  useEffect(() => {
+    const onRejection = (event: PromiseRejectionEvent) => {
+      console.error(event.reason);
+      toast.error(friendlyMessage(event.reason));
+    };
+    window.addEventListener("unhandledrejection", onRejection);
+    return () => window.removeEventListener("unhandledrejection", onRejection);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
