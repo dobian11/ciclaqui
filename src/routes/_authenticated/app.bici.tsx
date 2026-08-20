@@ -249,9 +249,9 @@ function AddBikeModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
   return (
     <div className="fixed inset-0 z-[1200] grid place-items-end bg-black/60 backdrop-blur-sm sm:place-items-center">
       <div
-        className="max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-border bg-card p-6 sm:rounded-3xl"
-        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1.5rem)" }}
+        className="max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-border bg-card p-6 pb-[calc(env(safe-area-inset-bottom,0px)+7rem)] sm:rounded-3xl sm:pb-6"
       >
+
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg font-semibold">Nuova bici</h2>
           <button type="button" aria-label="Chiudi" onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-muted">
