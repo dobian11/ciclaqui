@@ -44,7 +44,7 @@ function eur(n: number) {
 }
 
 function PuntiPage() {
-  const navigate = useNavigate();
+  const navigate = Route.useNavigate();
   const { tab } = Route.useSearch();
   const [hasSession, setHasSession] = useState<boolean | null>(true);
   const [open, setOpen] = useState(false);
