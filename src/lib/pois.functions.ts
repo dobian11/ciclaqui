@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 const ENDPOINTS = [
@@ -23,7 +22,6 @@ const QUERIES = {
 } as const;
 
 export const fetchPoisServer = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => schema.parse(d))
   .handler(async ({ data }) => {
     const bboxStr = data.bbox.map((n) => n.toFixed(4)).join(",");
