@@ -247,14 +247,13 @@ function AddBikeModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
   });
 
   return (
-    <div className="fixed inset-0 z-[1200] grid place-items-end bg-black/60 backdrop-blur-sm sm:place-items-center">
+    <div className="fixed inset-0 z-[1200] grid place-items-end overflow-hidden bg-black/60 backdrop-blur-sm sm:place-items-center sm:p-4">
       <div
-        className="max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-border bg-card p-6 pb-[calc(env(safe-area-inset-bottom,0px)+7rem)] sm:rounded-3xl sm:pb-6"
+        className="flex max-h-[100dvh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card sm:max-h-[min(42rem,90dvh)] sm:rounded-3xl"
       >
-
-        <div className="flex items-center justify-between">
+        <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3 sm:px-6 sm:py-4">
           <h2 className="font-display text-lg font-semibold">Nuova bici</h2>
-          <button type="button" aria-label="Chiudi" onClick={onClose} className="rounded-full p-1.5 text-muted-foreground hover:bg-muted">
+          <button type="button" aria-label="Chiudi" onClick={onClose} className="grid min-h-11 min-w-11 place-items-center rounded-full text-muted-foreground hover:bg-muted">
             <X size={18} />
           </button>
         </div>
@@ -263,54 +262,58 @@ function AddBikeModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
             e.preventDefault();
             mut.mutate();
           }}
-          className="mt-4 space-y-3"
+          className="flex min-h-0 flex-1 flex-col"
         >
-          <Field label="Marca *">
-            <input
-              required
-              value={form.marca}
-              onChange={(e) => setForm({ ...form, marca: e.target.value })}
-              placeholder="Es. Bianchi"
-              className="input-base"
-            />
-          </Field>
-          <Field label="Modello">
-            <input
-              value={form.modello}
-              onChange={(e) => setForm({ ...form, modello: e.target.value })}
-              placeholder="Es. Aria"
-              className="input-base"
-            />
-          </Field>
-          <Field label="Colore">
-            <input
-              value={form.colore}
-              onChange={(e) => setForm({ ...form, colore: e.target.value })}
-              placeholder="Es. Verde celeste"
-              className="input-base"
-            />
-          </Field>
-          <Field label="Numero telaio *">
-            <input
-              required
-              value={form.frame_number}
-              onChange={(e) =>
-                setForm({ ...form, frame_number: e.target.value.toUpperCase() })
-              }
-              placeholder="WBA12345678"
-              className="input-base font-mono"
-            />
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              Stampigliato sul telaio (di solito sotto il movimento centrale).
-            </p>
-          </Field>
-          <button
-            type="submit"
-            disabled={mut.isPending}
-            className="mt-2 w-full rounded-full bg-cicla py-3 text-sm font-semibold text-cicla-foreground disabled:opacity-50"
-          >
-            {mut.isPending ? "Salvataggio…" : "Registra bici"}
-          </button>
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 overscroll-contain sm:px-6">
+            <Field label="Marca *">
+              <input
+                required
+                value={form.marca}
+                onChange={(e) => setForm({ ...form, marca: e.target.value })}
+                placeholder="Es. Bianchi"
+                className="input-base"
+              />
+            </Field>
+            <Field label="Modello">
+              <input
+                value={form.modello}
+                onChange={(e) => setForm({ ...form, modello: e.target.value })}
+                placeholder="Es. Aria"
+                className="input-base"
+              />
+            </Field>
+            <Field label="Colore">
+              <input
+                value={form.colore}
+                onChange={(e) => setForm({ ...form, colore: e.target.value })}
+                placeholder="Es. Verde celeste"
+                className="input-base"
+              />
+            </Field>
+            <Field label="Numero telaio *">
+              <input
+                required
+                value={form.frame_number}
+                onChange={(e) =>
+                  setForm({ ...form, frame_number: e.target.value.toUpperCase() })
+                }
+                placeholder="WBA12345678"
+                className="input-base font-mono"
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Stampigliato sul telaio (di solito sotto il movimento centrale).
+              </p>
+            </Field>
+          </div>
+          <div className="shrink-0 border-t border-border bg-card px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] sm:px-6 sm:pb-4">
+            <button
+              type="submit"
+              disabled={mut.isPending}
+              className="min-h-11 w-full rounded-full bg-cicla px-4 text-sm font-semibold text-cicla-foreground disabled:opacity-50"
+            >
+              {mut.isPending ? "Salvataggio…" : "Registra bici"}
+            </button>
+          </div>
         </form>
       </div>
     </div>
