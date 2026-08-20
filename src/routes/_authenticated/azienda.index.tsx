@@ -159,7 +159,7 @@ function CompanyDashboard() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background via-secondary/40 to-background pb-12">
         <div className="mx-auto max-w-md px-5 py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex min-w-0 items-center justify-between gap-2">
             <CiclaLogo size="md" />
             <div className="flex items-center gap-2">
               <NotificationsBell />
