@@ -1,26 +1,57 @@
 import { Bike } from "lucide-react";
 
-export function CiclaLogo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
+type Size = "sm" | "md" | "lg";
+
+/**
+ * Logo responsive: su schermi molto stretti l'icona si riduce e il payoff
+ * viene nascosto per evitare compressioni/overflow dell'header.
+ */
+export function CiclaLogo({
+  size = "md",
+  showTagline = true,
+  className = "",
+}: {
+  size?: Size;
+  showTagline?: boolean;
+  className?: string;
+}) {
   const sizes = {
-    sm: { icon: 18, text: "text-base", pad: "h-8 w-8" },
-    md: { icon: 22, text: "text-xl", pad: "h-10 w-10" },
-    lg: { icon: 28, text: "text-2xl", pad: "h-12 w-12" },
+    sm: {
+      icon: "size-4",
+      text: "text-sm sm:text-base",
+      pad: "h-7 w-7 sm:h-8 sm:w-8",
+    },
+    md: {
+      icon: "size-4 sm:size-5",
+      text: "text-base sm:text-xl",
+      pad: "h-8 w-8 sm:h-10 sm:w-10",
+    },
+    lg: {
+      icon: "size-5 sm:size-7",
+      text: "text-lg sm:text-2xl",
+      pad: "h-10 w-10 sm:h-12 sm:w-12",
+    },
   } as const;
   const s = sizes[size];
+
   return (
-    <div className="inline-flex items-center gap-2">
+    <div className={`inline-flex min-w-0 items-center gap-2 ${className}`}>
       <div
-        className={`${s.pad} grid place-items-center rounded-full bg-cicla text-cicla-foreground shadow-cicla`}
+        className={`${s.pad} shrink-0 grid place-items-center rounded-full bg-cicla text-cicla-foreground shadow-cicla`}
       >
-        <Bike size={s.icon} strokeWidth={2.4} />
+        <Bike className={s.icon} strokeWidth={2.4} />
       </div>
-      <div className="leading-tight">
-        <div className={`font-display font-bold tracking-tight ${s.text}`}>
+      <div className="min-w-0 leading-tight">
+        <div
+          className={`truncate font-display font-bold tracking-tight ${s.text}`}
+        >
           CICLA<span className="text-cicla">QUI</span>
         </div>
-        <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-          la tua sicurezza in bici
-        </div>
+        {showTagline ? (
+          <div className="hidden truncate text-[10px] uppercase tracking-[0.18em] text-muted-foreground xs:block">
+            la tua sicurezza in bici
+          </div>
+        ) : null}
       </div>
     </div>
   );
