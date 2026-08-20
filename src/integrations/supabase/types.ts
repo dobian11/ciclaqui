@@ -266,6 +266,63 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_prizes: {
+        Row: {
+          awarded_at: string | null
+          awarded_code: string | null
+          awarded_user_id: string | null
+          challenge_id: string
+          created_at: string
+          id: string
+          label: string | null
+          points: number
+          rank_position: number
+          reward_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          awarded_at?: string | null
+          awarded_code?: string | null
+          awarded_user_id?: string | null
+          challenge_id: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          points?: number
+          rank_position: number
+          reward_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          awarded_at?: string | null
+          awarded_code?: string | null
+          awarded_user_id?: string | null
+          challenge_id?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          points?: number
+          rank_position?: number
+          reward_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_prizes_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenge_prizes_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       challenges: {
         Row: {
           company_id: string | null
@@ -1674,6 +1731,15 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      award_challenge_podium: {
+        Args: { _challenge_id: string }
+        Returns: {
+          out_code: string
+          out_points: number
+          out_position: number
+          out_user_id: string
+        }[]
       }
       bump_streak: {
         Args: { _mode: string; _user_id: string }

@@ -10,6 +10,7 @@ import {
   getCompanyLeaderboard,
 } from "@/lib/gamification.functions";
 import { Flame, Trophy, Award, Users, Loader2 } from "lucide-react";
+import { rewardCategoryMeta } from "@/lib/reward-categories";
 
 export const Route = createFileRoute("/_authenticated/app/sfide")({
   component: SfidePage,
@@ -129,6 +130,34 @@ function SfidePage() {
                         )}
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">{c.description}</p>
+                      {(c.prizes ?? []).length > 0 && (
+                        <ul className="mt-2 space-y-1">
+                          {(c.prizes ?? []).map((p: any) => (
+                            <li
+                              key={p.position}
+                              className="flex items-start gap-1.5 rounded-xl bg-white/5 px-2 py-1 text-[11px]"
+                            >
+                              <span>{p.position === 1 ? "\u{1F947}" : p.position === 2 ? "\u{1F948}" : "\u{1F949}"}</span>
+                              <span className="min-w-0 flex-1">
+                                <strong className="text-foreground">
+                                  {p.reward_title ?? p.label ?? "Premio"}
+                                </strong>
+                                {p.reward_title && p.reward_category && (
+                                  <span className="text-muted-foreground">
+                                    {" "}· {rewardCategoryMeta(p.reward_category).label}
+                                  </span>
+                                )}
+                                {p.points > 0 && (
+                                  <span className="text-cicla"> · +{p.points} pt</span>
+                                )}
+                                {p.won_by_me && (
+                                  <span className="font-bold text-cicla"> · vinto da te 🎉</span>
+                                )}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                   </div>
                   <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/5">
