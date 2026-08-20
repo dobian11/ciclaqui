@@ -18,6 +18,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { getAirQuality } from "@/lib/air-quality.functions";
 import { endTrip } from "@/lib/trips.functions";
 import { getMyTrackingWindow } from "@/lib/companies.functions";
+import { listActiveChallenges } from "@/lib/gamification.functions";
+import { ActiveCupsBanner } from "@/components/cicla/ActiveCupsBanner";
+import { challengeMatchesMode, estimateDelta, challengeUnit } from "@/lib/challenge-match";
 import { computeRoute } from "@/lib/routes.functions";
 import { decodePolyline } from "@/lib/polyline";
 import { MapSearchBar } from "@/components/cicla/MapSearchBar";
@@ -313,6 +316,16 @@ function MapHome() {
   });
   const inWindow = isWithinWindow(winQuery.data as any);
 
+  // Coppe/maratone attive: servono a dire all'utente per cosa sta gareggiando
+  const fetchChallenges = useServerFn(listActiveChallenges);
+  const challengesQuery = useQuery({
+    queryKey: ["challenges"],
+    queryFn: () => fetchChallenges({} as any),
+    enabled: authed,
+    staleTime: 60_000,
+  });
+  const activeChallenges = (challengesQuery.data as any[] | undefined) ?? undefined;
+
   // GPS telemetry — fires on error transitions
   const lastGpsErrorRef = useRef<string | null>(null);
   useEffect(() => {
@@ -398,10 +411,22 @@ function MapHome() {
         pointsEarned: res.points_earned ?? 0,
         anomaly: !!res.anomaly,
         anomalyReason: res.anomaly_reason ?? null,
+        challenges: (activeChallenges ?? [])
+          .filter((c: any) => challengeMatchesMode(c.type, snapshot.mode as any))
+          .map((c: any) => ({
+            id: c.id,
+            title: c.title,
+            icon: c.icon,
+            delta: estimateDelta(c.type, res.distance_km ?? snapshot.distanceKm),
+            unit: challengeUnit(c.type),
+            goal: Number(c.goal) || 0,
+          }))
+          .filter((c: any) => c.delta > 0),
       });
       trip.reset();
       qc.invalidateQueries({ queryKey: ["wallet"] });
       qc.invalidateQueries({ queryKey: ["my-trips"] });
+      qc.invalidateQueries({ queryKey: ["challenges"] });
     },
     onError: (e: any) => {
       toast.error(e?.message ?? "Errore salvataggio viaggio");
@@ -610,6 +635,21 @@ function MapHome() {
             <span className="text-[10px] opacity-80">·</span>
             <span className="text-[10px] font-bold uppercase tracking-wider">Auto</span>
           </div>
+        </div>
+      )}
+
+      {/* Coppe a cui il viaggio in corso contribuisce */}
+      {authed && (
+        <div
+          className="absolute inset-x-0 z-[1000]"
+          style={{ top: `calc(env(safe-area-inset-top, 0px) + ${trip.recording ? 82 : 50}px)` }}
+        >
+          <ActiveCupsBanner
+            challenges={activeChallenges as any}
+            mode={liveMode}
+            recording={trip.recording}
+            distanceKm={trip.distanceKm}
+          />
         </div>
       )}
 
