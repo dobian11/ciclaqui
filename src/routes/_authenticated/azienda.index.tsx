@@ -159,9 +159,9 @@ function CompanyDashboard() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background via-secondary/40 to-background pb-12">
         <div className="mx-auto max-w-md px-5 py-6">
-          <div className="flex items-center justify-between">
+          <div className="flex min-w-0 items-center justify-between gap-2">
             <CiclaLogo size="md" />
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <NotificationsBell />
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
                 <LogOut className="size-4" />
@@ -417,7 +417,7 @@ function EmployeesSection({ memberLabel }: { memberLabel: string }) {
 
   return (
     <Card className="mt-4 p-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           {memberLabel} {data ? `(${data.length})` : ""}
         </div>
