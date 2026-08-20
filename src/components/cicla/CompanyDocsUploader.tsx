@@ -36,12 +36,13 @@ export function CompanyDocsUploader({
     try {
       const safe = file.name.replace(/[^A-Za-z0-9._-]/g, "_");
       const path = `${companyId}/initial/${specKey}-${Date.now()}-${safe}`;
+      const isPdf = /\.pdf$/i.test(file.name);
       const { error } = await supabase.storage.from("company-docs").upload(path, file, {
-        contentType: file.type || undefined,
+        contentType: file.type || (isPdf ? "application/pdf" : "application/octet-stream"),
         upsert: false,
       });
       if (error) {
-        toast.error(`Upload fallito: ${file.name}`);
+        toast.error(`Upload fallito: ${file.name}`, { description: error.message });
         return;
       }
       const next = docs.filter((d) => d.doc_key !== specKey);
