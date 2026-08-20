@@ -284,7 +284,8 @@ function PuntiPage() {
             );
           })}
         </div>
-      </div>
+      </>
+    </div>
 
       {open && summary && (
         <PayoutModal
