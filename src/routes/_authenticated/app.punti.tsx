@@ -1,7 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { listMyTrips } from "@/lib/trips.functions";
 import { listMyPayouts, requestPayout, getPayoutSummary } from "@/lib/payments.functions";
@@ -17,13 +18,18 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  Gift,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { validateIban, formatIban } from "@/lib/iban";
+import { RewardsCatalog } from "@/components/cicla/RewardsCatalog";
 
 export const Route = createFileRoute("/_authenticated/app/punti")({
   component: PuntiPage,
+  validateSearch: z.object({
+    tab: z.enum(["points", "rewards"]).optional().catch("points"),
+  }),
 });
 
 const STATUS_META: Record<string, { label: string; className: string; Icon: typeof Clock }> = {
