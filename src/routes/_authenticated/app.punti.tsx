@@ -104,7 +104,18 @@ function PuntiPage() {
           tua azienda o dal tuo Comune. Bici 10 pt/km · piedi 3 pt/km · auto 0.
         </p>
 
-        <div className="mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-cicla to-emerald-600 p-6 text-white shadow-cicla">
+        <div className="mt-4 flex gap-1.5 overflow-x-auto text-[11px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <Tab active={tab === "points"} onClick={() => navigate({ search: { tab: "points" } })} icon={Coins}>Punti</Tab>
+          <Tab active={tab === "rewards"} onClick={() => navigate({ search: { tab: "rewards" } })} icon={Gift}>Premi</Tab>
+        </div>
+
+        {tab === "rewards" ? (
+          <div className="mt-4">
+            <RewardsCatalog />
+          </div>
+        ) : (
+          <>
+            <div className="mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-cicla to-emerald-600 p-6 text-white shadow-cicla">
           <div className="flex items-center gap-2 text-xs uppercase tracking-wider opacity-80">
             <Coins size={14} /> Saldo punti
           </div>
