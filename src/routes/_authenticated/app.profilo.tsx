@@ -360,7 +360,8 @@ function ProfiloPage() {
         <Card className="mt-4 p-3">
           <div className="grid grid-cols-2 gap-2">
             <Link
-              to="/app/premi"
+              to="/app/punti"
+              search={{ tab: "rewards" }}
               preload="intent"
               className="flex items-center gap-2 rounded-xl bg-cicla/10 px-3 py-2 text-xs font-semibold text-cicla"
             >
