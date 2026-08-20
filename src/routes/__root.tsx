@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { CookieBanner } from "@/components/cicla/CookieBanner";
 import { PerfProvider } from "@/components/cicla/PerfPanel";
+import { BootSplash } from "@/components/cicla/BootSplash";
+
 
 function NotFoundComponent() {
   return (
