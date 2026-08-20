@@ -19,9 +19,19 @@ type Reward = {
   company_id: string | null;
 };
 
+type Redemption = {
+  id: string;
+  code: string;
+  points_spent: number;
+  status: string;
+  redeemed_at: string;
+  rewards_catalog: { title: string; category: string } | null;
+};
+
 export function RewardsCatalog() {
-  const [tab, setTab] = useState<"national" | "local" | "cash" | "donation" | "company">("company");
+  const [tab, setTab] = useState<"national" | "local" | "cash" | "donation" | "company" | "mine">("company");
   const [rewards, setRewards] = useState<Reward[]>([]);
+  const [mine, setMine] = useState<Redemption[]>([]);
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -34,6 +44,21 @@ export function RewardsCatalog() {
         setBalance(w?.points_balance ?? 0);
       } else {
         setBalance(0);
+      }
+      if (tab === "mine") {
+        if (!user) {
+          setMine([]);
+          setLoading(false);
+          return;
+        }
+        const { data } = await supabase
+          .from("reward_redemptions")
+          .select("id, code, points_spent, status, redeemed_at, rewards_catalog(title, category)")
+          .eq("user_id", user.id)
+          .order("redeemed_at", { ascending: false });
+        setMine((data ?? []) as unknown as Redemption[]);
+        setLoading(false);
+        return;
       }
       if (tab === "company") {
         let companyId: string | null = null;
