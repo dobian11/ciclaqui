@@ -96,7 +96,7 @@ function WelcomePage() {
         <section className="mt-8 grid grid-cols-2 gap-3">
           <FeatureCard icon={<MapPin size={16} />} title="Mappa GPS" desc="Rileva auto il mezzo: bici, piedi, auto." />
           <FeatureCard icon={<Gift size={16} />} title="Punti = premi" desc="Voucher, premi e incentivi dedicati." />
-          <FeatureCard icon={<ShieldCheck size={16} />} title="Passaporto" desc="Antifurto via numero telaio." />
+          <FeatureCard icon={<ShieldCheck size={16} />} title="Passaporto" desc="Registra la tua bici e rendila riconoscibile in caso di furto." />
           <FeatureCard icon={<Building2 size={16} />} title="Aziende & Comuni" desc="Codice, dashboard, premia il team." />
         </section>
 

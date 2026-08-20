@@ -63,7 +63,9 @@ function BiciPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-display text-2xl font-bold tracking-tight">Passaporto bici</h1>
-            <p className="mt-1 text-sm text-muted-foreground">QR, telaio, antifurto.</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Identità digitale e segnalazione furto della tua bici.
+            </p>
           </div>
           <button
             type="button"
