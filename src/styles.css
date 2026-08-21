@@ -205,7 +205,11 @@
       width: 100%;
     }
 
-    body > div {
+    /* Le pagine "documento" (landing, auth, legal, admin, ente) scrollano nel
+       proprio contenitore radice. La shell dell'app ciclista (data-app-shell)
+       e gli overlay fixed (modali, toast, splash) restano esclusi: sono già
+       ancorati al viewport e gestiscono lo scroll internamente. */
+    body > div:not([data-app-shell]):not(.fixed) {
       height: 100dvh;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
