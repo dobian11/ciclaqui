@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,27 +22,44 @@ export type ConfirmOptions = {
   input?: { label: string; placeholder?: string; required?: boolean };
 };
 
-type Pending = {
-  opts: ConfirmOptions;
-  resolve: (value: { ok: boolean; value?: string }) => void;
-};
+export type ConfirmResult = { ok: boolean; value?: string };
+
+type Pending = { opts: ConfirmOptions; resolve: (r: ConfirmResult) => void };
+
+let listener: ((p: Pending | null) => void) | null = null;
 
 /**
- * Conferma in-app con lo stile dell'app (niente window.confirm/prompt nativi).
- * Uso: const { confirm, dialog } = useConfirm(); ... if (!(await confirm({...})).ok) return;
+ * Conferma in-app con lo stile dell'app (sostituisce window.confirm/prompt nativi).
+ * Richiede <ConfirmHost /> montato una volta nel root.
  */
+export function confirmDialog(opts: ConfirmOptions): Promise<ConfirmResult> {
+  return new Promise((resolve) => {
+    if (!listener) {
+      resolve({ ok: false });
+      return;
+    }
+    listener({ opts, resolve });
+  });
+}
+
+/** Piccolo helper per i componenti: const confirm = useConfirm(). */
 export function useConfirm() {
+  return confirmDialog;
+}
+
+export function ConfirmHost() {
   const [pending, setPending] = useState<Pending | null>(null);
   const [text, setText] = useState("");
 
-  const confirm = useCallback(
-    (opts: ConfirmOptions) =>
-      new Promise<{ ok: boolean; value?: string }>((resolve) => {
-        setText("");
-        setPending({ opts, resolve });
-      }),
-    [],
-  );
+  useEffect(() => {
+    listener = (p) => {
+      setText("");
+      setPending(p);
+    };
+    return () => {
+      listener = null;
+    };
+  }, []);
 
   function close(ok: boolean) {
     pending?.resolve({ ok, value: ok ? text.trim() : undefined });
@@ -52,7 +69,7 @@ export function useConfirm() {
   const opts = pending?.opts;
   const blocked = Boolean(opts?.input?.required && text.trim().length === 0);
 
-  const dialog = (
+  return (
     <AlertDialog
       open={Boolean(pending)}
       onOpenChange={(open) => {
@@ -106,6 +123,4 @@ export function useConfirm() {
       </AlertDialogContent>
     </AlertDialog>
   );
-
-  return { confirm, dialog };
 }
