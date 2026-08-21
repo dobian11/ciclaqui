@@ -44,6 +44,7 @@ function AppLayout() {
 
   return (
     <div
+      data-app-shell
       className="fixed inset-x-0 top-0 flex w-full max-w-full flex-col overflow-x-hidden"
       style={{ height: "var(--app-shell-h, 100dvh)" }}
     >
