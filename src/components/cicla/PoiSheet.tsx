@@ -306,6 +306,7 @@ export function NavigationBanner({
         </div>
 
       </div>
+      {dialog}
     </div>
   );
 }
