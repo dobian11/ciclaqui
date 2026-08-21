@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Trophy, Plus, Trash2, Loader2, Pencil, Users, User, Medal } from "lucide-react";
 import { ChallengePodiumEditor } from "@/components/cicla/ChallengePodiumEditor";
-import { useConfirm } from "@/components/cicla/ConfirmDialog";
+import { confirmDialog as confirm } from "@/components/cicla/ConfirmDialog";
 
 const TYPES = [
   { value: "km_bike", label: "Km in bici", unit: "km" },

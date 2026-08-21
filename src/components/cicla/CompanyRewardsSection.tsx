@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { Gift, Plus, Trash2, Loader2, Pencil } from "lucide-react";
 
 import { REWARD_CATEGORIES } from "@/lib/reward-categories";
-import { useConfirm } from "@/components/cicla/ConfirmDialog";
+import { confirmDialog as confirm } from "@/components/cicla/ConfirmDialog";
 
 const CATEGORIES = REWARD_CATEGORIES.map((c) => ({
   value: c.value,

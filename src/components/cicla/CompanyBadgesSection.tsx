@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Award, Loader2, Crown, Trash2, Medal } from "lucide-react";
-import { useConfirm } from "@/components/cicla/ConfirmDialog";
+import { confirmDialog as confirm } from "@/components/cicla/ConfirmDialog";
 
 function currentMonth() {
   return new Date().toISOString().slice(0, 7);

@@ -13,7 +13,7 @@ import {
   markRecovered,
 } from "@/lib/bikes.functions";
 import { getGoogleWalletLink, getAppleWalletPass } from "@/lib/wallet.functions";
-import { useConfirm } from "@/components/cicla/ConfirmDialog";
+import { confirmDialog as confirm } from "@/components/cicla/ConfirmDialog";
 
 export const Route = createFileRoute("/_authenticated/app/bici")({
   component: BiciPage,

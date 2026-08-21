@@ -1,6 +1,6 @@
 import { Navigation, X, ExternalLink, Loader2, MapPin, Locate, RotateCw, Flag } from "lucide-react";
 import { POI_META, type Poi } from "@/lib/pois";
-import { useConfirm } from "@/components/cicla/ConfirmDialog";
+import { confirmDialog as confirm } from "@/components/cicla/ConfirmDialog";
 
 function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const R = 6371000;
@@ -176,7 +176,6 @@ export function NavigationBanner({
   onArrived?: () => void;
   onRecalc?: () => void;
 }) {
-  const { confirm, dialog } = useConfirm();
   const km = distanceMeters / 1000;
   const distLabel = km < 1 ? `${Math.round(distanceMeters)} m` : `${km.toFixed(km < 10 ? 2 : 1)} km`;
   const mins = Math.max(1, Math.round(durationSec / 60));
@@ -306,7 +305,6 @@ export function NavigationBanner({
         </div>
 
       </div>
-      {dialog}
     </div>
   );
 }

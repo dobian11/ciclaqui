@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Medal } from "lucide-react";
 import { rewardCategoryMeta } from "@/lib/reward-categories";
-import { useConfirm } from "@/components/cicla/ConfirmDialog";
+import { confirmDialog as confirm } from "@/components/cicla/ConfirmDialog";
 
 type PrizeDraft = {
   position: number;
