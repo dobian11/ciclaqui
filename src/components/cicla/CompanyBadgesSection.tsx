@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Award, Loader2, Crown, Trash2, Medal } from "lucide-react";
+import { useConfirm } from "@/components/cicla/ConfirmDialog";
 
 function currentMonth() {
   return new Date().toISOString().slice(0, 7);
@@ -65,7 +66,13 @@ export function CompanyBadgesSection({ memberLabel }: { memberLabel: string }) {
   }
 
   async function revoke(id: string) {
-    if (!window.confirm("Rimuovere questo badge?")) return;
+    const c = await confirm({
+      title: "Rimuovere questo badge?",
+      description: "Il badge sparirà dal profilo della persona.",
+      confirmLabel: "Rimuovi",
+      destructive: true,
+    });
+    if (!c.ok) return;
     try {
       await revokeFn({ data: { id } });
       toast.success("Badge rimosso");

@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, Medal } from "lucide-react";
 import { rewardCategoryMeta } from "@/lib/reward-categories";
+import { useConfirm } from "@/components/cicla/ConfirmDialog";
 
 type PrizeDraft = {
   position: number;
@@ -117,8 +118,12 @@ export function ChallengePodiumEditor({
   }
 
   async function onAward() {
-    if (!window.confirm("Assegnare i premi ai primi classificati? L'operazione non è reversibile."))
-      return;
+    const c = await confirm({
+      title: "Assegnare i premi del podio?",
+      description: "I premi verranno accreditati ai primi classificati. L'operazione non è reversibile.",
+      confirmLabel: "Assegna",
+    });
+    if (!c.ok) return;
     setAwarding(true);
     try {
       const res = await award({ data: { challengeId } });

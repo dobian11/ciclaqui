@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Gift, Plus, Trash2, Loader2, Pencil } from "lucide-react";
 
 import { REWARD_CATEGORIES } from "@/lib/reward-categories";
+import { useConfirm } from "@/components/cicla/ConfirmDialog";
 
 const CATEGORIES = REWARD_CATEGORIES.map((c) => ({
   value: c.value,
@@ -93,7 +94,13 @@ export function CompanyRewardsSection() {
   }
 
   async function del(id: string) {
-    if (!window.confirm("Eliminare questo premio?")) return;
+    const c = await confirm({
+      title: "Eliminare questo premio?",
+      description: "Il premio non sarà più visibile nel catalogo del tuo ente.",
+      confirmLabel: "Elimina",
+      destructive: true,
+    });
+    if (!c.ok) return;
     try {
       await remove({ data: { id } });
       toast.success("Premio eliminato");

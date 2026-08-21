@@ -13,6 +13,7 @@ import {
   markRecovered,
 } from "@/lib/bikes.functions";
 import { getGoogleWalletLink, getAppleWalletPass } from "@/lib/wallet.functions";
+import { useConfirm } from "@/components/cicla/ConfirmDialog";
 
 export const Route = createFileRoute("/_authenticated/app/bici")({
   component: BiciPage,
@@ -215,10 +216,15 @@ function BikeCard({
         ) : (
           <button
             type="button"
-            onClick={() => {
-              if (confirm("Segnalare questa bici come rubata? Sarà visibile pubblicamente.")) {
-                reportMut.mutate();
-              }
+            onClick={async () => {
+              const c = await confirm({
+                title: "Segnalare questa bici come rubata?",
+                description:
+                  "La segnalazione sarà visibile pubblicamente per aiutare la community a riconoscerla.",
+                confirmLabel: "Segnala furto",
+                destructive: true,
+              });
+              if (c.ok) reportMut.mutate();
             }}
             disabled={reportMut.isPending}
             className="inline-flex items-center gap-1.5 rounded-full bg-destructive/15 px-3 py-1.5 text-xs font-semibold text-destructive disabled:opacity-50"
