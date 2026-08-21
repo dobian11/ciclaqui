@@ -1,5 +1,6 @@
 import { Navigation, X, ExternalLink, Loader2, MapPin, Locate, RotateCw, Flag } from "lucide-react";
 import { POI_META, type Poi } from "@/lib/pois";
+import { confirmDialog as confirm } from "@/components/cicla/ConfirmDialog";
 
 function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const R = 6371000;
@@ -273,10 +274,16 @@ export function NavigationBanner({
           {onCancel && (
             <button
               type="button"
-              onClick={() => {
-                if (confirm("Annullare il tragitto in corso? I km percorsi non saranno salvati.")) {
-                  onCancel();
-                }
+              onClick={async () => {
+                const res = await confirm({
+                  title: "Annullare il tragitto?",
+                  description:
+                    "Il viaggio in corso verrà interrotto e i km percorsi non saranno salvati.",
+                  confirmLabel: "Annulla tragitto",
+                  cancelLabel: "Continua",
+                  destructive: true,
+                });
+                if (res.ok) onCancel();
               }}
               className="inline-flex h-7 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-full bg-red-500/90 px-2.5 text-[10px] font-bold uppercase leading-none tracking-wider text-white active:scale-95"
               aria-label="Annulla tragitto"

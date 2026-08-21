@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Trophy, Plus, Trash2, Loader2, Pencil, Users, User, Medal } from "lucide-react";
 import { ChallengePodiumEditor } from "@/components/cicla/ChallengePodiumEditor";
+import { confirmDialog as confirm } from "@/components/cicla/ConfirmDialog";
 
 const TYPES = [
   { value: "km_bike", label: "Km in bici", unit: "km" },
@@ -118,7 +119,13 @@ export function CompanyChallengesSection({ memberLabel }: { memberLabel: string 
   }
 
   async function del(id: string) {
-    if (!window.confirm("Eliminare questa coppa/maratona?")) return;
+    const c = await confirm({
+      title: "Eliminare questa coppa?",
+      description: "La competizione e i relativi progressi verranno rimossi.",
+      confirmLabel: "Elimina",
+      destructive: true,
+    });
+    if (!c.ok) return;
     try {
       await remove({ data: { id } });
       toast.success("Coppa eliminata");

@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
+import { ConfirmHost } from "@/components/cicla/ConfirmDialog";
 import { CookieBanner } from "@/components/cicla/CookieBanner";
 import { PerfProvider } from "@/components/cicla/PerfPanel";
 import { BootSplash } from "@/components/cicla/BootSplash";
@@ -208,6 +209,7 @@ function RootComponent() {
         <Outlet />
       </PerfProvider>
       <Toaster richColors position="top-center" />
+      <ConfirmHost />
       <CookieBanner />
       <BootSplash />
     </QueryClientProvider>

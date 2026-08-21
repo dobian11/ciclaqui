@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { confirmDialog as confirm } from "@/components/cicla/ConfirmDialog";
 import {
   Loader2,
   Users,
@@ -244,10 +245,18 @@ function AdminDashboard() {
 
   async function handleCompanyDecide(id: string, decision: "approved" | "rejected") {
     try {
-      const reason =
-        decision === "rejected"
-          ? (window.prompt("Motivo del rifiuto (verrà mostrato all'ente):") ?? undefined)
-          : undefined;
+      let reason: string | undefined;
+      if (decision === "rejected") {
+        const c = await confirm({
+          title: "Rifiutare questo ente?",
+          description: "Il motivo verrà mostrato all'ente nella sua area personale.",
+          confirmLabel: "Rifiuta",
+          destructive: true,
+          input: { label: "Motivo del rifiuto", placeholder: "Documenti non leggibili…", required: true },
+        });
+        if (!c.ok) return;
+        reason = c.value;
+      }
       const res = await decideCompanyFn({ data: { company_id: id, decision, reason } });
       toast.success(decision === "approved" ? "Ente approvato" : "Ente rifiutato");
 
