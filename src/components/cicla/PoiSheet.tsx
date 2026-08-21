@@ -1,5 +1,6 @@
 import { Navigation, X, ExternalLink, Loader2, MapPin, Locate, RotateCw, Flag } from "lucide-react";
 import { POI_META, type Poi } from "@/lib/pois";
+import { useConfirm } from "@/components/cicla/ConfirmDialog";
 
 function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const R = 6371000;
