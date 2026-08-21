@@ -207,8 +207,12 @@
 
     body > div {
       height: 100dvh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
     }
   }
+
 
 
   h1, h2, h3, h4, h5, h6 {
