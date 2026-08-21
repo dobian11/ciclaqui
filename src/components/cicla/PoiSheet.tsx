@@ -176,6 +176,7 @@ export function NavigationBanner({
   onArrived?: () => void;
   onRecalc?: () => void;
 }) {
+  const { confirm, dialog } = useConfirm();
   const km = distanceMeters / 1000;
   const distLabel = km < 1 ? `${Math.round(distanceMeters)} m` : `${km.toFixed(km < 10 ? 2 : 1)} km`;
   const mins = Math.max(1, Math.round(durationSec / 60));
