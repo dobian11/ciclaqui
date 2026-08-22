@@ -257,7 +257,11 @@ function AddBikeModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
   return (
     <div className="fixed inset-0 z-[1200] grid place-items-end overflow-hidden bg-black/60 backdrop-blur-sm sm:place-items-center sm:p-4">
       <div
-        className="flex max-h-[100dvh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card sm:max-h-[min(42rem,90dvh)] sm:rounded-3xl"
+        className="flex w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card sm:rounded-3xl"
+        style={{
+          maxHeight: "calc(100dvh - env(safe-area-inset-bottom, 0px) - 1rem)",
+          marginBottom: "max(env(safe-area-inset-bottom, 0px), 12px)",
+        }}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3 sm:px-6 sm:py-4">
           <h2 className="font-display text-lg font-semibold">Nuova bici</h2>
@@ -313,11 +317,11 @@ function AddBikeModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
               </p>
             </Field>
           </div>
-          <div className="shrink-0 border-t border-border bg-card px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] sm:px-6 sm:pb-4">
+          <div className="shrink-0 border-t border-border bg-card px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)] sm:px-6 sm:pb-4">
             <button
               type="submit"
               disabled={mut.isPending}
-              className="min-h-11 w-full rounded-full bg-cicla px-4 text-sm font-semibold text-cicla-foreground disabled:opacity-50"
+              className="min-h-12 w-full rounded-full bg-cicla px-4 text-sm font-semibold text-cicla-foreground disabled:opacity-50"
             >
               {mut.isPending ? "Salvataggio…" : "Registra bici"}
             </button>
