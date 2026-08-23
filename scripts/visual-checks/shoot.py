@@ -127,12 +127,6 @@ async def check_device(pw, name, cfg):
             await page.wait_for_timeout(400)  # transizione sheet
             await page.screenshot(path=str(device_dir / "4_bici_modal.png"))
             await measure_button(page, name, "bici modal submit", "Registra bici")
-            # Bottom nav non deve sovrapporsi al foglio
-            gap = await page.evaluate("""() => {
-                const nav = document.querySelector('nav');
-                const sheet = document.querySelector('.fixed.inset-0.z-\\\\[1200\\\\] > div');
-                return null;
-            }""")
         else:
             report(name, "bici modal", False, "bottone 'Aggiungi' non trovato")
     else:
