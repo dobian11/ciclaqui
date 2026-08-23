@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Bike, Plus, QrCode, ShieldAlert, ShieldCheck, X, Copy, Share2, Wallet } from "lucide-react";
@@ -257,6 +257,59 @@ function AddBikeModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  // Snap points stile iOS: "full" (aperto), "half" (45% nascosto) e chiusura
+  // trascinando oltre la soglia. Attivi solo su mobile (su desktop il modale
+  // è centrato e non si trascina). Con la tastiera aperta resta sempre "full".
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(true);
+  const [snap, setSnap] = useState<"full" | "half">("full");
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startY = useRef(0);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    if (keyboardOpen) setSnap("full");
+  }, [keyboardOpen]);
+
+  const onHandlePointerDown = (e: React.PointerEvent<HTMLElement>) => {
+    if (!isMobile) return;
+    setIsDragging(true);
+    startY.current = e.clientY;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onHandlePointerMove = (e: React.PointerEvent<HTMLElement>) => {
+    if (!isDragging) return;
+    const delta = e.clientY - startY.current;
+    // Da "full" si può solo scendere; da "half" anche risalire.
+    setDragY(snap === "half" ? delta : Math.max(0, delta));
+  };
+  const onHandlePointerEnd = () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    const h = sheetRef.current?.offsetHeight ?? 1;
+    const total = (snap === "half" ? h * 0.45 : 0) + dragY;
+    if (total > h * 0.65) onClose();
+    else if (total > h * 0.22) setSnap("half");
+    else setSnap("full");
+    setDragY(0);
+  };
+
+  const sheetTransform =
+    isMobile && (snap === "half" || dragY !== 0)
+      ? `translateY(calc(${snap === "half" ? "45%" : "0px"} + ${Math.max(
+          snap === "half" ? -sheetRef.current?.offsetHeight! * 0.45 || 0 : 0,
+          dragY,
+        )}px))`
+      : undefined;
 
   // Quando la tastiera si apre, il foglio si solleva sopra di essa e il
   // campo attivo viene fatto scorrere in vista: il bottone resta raggiungibile.
