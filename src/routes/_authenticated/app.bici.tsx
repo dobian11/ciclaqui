@@ -323,9 +323,9 @@ function AddBikeModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
     <div
       className="fixed inset-0 z-[1200] grid place-items-end overflow-hidden bg-black/60 backdrop-blur-sm sm:place-items-center sm:p-4"
       onClick={(e) => {
-        // Tap sul backdrop: da "half" riapre, da "full" chiude.
+        // Tap sul backdrop: da "half" riapre a tutto schermo, da "full" chiude.
         if (e.target === e.currentTarget) {
-          if (snap === "half") setSnap("half" === "half" ? "full" : "full");
+          if (snap === "half") setSnap("full");
           else onClose();
         }
       }}
