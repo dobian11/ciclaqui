@@ -296,7 +296,10 @@ function AddBikeModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
           }}
           className="flex min-h-0 flex-1 flex-col"
         >
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 overscroll-contain sm:px-6">
+          <div
+            onFocusCapture={onFieldFocus}
+            className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 overscroll-contain sm:px-6"
+          >
             <Field label="Marca *">
               <input
                 required
