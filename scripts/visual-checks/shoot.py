@@ -128,12 +128,12 @@ async def check_device(pw, name, cfg):
     # 3) Passaporto bici: modale + bottone sopra la navbar
     if authed:
         await page.goto(BASE_URL + "/app/bici", wait_until="networkidle")
-        await page.screenshot(path=str(device_dir / "3_bici.png"))
+        await page.screenshot(path=str(device_dir / "4_bici.png"))
         add = page.get_by_role("button", name="Aggiungi").first
         if await add.count():
             await add.click()
             await page.wait_for_timeout(400)  # transizione sheet
-            await page.screenshot(path=str(device_dir / "4_bici_modal.png"))
+            await page.screenshot(path=str(device_dir / "5_bici_modal.png"))
             await measure_button(page, name, "bici modal submit", "Registra bici")
         else:
             report(name, "bici modal", False, "bottone 'Aggiungi' non trovato")
