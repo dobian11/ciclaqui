@@ -98,6 +98,11 @@ async def check_device(pw, name, cfg):
 
     # 1) Landing: CTA "Sono un dipendente" visibile nel viewport
     await page.goto(BASE_URL + "/", wait_until="networkidle")
+    # Chiudi il banner cookie come farebbe un utente, altrimenti copre il fondo
+    cookie_btn = page.get_by_role("button", name="Solo necessari").first
+    if await cookie_btn.count() and await cookie_btn.is_visible():
+        await cookie_btn.click()
+        await page.wait_for_timeout(300)
     await page.screenshot(path=str(device_dir / "1_home.png"))
     cta = page.get_by_role("link", name="Sono un dipendente").first
     if await cta.count():
