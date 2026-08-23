@@ -303,12 +303,11 @@ function AddBikeModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
     setDragY(0);
   };
 
+  // translateY in % si riferisce all'altezza del foglio stesso: 45% = snap "half".
+  const minDrag = snap === "half" ? -((sheetRef.current?.offsetHeight ?? 0) * 0.45) : 0;
   const sheetTransform =
     isMobile && (snap === "half" || dragY !== 0)
-      ? `translateY(calc(${snap === "half" ? "45%" : "0px"} + ${Math.max(
-          snap === "half" ? -sheetRef.current?.offsetHeight! * 0.45 || 0 : 0,
-          dragY,
-        )}px))`
+      ? `translateY(calc(${snap === "half" ? "45%" : "0px"} + ${Math.max(minDrag, dragY)}px))`
       : undefined;
 
   // Quando la tastiera si apre, il foglio si solleva sopra di essa e il
