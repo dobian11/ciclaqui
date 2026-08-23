@@ -61,8 +61,8 @@ function WelcomePage() {
         <div className="absolute top-1/3 -right-24 size-[380px] rounded-full bg-info opacity-10 blur-[120px]" />
       </div>
 
-      <div className="relative mx-auto flex min-h-screen max-w-md flex-col px-5 pb-8 pt-6"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 24px)" }}
+      <div className="relative mx-auto flex min-h-screen max-w-md flex-col px-5 pb-4 pt-4"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 16px)" }}
       >
         <header className="flex items-center justify-between">
           <CiclaLogo size="md" />
@@ -75,32 +75,32 @@ function WelcomePage() {
           </Link>
         </header>
 
-        <section className="mt-12">
+        <section className="mt-6 sm:mt-12">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-cicla/15 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-cicla ring-1 ring-cicla/30">
             <span className="size-1.5 rounded-full bg-cicla animate-pulse" /> Mobilità che premia
           </span>
-          <h1 className="mt-5 font-display text-[44px] font-bold leading-[1.05] tracking-tight">
+          <h1 className="mt-3 font-display text-[32px] font-bold leading-[1.05] tracking-tight sm:mt-5 sm:text-[44px]">
             Muoviti green.
             <br />
             <span className="bg-gradient-to-r from-cicla to-info bg-clip-text text-transparent">
               Vinci premi.
             </span>
           </h1>
-          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:mt-4">
             Cicla Qui traccia i tuoi spostamenti sostenibili, protegge la tua bici
             dai furti e trasforma i chilometri in <strong>punti</strong> riscattabili
             con i premi messi a disposizione dalla tua azienda o dal tuo Comune.
           </p>
         </section>
 
-        <section className="mt-8 grid grid-cols-2 gap-3">
+        <section className="mt-4 grid grid-cols-2 gap-3 sm:mt-8">
           <FeatureCard icon={<MapPin size={16} />} title="Mappa GPS" desc="Rileva auto il mezzo: bici, piedi, auto." />
           <FeatureCard icon={<Gift size={16} />} title="Punti = premi" desc="Voucher, premi e incentivi dedicati." />
           <FeatureCard icon={<ShieldCheck size={16} />} title="Passaporto" desc="Registra la tua bici e rendila riconoscibile in caso di furto." />
           <FeatureCard icon={<Building2 size={16} />} title="Aziende & Comuni" desc="Codice, dashboard, premia il team." />
         </section>
 
-        <div className="mt-auto pt-10 space-y-3">
+        <div className="mt-auto pt-4 space-y-3 sm:pt-10">
           <Link
             to="/auth"
             search={{ mode: "signup" }}
@@ -149,11 +149,11 @@ function WelcomePage() {
 
 function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
-    <div className="rounded-3xl app-glass p-4">
-      <div className="grid h-9 w-9 place-items-center rounded-2xl bg-cicla/15 text-cicla ring-1 ring-cicla/25">
+    <div className="rounded-3xl app-glass p-3 sm:p-4">
+      <div className="grid h-8 w-8 place-items-center rounded-2xl bg-cicla/15 text-cicla ring-1 ring-cicla/25 sm:h-9 sm:w-9">
         {icon}
       </div>
-      <div className="mt-3 font-display text-sm font-bold leading-tight">{title}</div>
+      <div className="mt-2 font-display text-sm font-bold leading-tight sm:mt-3">{title}</div>
       <div className="mt-1 text-[11px] leading-snug text-muted-foreground">{desc}</div>
     </div>
   );
