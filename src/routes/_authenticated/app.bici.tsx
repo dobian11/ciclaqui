@@ -14,7 +14,7 @@ import {
 } from "@/lib/bikes.functions";
 import { getGoogleWalletLink, getAppleWalletPass } from "@/lib/wallet.functions";
 import { confirmDialog as confirm } from "@/components/cicla/ConfirmDialog";
-import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
+import { useViewportBottomInset } from "@/hooks/use-keyboard-inset";
 
 export const Route = createFileRoute("/_authenticated/app/bici")({
   component: BiciPage,
@@ -240,7 +240,9 @@ function BikeCard({
 
 function AddBikeModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const createFn = useServerFn(createBike);
-  const keyboardInset = useKeyboardInset();
+  // Inset inferiore reale: toolbar iOS Safari o tastiera software.
+  const bottomInset = useViewportBottomInset();
+  const keyboardOpen = bottomInset > 150;
   const [form, setForm] = useState({
     marca: "",
     modello: "",
