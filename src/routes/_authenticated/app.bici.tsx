@@ -340,7 +340,10 @@ function AddBikeModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
               </p>
             </Field>
           </div>
-          <div className="shrink-0 border-t border-border bg-card px-4 pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+2rem)] sm:px-6 sm:pb-6">
+          <div
+            className="shrink-0 border-t border-border bg-card px-4 pt-4 pb-[calc(env(safe-area-inset-bottom,0px)+2rem)] sm:px-6 sm:pb-6"
+            style={keyboardInset > 0 ? { paddingBottom: "0.75rem" } : undefined}
+          >
             <button
               type="submit"
               disabled={mut.isPending}
