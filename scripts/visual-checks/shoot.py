@@ -96,10 +96,10 @@ async def check_device(pw, name, cfg):
     page = await context.new_page()
     authed = await restore_session(page, context)
 
-    # 1) Landing: CTA visibile
+    # 1) Landing: CTA "Sono un dipendente" visibile nel viewport
     await page.goto(BASE_URL + "/", wait_until="networkidle")
     await page.screenshot(path=str(device_dir / "1_home.png"))
-    cta = page.get_by_role("link", name="Inizia ora").first
+    cta = page.get_by_role("link", name="Sono un dipendente").first
     if await cta.count():
         box = await cta.bounding_box()
         vh = await page.evaluate("window.innerHeight")
@@ -107,15 +107,23 @@ async def check_device(pw, name, cfg):
         report(name, "home CTA", ok,
                f"CTA y={box['y']:.0f} h={box['height']:.0f} viewport={vh}" if box else "no box")
     else:
-        report(name, "home CTA", False, "CTA 'Inizia ora' non trovata")
+        report(name, "home CTA", False, "CTA 'Sono un dipendente' non trovata")
 
-    # 2) Auth: bottone submit raggiungibile (scroll se serve)
+    # 2) Auth: bottoni submit di login e registrazione visibili
     await page.goto(BASE_URL + "/auth", wait_until="networkidle")
-    submit = page.get_by_role("button", name="Accedi").first
+    submit = page.get_by_role("button", name="Entra").first
     if await submit.count():
         await submit.scroll_into_view_if_needed()
-    await page.screenshot(path=str(device_dir / "2_auth.png"))
-    await measure_button(page, name, "auth submit", "Accedi")
+    await page.screenshot(path=str(device_dir / "2_auth_login.png"))
+    await measure_button(page, name, "auth login submit", "Entra")
+
+    await page.get_by_role("tab", name="Registrati").click()
+    await page.wait_for_timeout(300)
+    signup = page.get_by_role("button", name="Crea il mio account").first
+    if await signup.count():
+        await signup.scroll_into_view_if_needed()
+    await page.screenshot(path=str(device_dir / "3_auth_signup.png"))
+    await measure_button(page, name, "auth signup submit", "Crea il mio account")
 
     # 3) Passaporto bici: modale + bottone sopra la navbar
     if authed:
