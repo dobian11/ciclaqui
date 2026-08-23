@@ -320,17 +320,40 @@ function AddBikeModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
   };
 
   return (
-    <div className="fixed inset-0 z-[1200] grid place-items-end overflow-hidden bg-black/60 backdrop-blur-sm sm:place-items-center sm:p-4">
+    <div
+      className="fixed inset-0 z-[1200] grid place-items-end overflow-hidden bg-black/60 backdrop-blur-sm sm:place-items-center sm:p-4"
+      onClick={(e) => {
+        // Tap sul backdrop: da "half" riapre, da "full" chiude.
+        if (e.target === e.currentTarget) {
+          if (snap === "half") setSnap("half" === "half" ? "full" : "full");
+          else onClose();
+        }
+      }}
+    >
       <div
-        className="flex w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card transition-[max-height,margin] duration-200 ease-out sm:rounded-3xl"
+        ref={sheetRef}
+        className={`flex w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card sm:rounded-3xl ${
+          isDragging ? "" : "transition-[max-height,margin,transform] duration-200 ease-out"
+        }`}
         style={{
           maxHeight: `calc(100dvh - ${bottomInset}px - ${keyboardOpen ? "1rem" : "2.5rem"})`,
           marginBottom:
             bottomInset > 0
               ? `${bottomInset + (keyboardOpen ? 8 : 12)}px`
               : "calc(env(safe-area-inset-bottom, 0px) + 1.25rem)",
+          transform: sheetTransform,
         }}
       >
+        <div
+          className="flex shrink-0 cursor-grab touch-none justify-center pb-1 pt-2 active:cursor-grabbing sm:hidden"
+          onPointerDown={onHandlePointerDown}
+          onPointerMove={onHandlePointerMove}
+          onPointerUp={onHandlePointerEnd}
+          onPointerCancel={onHandlePointerEnd}
+          aria-label="Trascina per ridimensionare o chiudere"
+        >
+          <div className="h-1.5 w-10 rounded-full bg-muted-foreground/30" />
+        </div>
         <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3 sm:px-6 sm:py-4">
           <h2 className="font-display text-lg font-semibold">Nuova bici</h2>
           <button type="button" aria-label="Chiudi" onClick={onClose} className="grid min-h-11 min-w-11 place-items-center rounded-full text-muted-foreground hover:bg-muted">
