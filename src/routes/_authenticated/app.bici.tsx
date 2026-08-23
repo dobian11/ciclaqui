@@ -256,13 +256,31 @@ function AddBikeModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
     onError: (e: Error) => toast.error(e.message),
   });
 
+  // Quando la tastiera si apre, il foglio si solleva sopra di essa e il
+  // campo attivo viene fatto scorrere in vista: il bottone resta raggiungibile.
+  const onFieldFocus = (e: React.FocusEvent<HTMLElement>) => {
+    const el = e.target;
+    window.setTimeout(() => {
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 320);
+  };
+
   return (
-    <div className="fixed inset-0 z-[1200] grid place-items-end overflow-hidden bg-black/60 backdrop-blur-sm sm:place-items-center sm:p-4">
+    <div
+      className="fixed inset-0 z-[1200] grid place-items-end overflow-hidden bg-black/60 backdrop-blur-sm transition-[padding] duration-200 ease-out sm:place-items-center sm:p-4"
+      style={{ paddingBottom: keyboardInset > 0 ? keyboardInset : undefined }}
+    >
       <div
-        className="flex w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card sm:rounded-3xl"
+        className="flex w-full max-w-md flex-col overflow-hidden rounded-t-3xl border border-border bg-card transition-[max-height,margin] duration-200 ease-out sm:rounded-3xl"
         style={{
-          maxHeight: "calc(100dvh - env(safe-area-inset-bottom, 0px) - 2.5rem)",
-          marginBottom: "calc(env(safe-area-inset-bottom, 0px) + 1.25rem)",
+          maxHeight:
+            keyboardInset > 0
+              ? `calc(100dvh - ${keyboardInset}px - 1rem)`
+              : "calc(100dvh - env(safe-area-inset-bottom, 0px) - 2.5rem)",
+          marginBottom:
+            keyboardInset > 0
+              ? "0.5rem"
+              : "calc(env(safe-area-inset-bottom, 0px) + 1.25rem)",
         }}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3 sm:px-6 sm:py-4">
