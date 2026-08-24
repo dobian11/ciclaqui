@@ -1,12 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { clampModeToSpeed, type DetectorMode } from "@/lib/mode-detector";
 
 const pointSchema = z.object({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
   t: z.number().int().nonnegative(), // ms epoch
   s: z.number().nonnegative().optional(), // km/h
+  m: z.enum(["foot", "bike", "car"]).optional(), // mezzo classificato dal client al fix
 });
 
 const endTripSchema = z.object({
@@ -36,6 +38,11 @@ const CO2_KG_PER_KM_CAR_AVOIDED = 0.18; // emissione media auto evitata
  * Chiude un viaggio: calcola distanza/velocità lato server (anti-frode),
  * assegna punti in base ad app_config, aggiorna wallet in transazione,
  * registra point_transaction. Ritorna il riepilogo.
+ *
+ * Se il client invia il mezzo per ogni fix (`m`, dal rilevatore on-device),
+ * i punti sono calcolati per segmento: bici 10 pt/km, piedi 3 pt/100 m,
+ * auto 0 — con il mezzo dichiarato vincolato alla velocità misurata sul
+ * segmento (anti-frode: un segmento "bici" a 60 km/h non dà punti bici).
  */
 export const endTrip = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -74,13 +81,32 @@ export const endTrip = createServerFn({ method: "POST" })
       throw new Error("Tracciato non valido");
     }
 
+    const hasHints = cleaned.some((p) => p.m != null);
+
     let distance = 0;
     let maxSpeed = 0;
+    // Distanza per mezzo validato (solo se il client manda gli hint per-fix)
+    let bikeKm = 0;
+    let footM = 0;
+    let carKm = 0;
     for (let i = 1; i < cleaned.length; i++) {
-      const dKm = distanceKm(cleaned[i - 1], cleaned[i]);
+      const prev = cleaned[i - 1];
+      const cur = cleaned[i];
+      const dKm = distanceKm(prev, cur);
       distance += dKm;
-      const s = cleaned[i].s ?? 0;
+      const dtS = Math.max(1, (cur.t - prev.t) / 1000);
+      const segSpeed = (dKm / dtS) * 3600;
+      const s = cur.s ?? segSpeed;
       if (s > maxSpeed) maxSpeed = s;
+
+      if (hasHints) {
+        // Mezzo dichiarato al fix, vincolato alla velocità misurata sul segmento
+        const hint: DetectorMode = cur.m ?? prev.m ?? "foot";
+        const validated = clampModeToSpeed(hint, segSpeed);
+        if (validated === "bike") bikeKm += dKm;
+        else if (validated === "foot") footM += dKm * 1000;
+        else carKm += dKm;
+      }
     }
 
     // Durata "attiva": somma degli intervalli tra fix GPS, escludendo le pause
@@ -96,16 +122,38 @@ export const endTrip = createServerFn({ method: "POST" })
     const durationH = Math.max(0.001, durationMs / 3600000);
     const avgSpeed = distance / durationH;
 
+    // Mezzo effettivo: con gli hint per-fix è quello con più km validati,
+    // altrimenti quello dichiarato dal client.
+    let effectiveMode: DetectorMode = data.mode;
+    if (hasHints && distance > 0) {
+      const entries: Array<[DetectorMode, number]> = [
+        ["bike", bikeKm],
+        ["foot", footM / 1000],
+        ["car", carKm],
+      ];
+      entries.sort((a, b) => b[1] - a[1]);
+      effectiveMode = entries[0][0];
+    }
+
     // Anti-frode mode plausibility
     let anomaly = false;
     let anomalyReason: string | null = null;
-    if (data.mode === "foot" && maxSpeed > 20) {
+    if (effectiveMode === "foot" && maxSpeed > 20) {
       anomaly = true;
       anomalyReason = "Velocità max troppo alta per spostamento a piedi";
     }
-    if (data.mode === "bike" && maxSpeed > 70) {
+    if (effectiveMode === "bike" && maxSpeed > 70) {
       anomaly = true;
       anomalyReason = "Velocità max troppo alta per la bici";
+    }
+    if (
+      hasHints &&
+      data.mode !== "car" &&
+      carKm > bikeKm + footM / 1000 &&
+      carKm > 1
+    ) {
+      anomaly = true;
+      anomalyReason = "Mezzo dichiarato non coerente con la velocità misurata";
     }
 
     // Cap giornaliero
@@ -118,16 +166,25 @@ export const endTrip = createServerFn({ method: "POST" })
       .gte("started_at", today.toISOString());
     const kmToday = (todayTrips ?? []).reduce((s, t: any) => s + (t.distance_km ?? 0), 0);
     const eligibleKm = Math.max(0, Math.min(distance, dailyCapKm - kmToday));
+    const eligibleRatio = distance > 0 ? eligibleKm / distance : 0;
 
     // A piedi: 3 punti ogni 100 m completati (blocchi da 0,1 km).
     // Bici/auto: punti per km secondo app_config.
-    let points = anomaly
-      ? 0
-      : data.mode === "foot"
-        ? Math.floor(eligibleKm * 10) * pointsPerKm.foot
-        : Math.floor(eligibleKm * pointsPerKm[data.mode]);
-    const calories = Math.round((MET[data.mode] * 3.5 * 70 * (durationMs / 60000)) / 200);
-    const co2Saved = data.mode === "car" ? 0 : distance * CO2_KG_PER_KM_CAR_AVOIDED;
+    // Con hint per-fix: punti per segmento, con quota cap proporzionale.
+    let points: number;
+    if (anomaly) {
+      points = 0;
+    } else if (hasHints) {
+      const elBikeKm = bikeKm * eligibleRatio;
+      const elFootM = footM * eligibleRatio;
+      points = Math.floor(elBikeKm) * pointsPerKm.bike + Math.floor(elFootM / 100) * pointsPerKm.foot;
+    } else if (data.mode === "foot") {
+      points = Math.floor(eligibleKm * 10) * pointsPerKm.foot;
+    } else {
+      points = Math.floor(eligibleKm * pointsPerKm[data.mode]);
+    }
+    const calories = Math.round((MET[effectiveMode] * 3.5 * 70 * (durationMs / 60000)) / 200);
+    const co2Saved = effectiveMode === "car" ? 0 : distance * CO2_KG_PER_KM_CAR_AVOIDED;
 
     // Inserisci viaggio
     const { data: trip, error: tripErr } = await supabaseAdmin
@@ -136,7 +193,7 @@ export const endTrip = createServerFn({ method: "POST" })
         user_id: userId,
         started_at: data.started_at,
         ended_at: data.ended_at,
-        mode: data.mode,
+        mode: effectiveMode,
         distance_km: Math.round(distance * 1000) / 1000,
         avg_speed_kmh: Math.round(avgSpeed * 10) / 10,
         max_speed_kmh: Math.round(maxSpeed * 10) / 10,
@@ -245,20 +302,43 @@ export const endTrip = createServerFn({ method: "POST" })
     }
 
     // ── Gamification: streak + sfide attive ────────────────
+    // Con hint per-fix: contribuiscono i km validati per ciascun mezzo green.
     try {
-      await supabaseAdmin.rpc("bump_streak", { _user_id: userId, _mode: data.mode });
+      await supabaseAdmin.rpc("bump_streak", { _user_id: userId, _mode: effectiveMode });
       const { data: prof } = await supabaseAdmin
         .from("profiles")
         .select("company_id")
         .eq("id", userId)
         .maybeSingle();
-      await supabaseAdmin.rpc("apply_trip_to_challenges", {
-        _user_id: userId,
-        _mode: data.mode,
-        _distance_km: distance,
-        _company_id: prof?.company_id ?? undefined,
-      } as any);
+      const companyId = prof?.company_id ?? undefined;
 
+      if (hasHints) {
+        const kmBike = Math.round(bikeKm * 1000) / 1000;
+        const kmFoot = Math.round(footM / 10) / 100;
+        if (kmBike > 0.05) {
+          await supabaseAdmin.rpc("apply_trip_to_challenges", {
+            _user_id: userId,
+            _mode: "bike",
+            _distance_km: kmBike,
+            _company_id: companyId,
+          } as any);
+        }
+        if (kmFoot > 0.05) {
+          await supabaseAdmin.rpc("apply_trip_to_challenges", {
+            _user_id: userId,
+            _mode: "foot",
+            _distance_km: kmFoot,
+            _company_id: companyId,
+          } as any);
+        }
+      } else {
+        await supabaseAdmin.rpc("apply_trip_to_challenges", {
+          _user_id: userId,
+          _mode: data.mode,
+          _distance_km: distance,
+          _company_id: companyId,
+        } as any);
+      }
     } catch (e) {
       console.error("[endTrip] gamification rpc failed", e);
     }
@@ -271,6 +351,12 @@ export const endTrip = createServerFn({ method: "POST" })
       co2_saved_kg: trip.co2_saved_kg,
       anomaly,
       anomaly_reason: anomalyReason,
+      mode: effectiveMode,
+      breakdown: {
+        bike_km: Math.round(bikeKm * 1000) / 1000,
+        foot_km: Math.round((footM / 1000) * 1000) / 1000,
+        car_km: Math.round(carKm * 1000) / 1000,
+      },
     };
   });
 

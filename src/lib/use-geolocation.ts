@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import type { TripMode } from "@/components/cicla/MapView";
+import {
+  CLASSIFY_MAX_ACCURACY_M,
+  ModeDetector,
+  effectiveSpeedKmh,
+  type GeoFix,
+} from "@/lib/mode-detector";
 
 export type GeoErrorCode = "denied" | "unavailable" | "timeout" | "unsupported" | "unknown";
 
@@ -19,18 +25,14 @@ export interface GeoState {
 }
 
 /**
- * Watches the device geolocation and infers the user's transport mode from the
- * smoothed instantaneous GPS speed.
+ * Osserva la geolocalizzazione e ricava il mezzo di trasporto.
  *
- * Thresholds match `app_config` defaults (foot < 8 km/h, bike 8–35 km/h, car > 35 km/h).
- * The smoothing window dampens GPS jitter so a single noisy reading does not
- * flip the icon. Persisting a mode requires `MODE_STABILITY` consecutive
- * samples agreeing with the new candidate.
+ * Affidabilità (demo e uso reale):
+ * - se il device non fornisce la velocità (iOS Safari: `coords.speed = null`)
+ *   la deriva da distanza/tempo tra fix consecutivi — niente più "a piedi" fisso;
+ * - mediana mobile + isteresi anti-sfarfallio (vedi mode-detector.ts);
+ * - fix con precisione scarsa aggiornano la posizione ma non la classificazione.
  */
-const FOOT_KMH = 8;
-const BIKE_KMH = 35;
-const MODE_STABILITY = 3;
-
 export function useGeolocation(enabled = true): GeoState {
   const [retryTick, setRetryTick] = useState(0);
   const [state, setState] = useState<GeoState>({
@@ -43,51 +45,43 @@ export function useGeolocation(enabled = true): GeoState {
     retry: () => setRetryTick((t) => t + 1),
   });
 
-  const recentSpeeds = useRef<number[]>([]);
-  const candidate = useRef<{ mode: TripMode; count: number }>({ mode: "foot", count: 0 });
+  const detectorRef = useRef<ModeDetector | null>(null);
+  const lastFixRef = useRef<GeoFix | null>(null);
 
   useEffect(() => {
     if (!enabled || typeof navigator === "undefined" || !navigator.geolocation) {
       return;
     }
+    const detector = (detectorRef.current = detectorRef.current ?? new ModeDetector());
+    lastFixRef.current = null;
     setState((s) => ({ ...s, error: null, loading: true }));
+
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        const speedMs = pos.coords.speed; // m/s, can be null
-        const speedKmh = speedMs != null && !Number.isNaN(speedMs) ? Math.max(0, speedMs * 3.6) : 0;
+        const fix: GeoFix = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          t: pos.timestamp || Date.now(),
+          speedKmh:
+            pos.coords.speed != null && !Number.isNaN(pos.coords.speed)
+              ? Math.max(0, pos.coords.speed * 3.6)
+              : null,
+          accuracyM: pos.coords.accuracy ?? null,
+        };
+        const accuracy = pos.coords.accuracy ?? null;
+        const speed = effectiveSpeedKmh(lastFixRef.current, fix);
+        lastFixRef.current = fix;
 
-        // smoothing window of last 5 samples
-        const win = recentSpeeds.current;
-        win.push(speedKmh);
-        if (win.length > 5) win.shift();
-        const smoothed = win.reduce((a, b) => a + b, 0) / win.length;
-
-        let candidateMode: TripMode;
-        if (smoothed < FOOT_KMH) candidateMode = "foot";
-        else if (smoothed < BIKE_KMH) candidateMode = "bike";
-        else candidateMode = "car";
-
-        let nextMode = state.mode;
-        if (candidate.current.mode === candidateMode) {
-          candidate.current.count += 1;
-        } else {
-          candidate.current = { mode: candidateMode, count: 1 };
-        }
-        // Stazionario (<1 km/h): blocca subito su "a piedi" senza aspettare la stabilità.
-        // Questo evita che a riposo il marker resti su un mode "ereditato" (bici/auto).
-        if (smoothed < 1) {
-          nextMode = "foot";
-          candidate.current = { mode: "foot", count: MODE_STABILITY };
-        } else if (candidate.current.count >= MODE_STABILITY) {
-          nextMode = candidateMode;
-        }
+        // Classifica solo con fix affidabili; la posizione si aggiorna sempre.
+        const reliable = accuracy == null || accuracy <= CLASSIFY_MAX_ACCURACY_M;
+        const mode = (reliable ? detector.push(speed) : detector.mode) as TripMode;
 
         setState((s) => ({
           ...s,
-          position: [pos.coords.latitude, pos.coords.longitude],
-          speedKmh: smoothed,
-          mode: nextMode,
-          accuracy: pos.coords.accuracy ?? null,
+          position: [fix.lat, fix.lng],
+          speedKmh: reliable ? detector.smoothedKmh : s.speedKmh,
+          mode,
+          accuracy,
           error: null,
           loading: false,
         }));
@@ -104,9 +98,6 @@ export function useGeolocation(enabled = true): GeoState {
       },
     );
     return () => navigator.geolocation.clearWatch(watchId);
-    // We intentionally read state.mode inside the callback via closure-safe
-    // setState updater, so we don't list it as a dep (would re-subscribe per fix).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, retryTick]);
 
   return state;
