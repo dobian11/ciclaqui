@@ -318,6 +318,8 @@ export function useTripRecorder(currentMode: TripMode) {
       clearInterval(watchdogRef.current);
       watchdogRef.current = null;
     }
+    stopMotionCollection();
+    motionStartedRef.current = false;
     void wakeLockRef.current?.release();
     clearActiveTrip();
     setState((prev) => ({ ...prev, recording: false, nativeBackground: false }));
@@ -326,6 +328,8 @@ export function useTripRecorder(currentMode: TripMode) {
   const reset = useCallback(() => {
     clearActiveTrip();
     dbmRef.current = { ...EMPTY_DBM };
+    classifierRef.current.reset();
+    detectorRef.current.reset();
     setState({
       recording: false,
       startedAt: null,
