@@ -1,12 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { notifyUsers } from "@/lib/notifications.server";
+import { clampModeToSpeed, type DetectorMode } from "@/lib/mode-detector";
 
 const pointSchema = z.object({
   lat: z.number().min(-90).max(90),
   lng: z.number().min(-180).max(180),
-  t: z.number().int().nonnegative(), // ms epoch
-  s: z.number().nonnegative().optional(), // km/h
+  t: z.number().int().positive(),
+  s: z.number().min(0).max(200).optional(),
+  m: z.enum(["foot", "bike", "car"]).optional(),
 });
 
 const endTripSchema = z.object({
@@ -16,275 +19,219 @@ const endTripSchema = z.object({
   path: z.array(pointSchema).min(2).max(20000),
 });
 
-// Haversine — km
-function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
-  const R = 6371;
+export type TripSummary = {
+  id: string;
+  distance_km: number;
+  duration_s: number;
+  points_earned: number;
+  mode: string;
+  // per riepilogo lato client
+  started_at: string;
+  ended_at: string;
+  breakdown?: { bike_km: number; foot_km: number; car_km: number };
+};
+
+const EARTH_R = 6371; // km
+function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const toRad = (d: number) => (d * Math.PI) / 180;
   const dLat = toRad(b.lat - a.lat);
   const dLng = toRad(b.lng - a.lng);
   const lat1 = toRad(a.lat);
   const lat2 = toRad(b.lat);
-  const h =
-    Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
-  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+  const h = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return 2 * EARTH_R * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
-const MET: Record<"foot" | "bike" | "car", number> = { foot: 3.5, bike: 6.8, car: 1.3 };
-const CO2_KG_PER_KM_CAR_AVOIDED = 0.18; // emissione media auto evitata
-
 /**
- * Chiude un viaggio: calcola distanza/velocità lato server (anti-frode),
- * assegna punti in base ad app_config, aggiorna wallet in transazione,
- * registra point_transaction. Ritorna il riepilogo.
+ * Termina un viaggio: ricalcola distanza e durata dal tracciato (anti-frode),
+ * valida la velocità e assegna i punti con accredito atomico lato DB.
+ *
+ * Modello punti (per-segmento quando il client invia il mezzo per ogni fix):
+ * - Bici: 10 pt per ogni km (intero) pedalato
+ * - A piedi: 3 pt per OGNI blocco da 100 m camminati
+ * - Auto: 0 pt
+ *
+ * Anti-frode: la velocità misurata su ogni segmento vincola il mezzo
+ * accreditato (es. segmento "bici" a 60 km/h → auto, 0 punti).
  */
 export const endTrip = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => endTripSchema.parse(d))
-  .handler(async ({ data, context }) => {
-    const { userId } = context;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  .inputValidator((input: unknown) => endTripSchema.parse(input))
+  .handler(async ({ data, context }): Promise<TripSummary> => {
+    const { supabase, userId } = context;
 
-    // Carica config corrente
-    const { data: cfg } = await supabaseAdmin
-      .from("app_config")
-      .select("*")
-      .eq("id", 1)
-      .maybeSingle();
-    const pointsPerKm = {
-      foot: cfg?.points_per_km_foot ?? 3,
-      bike: cfg?.points_per_km_bike ?? 10,
-      car: cfg?.points_per_km_car ?? 0,
-    };
-    const dailyCapKm = cfg?.daily_cap_km ?? 80;
-    const eurPerPoint = cfg?.eur_per_point ?? 0.01;
-
-    // Anti-frode: filtra punti con salti GPS implausibili (>250 km/h tra due fix)
-    const cleaned: typeof data.path = [data.path[0]];
-    for (let i = 1; i < data.path.length; i++) {
-      const prev = cleaned[cleaned.length - 1];
-      const cur = data.path[i];
-      const dKm = distanceKm(prev, cur);
-      const dtH = Math.max(1 / 3600, (cur.t - prev.t) / 3600000);
-      const v = dKm / dtH;
-      if (v > 250) continue; // scarta salto
-      cleaned.push(cur);
+    const startedAt = new Date(data.started_at).getTime();
+    const endedAt = new Date(data.ended_at).getTime();
+    if (!Number.isFinite(startedAt) || !Number.isFinite(endedAt) || endedAt <= startedAt) {
+      throw new Error("Orari non validi");
     }
 
-    if (cleaned.length < 2) {
-      throw new Error("Tracciato non valido");
-    }
+    // Ordina per timestamp e scarta duplicati/fuori ordine evidenti
+    const points = [...data.path]
+      .filter((p) => p.t >= startedAt - 60_000 && p.t <= endedAt + 60_000)
+      .sort((a, b) => a.t - b.t);
+    if (points.length < 2) throw new Error("Tracciato troppo corto");
 
-    let distance = 0;
-    let maxSpeed = 0;
-    for (let i = 1; i < cleaned.length; i++) {
-      const dKm = distanceKm(cleaned[i - 1], cleaned[i]);
-      distance += dKm;
-      const s = cleaned[i].s ?? 0;
-      if (s > maxSpeed) maxSpeed = s;
-    }
+    const durationS = Math.round((endedAt - startedAt) / 1000);
+    if (durationS < 60) throw new Error("Viaggio troppo corto (min 1 minuto)");
 
-    // Durata "attiva": somma degli intervalli tra fix GPS, escludendo le pause
-    // (app sospesa / viaggio ripreso) più lunghe di IDLE_GAP_MS.
-    const IDLE_GAP_MS = 120000;
-    let activeMs = 0;
-    for (let i = 1; i < cleaned.length; i++) {
-      const dt = cleaned[i].t - cleaned[i - 1].t;
-      if (dt > 0 && dt <= IDLE_GAP_MS) activeMs += dt;
-    }
-    const wallMs = new Date(data.ended_at).getTime() - new Date(data.started_at).getTime();
-    const durationMs = Math.max(1000, Math.min(activeMs > 0 ? activeMs : wallMs, wallMs));
-    const durationH = Math.max(0.001, durationMs / 3600000);
-    const avgSpeed = distance / durationH;
+    // Distanza ricalcolata server-side, scartando salti impossibili (> 150 km/h)
+    let distanceKm = 0;
+    let maxSpeedKmh = 0;
+    let bikeKm = 0;
+    let footM = 0;
+    let carKm = 0;
+    const hasHints = points.some((p) => p.m != null);
 
-    // Anti-frode mode plausibility
-    let anomaly = false;
-    let anomalyReason: string | null = null;
-    if (data.mode === "foot" && maxSpeed > 20) {
-      anomaly = true;
-      anomalyReason = "Velocità max troppo alta per spostamento a piedi";
-    }
-    if (data.mode === "bike" && maxSpeed > 70) {
-      anomaly = true;
-      anomalyReason = "Velocità max troppo alta per la bici";
-    }
+    for (let i = 1; i < points.length; i++) {
+      const prev = points[i - 1];
+      const cur = points[i];
+      const dtS = (cur.t - prev.t) / 1000;
+      if (dtS <= 0) continue;
+      const d = haversineKm(prev, cur);
+      const speed = (d / dtS) * 3600;
+      if (speed > 150) continue; // salto impossibile: ignora il segmento
+      distanceKm += d;
+      if (speed > maxSpeedKmh) maxSpeedKmh = speed;
 
-    // Cap giornaliero
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const { data: todayTrips } = await supabaseAdmin
-      .from("trips")
-      .select("distance_km, mode")
-      .eq("user_id", userId)
-      .gte("started_at", today.toISOString());
-    const kmToday = (todayTrips ?? []).reduce((s, t: any) => s + (t.distance_km ?? 0), 0);
-    const eligibleKm = Math.max(0, Math.min(distance, dailyCapKm - kmToday));
-
-    // A piedi: 3 punti ogni 100 m completati (blocchi da 0,1 km).
-    // Bici/auto: punti per km secondo app_config.
-    let points = anomaly
-      ? 0
-      : data.mode === "foot"
-        ? Math.floor(eligibleKm * 10) * pointsPerKm.foot
-        : Math.floor(eligibleKm * pointsPerKm[data.mode]);
-    const calories = Math.round((MET[data.mode] * 3.5 * 70 * (durationMs / 60000)) / 200);
-    const co2Saved = data.mode === "car" ? 0 : distance * CO2_KG_PER_KM_CAR_AVOIDED;
-
-    // Inserisci viaggio
-    const { data: trip, error: tripErr } = await supabaseAdmin
-      .from("trips")
-      .insert({
-        user_id: userId,
-        started_at: data.started_at,
-        ended_at: data.ended_at,
-        mode: data.mode,
-        distance_km: Math.round(distance * 1000) / 1000,
-        avg_speed_kmh: Math.round(avgSpeed * 10) / 10,
-        max_speed_kmh: Math.round(maxSpeed * 10) / 10,
-        calories,
-        co2_saved_kg: Math.round(co2Saved * 1000) / 1000,
-        points_earned: points,
-        anomaly_flag: anomaly,
-        anomaly_reason: anomalyReason,
-        path: { coords: cleaned } as any,
-      })
-      .select()
-      .single();
-
-    if (tripErr || !trip) {
-      console.error("[endTrip] insert failed", tripErr);
-      throw new Error("Impossibile salvare il viaggio");
-    }
-
-    // Coda di revisione anti-frode: registra la segnalazione per l'admin
-    if (anomaly) {
-      const predicted = maxSpeed > 45 ? "car" : maxSpeed > 20 ? "bike" : "foot";
-      const { data: prof0 } = await supabaseAdmin
-        .from("profiles")
-        .select("company_id")
-        .eq("id", userId)
-        .maybeSingle();
-      await supabaseAdmin.from("trip_flags").insert({
-        trip_id: trip.id,
-        user_id: userId,
-        company_id: prof0?.company_id ?? null,
-        score: Math.min(1, maxSpeed / 100),
-        declared_mode: data.mode,
-        predicted_mode: predicted,
-        reason: anomalyReason,
-        status: "pending",
-      });
-
-      try {
-        const { notifyUsers, companyManagerIds } = await import("@/lib/notify.server");
-        await notifyUsers({
-          userIds: [userId],
-          topic: "trip_flag",
-          type: "trip_flagged",
-          title: "Viaggio da verificare",
-          body: `Il viaggio appena concluso è in verifica (${anomalyReason ?? "anomalia rilevata"}). I punti verranno accreditati dopo il controllo.`,
-          url: "/app/punti",
-          companyId: prof0?.company_id ?? null,
-          ctaLabel: "Vedi i tuoi viaggi",
-          payload: { trip_id: trip.id, ref: trip.id },
-        });
-        if (prof0?.company_id) {
-          await notifyUsers({
-            userIds: await companyManagerIds(prof0.company_id),
-            topic: "trip_flag",
-            type: "trip_flag_review",
-            title: "Viaggio da rivedere",
-            body: `Un viaggio di un membro è stato segnalato (${anomalyReason ?? "anomalia"}). Verificalo dalla sezione "Da verificare".`,
-            url: "/azienda",
-            companyId: prof0.company_id,
-            ctaLabel: "Apri la dashboard ente",
-            payload: { trip_id: trip.id, ref: trip.id },
-          });
-        }
-      } catch (e) {
-        console.error("[endTrip] notify flag failed", e);
+      if (hasHints) {
+        // mezzo dichiarato dal client al fix, vincolato alla velocità misurata
+        const hint: DetectorMode = cur.m ?? prev.m ?? "foot";
+        const validated = clampModeToSpeed(hint, speed);
+        if (validated === "bike") bikeKm += d;
+        else if (validated === "foot") footM += d * 1000;
+        else carKm += d;
       }
     }
 
-    // Aggiorna wallet + transazione punti
-    if (points > 0) {
-      await supabaseAdmin.from("point_transactions").insert({
-        user_id: userId,
-        trip_id: trip.id,
-        delta_points: points,
-        delta_eur: Math.round(points * eurPerPoint * 100) / 100,
-        reason: "trip",
-      });
-      const { data: wallet } = await supabaseAdmin
-        .from("wallets")
-        .select("points_balance, lifetime_points, lifetime_km, eur_balance")
-        .eq("user_id", userId)
-        .maybeSingle();
-      await supabaseAdmin
-        .from("wallets")
-        .update({
-          points_balance: (wallet?.points_balance ?? 0) + points,
-          lifetime_points: (wallet?.lifetime_points ?? 0) + points,
-          lifetime_km: Math.round(((wallet?.lifetime_km ?? 0) + distance) * 100) / 100,
-          eur_balance:
-            Math.round(((wallet?.eur_balance ?? 0) + points * eurPerPoint) * 100) / 100,
-        })
-        .eq("user_id", userId);
-    } else {
-      // aggiorna solo km lifetime
-      const { data: wallet } = await supabaseAdmin
-        .from("wallets")
-        .select("lifetime_km")
-        .eq("user_id", userId)
-        .maybeSingle();
-      await supabaseAdmin
-        .from("wallets")
-        .update({
-          lifetime_km: Math.round(((wallet?.lifetime_km ?? 0) + distance) * 100) / 100,
-        })
-        .eq("user_id", userId);
+    const avgSpeed = durationS > 0 ? (distanceKm / durationS) * 3600 : 0;
+
+    // Anomalie: velocità o mezzo incoerenti → trip salvato ma 0 punti + segnalazione
+    const anomalies: string[] = [];
+    if (maxSpeedKmh > 120) anomalies.push("velocità di picco anomala");
+    if (avgSpeed > 60) anomalies.push("velocità media anomala");
+    if (data.mode === "bike" && avgSpeed > 40) anomalies.push("bici troppo veloce");
+    if (data.mode === "foot" && avgSpeed > 15) anomalies.push("a piedi troppo veloce");
+
+    let validatedDominant: DetectorMode = data.mode;
+    if (hasHints) {
+      // mezzo dominante = quello con più km validati
+      const entries: Array<[DetectorMode, number]> = [
+        ["bike", bikeKm],
+        ["foot", footM / 1000],
+        ["car", carKm],
+      ];
+      entries.sort((a, b) => b[1] - a[1]);
+      validatedDominant = entries[0][0];
+      const hintedGreenKm = bikeKm + footM / 1000;
+      // se il dominante dichiarato è green ma la maggioranza è auto → sospetto
+      if (data.mode !== "car" && carKm > hintedGreenKm && carKm > 1) {
+        anomalies.push("mezzo dichiarato non coerente con la velocità");
+      }
     }
 
-    // ── Gamification: streak + sfide attive ────────────────
-    try {
-      await supabaseAdmin.rpc("bump_streak", { _user_id: userId, _mode: data.mode });
-      const { data: prof } = await supabaseAdmin
-        .from("profiles")
-        .select("company_id")
-        .eq("id", userId)
-        .maybeSingle();
-      await supabaseAdmin.rpc("apply_trip_to_challenges", {
-        _user_id: userId,
-        _mode: data.mode,
-        _distance_km: distance,
-        _company_id: prof?.company_id ?? undefined,
-      } as any);
+    // Punti
+    let pointsEarned = 0;
+    if (hasHints) {
+      pointsEarned = Math.floor(bikeKm) * 10 + Math.floor(footM / 100) * 3;
+    } else if (data.mode === "bike") {
+      pointsEarned = Math.floor(distanceKm) * 10;
+    } else if (data.mode === "foot") {
+      pointsEarned = Math.floor((distanceKm * 1000) / 100) * 3;
+    }
 
-    } catch (e) {
-      console.error("[endTrip] gamification rpc failed", e);
+    const flagged = anomalies.length > 0 && pointsEarned > 0;
+    if (flagged) pointsEarned = 0;
+
+    const { data: rpcRows, error: rpcError } = await supabase.rpc("finalize_trip", {
+      p_user_id: userId,
+      p_mode: validatedDominant,
+      p_started_at: data.started_at,
+      p_ended_at: data.ended_at,
+      p_distance_km: Math.round(distanceKm * 1000) / 1000,
+      p_duration_s: durationS,
+      p_avg_speed_kmh: Math.round(avgSpeed * 100) / 100,
+      p_max_speed_kmh: Math.round(maxSpeedKmh * 100) / 100,
+      p_path: JSON.parse(JSON.stringify(points)),
+      p_points: pointsEarned,
+    });
+
+    if (rpcError) throw new Error(rpcError.message);
+    const tripId = (rpcRows as Array<{ trip_id: string }> | null)?.[0]?.trip_id ?? "";
+
+    if (flagged && tripId) {
+      await supabase.from("trip_flags").insert({
+        user_id: userId,
+        trip_id: tripId,
+        reason: anomalies.join("; "),
+      });
+    } else if (tripId) {
+      // Aggiorna sfide attive con i km validati (bici → bike+total, piedi → foot+total)
+      const kmBike = hasHints ? bikeKm : data.mode === "bike" ? distanceKm : 0;
+      const kmFoot = hasHints ? footM / 1000 : data.mode === "foot" ? distanceKm : 0;
+      try {
+        if (kmBike > 0.05) {
+          await supabase.rpc("apply_trip_to_challenges", {
+            p_user_id: userId,
+            p_trip_mode: "bike",
+            p_distance_km: Math.round(kmBike * 1000) / 1000,
+          });
+        }
+        if (kmFoot > 0.05) {
+          await supabase.rpc("apply_trip_to_challenges", {
+            p_user_id: userId,
+            p_trip_mode: "foot",
+            p_distance_km: Math.round(kmFoot * 1000) / 1000,
+          });
+        }
+        if (kmBike > 0 || kmFoot > 0) {
+          await supabase.rpc("bump_streak", { p_user_id: userId });
+        }
+      } catch {
+        /* sfide opzionali */
+      }
+    }
+
+    // Notifica punti guadagnati
+    if (pointsEarned > 0) {
+      void notifyUsers({
+        event: "trip_points",
+        userIds: [userId],
+        title: `+${pointsEarned} punti`,
+        body: `Viaggio ${validatedDominant === "bike" ? "in bici" : validatedDominant === "foot" ? "a piedi" : "in auto"} di ${distanceKm.toFixed(1)} km: +${pointsEarned} punti Cicla.`,
+        url: "/app/punti",
+      });
     }
 
     return {
-      id: trip.id,
-      distance_km: trip.distance_km,
-      points_earned: points,
-      calories,
-      co2_saved_kg: trip.co2_saved_kg,
-      anomaly,
-      anomaly_reason: anomalyReason,
+      id: tripId,
+      distance_km: Math.round(distanceKm * 1000) / 1000,
+      duration_s: durationS,
+      points_earned: pointsEarned,
+      mode: validatedDominant,
+      started_at: data.started_at,
+      ended_at: data.ended_at,
+      breakdown: {
+        bike_km: Math.round(bikeKm * 1000) / 1000,
+        foot_km: Math.round((footM / 1000) * 1000) / 1000,
+        car_km: Math.round(carKm * 1000) / 1000,
+      },
     };
   });
 
-
-/** Lista viaggi recenti dell'utente (per la sezione punti). */
+/**
+ * Cronologia viaggi dell'utente, più recenti prima.
+ */
 export const listMyTrips = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("trips")
-      .select("id, started_at, ended_at, mode, distance_km, points_earned, calories, anomaly_flag")
+      .select("id, mode, started_at, ended_at, distance_km, duration_s, points_earned")
       .eq("user_id", userId)
       .order("started_at", { ascending: false })
-      .limit(20);
+      .limit(50);
+    if (error) throw new Error(error.message);
     return data ?? [];
   });
