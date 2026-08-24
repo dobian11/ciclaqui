@@ -16,11 +16,38 @@ export const listMyBikes = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data, error } = await supabase
       .from("bikes")
-      .select("id, marca, modello, colore, frame_number, photo_url, status, qr_token, stolen_at, stolen_note, created_at")
+      .select("id, marca, modello, colore, frame_number, photo_url, receipt_url, status, qr_token, stolen_at, stolen_place, stolen_note, created_at, updated_at")
       .eq("owner_id", userId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];
+  });
+
+const frameCheckSchema = z.object({
+  frame_number: z.string().trim().min(3).max(40),
+});
+
+/**
+ * Validazione numero di telaio prima della registrazione (solo utenti loggati).
+ * Ritorna disponibilità e se il telaio risulta in una bici segnalata rubata.
+ */
+export const checkFrameNumber = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => frameCheckSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const frame = data.frame_number.trim().toUpperCase();
+    const { data: existing, error } = await supabase
+      .from("bikes")
+      .select("status")
+      .eq("frame_number", frame)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return {
+      frame,
+      available: !existing,
+      flaggedStolen: existing?.status === "rubata",
+    };
   });
 
 export const createBike = createServerFn({ method: "POST" })
