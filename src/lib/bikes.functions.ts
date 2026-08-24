@@ -85,6 +85,8 @@ const reportStolenSchema = z.object({
   bike_id: z.string().uuid(),
   lat: z.number().min(-90).max(90).optional(),
   lng: z.number().min(-180).max(180).optional(),
+  place: z.string().trim().max(160).optional(),
+  when: z.string().datetime({ offset: true }).optional(),
   note: z.string().trim().max(500).optional(),
 });
 
@@ -93,25 +95,41 @@ export const reportStolen = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => reportStolenSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    // Data del furto: quella indicata dall'utente, mai nel futuro; default = ora.
+    const whenDate = data.when ? new Date(data.when) : new Date();
+    const stolenAt =
+      Number.isNaN(whenDate.getTime()) || whenDate.getTime() > Date.now()
+        ? new Date().toISOString()
+        : whenDate.toISOString();
+
     const { error } = await supabase
       .from("bikes")
       .update({
         status: "rubata",
-        stolen_at: new Date().toISOString(),
+        stolen_at: stolenAt,
         stolen_lat: data.lat ?? null,
         stolen_lng: data.lng ?? null,
+        stolen_place: data.place || null,
         stolen_note: data.note ?? null,
       })
       .eq("id", data.bike_id)
       .eq("owner_id", userId);
     if (error) throw new Error(error.message);
+
+    const reportNote = [
+      "[FURTO]",
+      data.place ? `Luogo: ${data.place}` : null,
+      data.note ?? null,
+    ]
+      .filter(Boolean)
+      .join(" — ");
     await supabase.from("bike_reports").insert({
       bike_id: data.bike_id,
       reporter_id: userId,
       type: "sighting",
       lat: data.lat ?? null,
       lng: data.lng ?? null,
-      note: `[FURTO] ${data.note ?? ""}`.trim(),
+      note: reportNote,
     });
     return { ok: true };
   });
