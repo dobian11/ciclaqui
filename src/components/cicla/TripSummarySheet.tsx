@@ -14,6 +14,8 @@ export interface TripSummary {
   pointsEarned: number;
   anomaly: boolean;
   anomalyReason: string | null;
+  /** km validati dal server per mezzo (viaggi misti) */
+  breakdown?: { bike_km: number; foot_km: number; car_km: number };
   /** Coppe/maratone a cui questo viaggio ha contribuito */
   challenges?: { id: string; title: string; icon?: string | null; delta: number; unit: string; goal: number }[];
 }
@@ -161,6 +163,40 @@ export function TripSummarySheet({ summary, onClose }: Props) {
             <> · Punti GPS: <span className="text-foreground">{summary.path.length}</span></>
           )}
         </div>
+
+        {/* Breakdown per mezzo (viaggi misti): bici verde, piedi giallo, auto rosso */}
+        {summary.breakdown &&
+          (() => {
+            const { bike_km, foot_km, car_km } = summary.breakdown;
+            const total = bike_km + foot_km + car_km;
+            if (total <= 0.05) return null;
+            const segs = [
+              { label: "Bici", km: bike_km, cls: "bg-cicla", txt: "text-cicla" },
+              { label: "A piedi", km: foot_km, cls: "bg-amber-500", txt: "text-amber-400" },
+              { label: "Auto", km: car_km, cls: "bg-destructive", txt: "text-destructive" },
+            ].filter((s) => s.km > 0.01);
+            if (segs.length < 2) return null; // mezzo unico: già mostrato nell'header
+            return (
+              <div className="mx-5 mb-3">
+                <div className="flex h-2 w-full overflow-hidden rounded-full bg-background/60">
+                  {segs.map((s) => (
+                    <div
+                      key={s.label}
+                      className={`${s.cls} h-full`}
+                      style={{ width: `${(s.km / total) * 100}%` }}
+                    />
+                  ))}
+                </div>
+                <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                  {segs.map((s) => (
+                    <span key={s.label} className={`text-[10px] font-semibold ${s.txt}`}>
+                      {s.label} {s.km.toFixed(2)} km
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
 
         {!summary.anomaly && (summary.challenges?.length ?? 0) > 0 && (
           <div className="mx-5 mb-3 rounded-2xl border border-cicla/30 bg-cicla/10 p-3">
