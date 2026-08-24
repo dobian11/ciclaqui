@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { TripMode } from "@/components/cicla/MapView";
+import type { TripMode } from "@/components/cicla/GoogleMapView";
 import {
   CLASSIFY_MAX_ACCURACY_M,
   ModeDetector,
