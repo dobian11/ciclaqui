@@ -16,7 +16,7 @@ export const listMyBikes = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data, error } = await supabase
       .from("bikes")
-      .select("id, marca, modello, colore, frame_number, photo_url, receipt_url, status, qr_token, stolen_at, stolen_place, stolen_note, created_at, updated_at")
+      .select("id, marca, modello, colore, frame_number, photo_url, receipt_url, status, qr_token, stolen_at, stolen_place, stolen_note, stolen_evidence, created_at, updated_at")
       .eq("owner_id", userId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -88,6 +88,8 @@ const reportStolenSchema = z.object({
   place: z.string().trim().max(160).optional(),
   when: z.string().datetime({ offset: true }).optional(),
   note: z.string().trim().max(500).optional(),
+  /** Path dei file prova caricati nel bucket bike-evidence (max 5). */
+  evidence: z.array(z.string().trim().min(1).max(300)).max(5).optional(),
 });
 
 export const reportStolen = createServerFn({ method: "POST" })
@@ -102,6 +104,11 @@ export const reportStolen = createServerFn({ method: "POST" })
         ? new Date().toISOString()
         : whenDate.toISOString();
 
+    // Le prove devono puntare alla cartella personale dell'utente nel bucket bike-evidence.
+    const evidence = (data.evidence ?? []).filter((p) =>
+      p.startsWith(`${userId}/${data.bike_id}/`),
+    );
+
     const { error } = await supabase
       .from("bikes")
       .update({
@@ -111,6 +118,7 @@ export const reportStolen = createServerFn({ method: "POST" })
         stolen_lng: data.lng ?? null,
         stolen_place: data.place || null,
         stolen_note: data.note ?? null,
+        stolen_evidence: evidence.length ? evidence : null,
       })
       .eq("id", data.bike_id)
       .eq("owner_id", userId);
@@ -131,6 +139,38 @@ export const reportStolen = createServerFn({ method: "POST" })
       lng: data.lng ?? null,
       note: reportNote,
     });
+
+    // Notifica il proprietario: lo stato passa a "furto segnalato".
+    try {
+      const { data: bike } = await supabase
+        .from("bikes")
+        .select("marca, modello")
+        .eq("id", data.bike_id)
+        .maybeSingle();
+      const { notifyUsers } = await import("@/lib/notify.server");
+      const bikeName = [bike?.marca, bike?.modello].filter(Boolean).join(" ") || "La tua bici";
+      await notifyUsers({
+        userIds: [userId],
+        topic: "bike",
+        type: "bike_stolen_reported",
+        title: "Furto segnalato",
+        body: `${bikeName}: la segnalazione di furto è attiva e visibile nel registro pubblico. Ti avviseremo a ogni avvistamento.`,
+        url: "/app/bici",
+        ctaLabel: "Apri il passaporto",
+        details: [
+          { label: "Bici", value: bikeName },
+          { label: "Data", value: new Date(stolenAt).toLocaleString("it-IT") },
+          ...(data.place ? [{ label: "Luogo", value: data.place }] : []),
+          ...(evidence.length
+            ? [{ label: "Prove allegate", value: `${evidence.length} file` }]
+            : []),
+        ],
+        payload: { bike_id: data.bike_id },
+      });
+    } catch (e) {
+      console.error("[reportStolen] notify failed", e);
+    }
+
     return { ok: true };
   });
 
@@ -145,6 +185,30 @@ export const markRecovered = createServerFn({ method: "POST" })
       .eq("id", data.bike_id)
       .eq("owner_id", userId);
     if (error) throw new Error(error.message);
+
+    // Notifica il proprietario: segnalazione aggiornata a "recuperata".
+    try {
+      const { data: bike } = await supabase
+        .from("bikes")
+        .select("marca, modello")
+        .eq("id", data.bike_id)
+        .maybeSingle();
+      const { notifyUsers } = await import("@/lib/notify.server");
+      const bikeName = [bike?.marca, bike?.modello].filter(Boolean).join(" ") || "La tua bici";
+      await notifyUsers({
+        userIds: [userId],
+        topic: "bike",
+        type: "bike_recovered",
+        title: "Bici recuperata",
+        body: `${bikeName}: la segnalazione di furto è stata chiusa. Il passaporto torna allo stato registrata.`,
+        url: "/app/bici",
+        ctaLabel: "Apri il passaporto",
+        details: [{ label: "Bici", value: bikeName }],
+        payload: { bike_id: data.bike_id },
+      });
+    } catch (e) {
+      console.error("[markRecovered] notify failed", e);
+    }
 
     return { ok: true };
   });
