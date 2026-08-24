@@ -172,11 +172,14 @@ export function useTripRecorder(currentMode: TripMode) {
   const armNativeWatch = useCallback(async (): Promise<boolean> => {
     if (!isNativePlatform()) return false;
     try {
-      const mod = await import(
-        /* @vite-ignore */ "@capacitor-community/background-geolocation"
-      );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const BackgroundGeolocation = ((mod as any).default ?? mod) as any;
+      // Il pacchetto non ha entry point JS (solo codice nativo iOS/Android):
+      // il plugin si raggiunge dal bridge Capacitor, presente solo nel build nativo.
+      const BackgroundGeolocation = (
+        window as unknown as {
+          Capacitor?: { Plugins?: Record<string, any> };
+        }
+      ).Capacitor?.Plugins?.BackgroundGeolocation;
+      if (!BackgroundGeolocation) return false;
       const id = await BackgroundGeolocation.addWatcher(
         {
           backgroundMessage: "Cicla Qui sta registrando il tuo viaggio",
