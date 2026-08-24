@@ -190,7 +190,7 @@ export const lookupStolenBike = createServerFn({ method: "POST" })
     const frame = data.query.trim().toUpperCase();
     const { data: bike } = await supabaseAdmin
       .from("bikes")
-      .select("id, marca, modello, colore, frame_number, photo_url, status, stolen_at, stolen_lat, stolen_lng, stolen_note")
+      .select("id, marca, modello, colore, frame_number, photo_url, status, stolen_at, stolen_lat, stolen_lng, stolen_place, stolen_note")
       .eq("frame_number", frame)
       .eq("status", "rubata")
       .maybeSingle();
