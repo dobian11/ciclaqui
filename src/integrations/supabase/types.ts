@@ -226,6 +226,7 @@ export type Database = {
           stolen_lat: number | null
           stolen_lng: number | null
           stolen_note: string | null
+          stolen_place: string | null
           updated_at: string
         }
         Insert: {
@@ -244,6 +245,7 @@ export type Database = {
           stolen_lat?: number | null
           stolen_lng?: number | null
           stolen_note?: string | null
+          stolen_place?: string | null
           updated_at?: string
         }
         Update: {
@@ -262,6 +264,7 @@ export type Database = {
           stolen_lat?: number | null
           stolen_lng?: number | null
           stolen_note?: string | null
+          stolen_place?: string | null
           updated_at?: string
         }
         Relationships: []
