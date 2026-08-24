@@ -266,6 +266,7 @@ export function useTripRecorder(currentMode: TripMode) {
   const start = useCallback(() => {
     if (typeof navigator === "undefined") return;
     detectorRef.current.reset();
+    classifierRef.current.reset();
     lastFixRef.current = null;
     dbmRef.current = { ...EMPTY_DBM };
     lastFixAtRef.current = Date.now();
@@ -279,6 +280,12 @@ export function useTripRecorder(currentMode: TripMode) {
       dominantMode: currentMode,
       distanceByMode: { ...EMPTY_DBM },
       nativeBackground: false,
+    });
+    // Avvia raccolta motion (accelerometro + heading) in background.
+    // Se i permessi vengono negati, il fallback GPS-only continua a funzionare.
+    motionStartedRef.current = false;
+    void startMotionCollection().then((ok) => {
+      motionStartedRef.current = ok;
     });
     // Prima prova il nativo (background reale); se fallisce, watch web.
     void armNativeWatch().then((native) => {
