@@ -402,6 +402,7 @@ export function useTripRecorder(currentMode: TripMode) {
     if (!stored) return;
     dbmRef.current = stored.distanceByMode ?? { ...EMPTY_DBM };
     detectorRef.current.reset();
+    classifierRef.current.reset();
     lastFixRef.current = null;
     lastFixAtRef.current = Date.now();
     setState({
@@ -413,6 +414,10 @@ export function useTripRecorder(currentMode: TripMode) {
       dominantMode: stored.dominantMode,
       distanceByMode: stored.distanceByMode ?? { ...EMPTY_DBM },
       nativeBackground: false,
+    });
+    motionStartedRef.current = false;
+    void startMotionCollection().then((ok) => {
+      motionStartedRef.current = ok;
     });
     void armNativeWatch().then((native) => {
       if (native) {
