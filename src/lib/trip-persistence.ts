@@ -4,7 +4,8 @@ export interface StoredTripPoint {
   lat: number;
   lng: number;
   t: number;
-  s?: number;
+  s?: number; // km/h
+  m?: TripMode; // mezzo classificato al momento del fix
 }
 
 export interface StoredTrip {
@@ -13,17 +14,29 @@ export interface StoredTrip {
   distanceKm: number;
   dominantMode: TripMode;
   modeCounts: Record<TripMode, number>;
+  /** km percorsi per mezzo (somma dei segmenti) */
+  distanceByMode?: Record<TripMode, number>;
   savedAt: number;
 }
 
-const KEY = "ciclaqui.activeTrip.v1";
+const KEY = "ciclaqui.activeTrip.v2";
+const LEGACY_KEY = "ciclaqui.activeTrip.v1";
 /** Oltre questa pausa il viaggio salvato è considerato scaduto e non viene ripreso. */
 export const RESUME_MAX_GAP_MS = 30 * 60 * 1000;
+/** Tetto punti persistiti: oltre si diradano i fix vecchi (localStorage ~5MB). */
+export const MAX_STORED_POINTS = 4000;
 
 export function saveActiveTrip(trip: StoredTrip) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(KEY, JSON.stringify({ ...trip, savedAt: Date.now() }));
+    let path = trip.path;
+    if (path.length > MAX_STORED_POINTS) {
+      // dirada la metà più vecchia tenendo i fix recenti a piena risoluzione
+      const half = Math.floor(path.length / 2);
+      const old = path.slice(0, half).filter((_, i) => i % 2 === 0);
+      path = [...old, ...path.slice(half)];
+    }
+    window.localStorage.setItem(KEY, JSON.stringify({ ...trip, path, savedAt: Date.now() }));
   } catch {
     /* quota / private mode */
   }
@@ -32,7 +45,7 @@ export function saveActiveTrip(trip: StoredTrip) {
 export function loadActiveTrip(): StoredTrip | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(KEY);
+    const raw = window.localStorage.getItem(KEY) ?? window.localStorage.getItem(LEGACY_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as StoredTrip;
     if (!parsed?.startedAt || !Array.isArray(parsed.path)) return null;
@@ -50,6 +63,7 @@ export function clearActiveTrip() {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.removeItem(KEY);
+    window.localStorage.removeItem(LEGACY_KEY);
   } catch {
     /* ignore */
   }
