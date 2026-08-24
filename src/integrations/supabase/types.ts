@@ -223,6 +223,7 @@ export type Database = {
           receipt_url: string | null
           status: Database["public"]["Enums"]["bike_status"]
           stolen_at: string | null
+          stolen_evidence: string[] | null
           stolen_lat: number | null
           stolen_lng: number | null
           stolen_note: string | null
@@ -242,6 +243,7 @@ export type Database = {
           receipt_url?: string | null
           status?: Database["public"]["Enums"]["bike_status"]
           stolen_at?: string | null
+          stolen_evidence?: string[] | null
           stolen_lat?: number | null
           stolen_lng?: number | null
           stolen_note?: string | null
@@ -261,6 +263,7 @@ export type Database = {
           receipt_url?: string | null
           status?: Database["public"]["Enums"]["bike_status"]
           stolen_at?: string | null
+          stolen_evidence?: string[] | null
           stolen_lat?: number | null
           stolen_lng?: number | null
           stolen_note?: string | null
