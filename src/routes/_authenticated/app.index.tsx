@@ -380,7 +380,7 @@ function MapHome() {
       const startedAt = new Date(trip.startedAt!).toISOString();
       const endedAtMs = Date.now();
       const endedAt = new Date(endedAtMs).toISOString();
-      const path = trip.path.map((p) => ({ lat: p.lat, lng: p.lng, t: p.t, s: p.s }));
+      const path = trip.path.map((p) => ({ lat: p.lat, lng: p.lng, t: p.t, s: p.s, m: p.m }));
       // snapshot del tragitto PRIMA della chiamata: serve per il riepilogo
       // anche se reset() svuota lo stato
       const snapshot = {
@@ -408,9 +408,11 @@ function MapHome() {
       setLastSummary({
         ...snapshot,
         distanceKm: res.distance_km ?? snapshot.distanceKm,
+        mode: (res.mode as typeof snapshot.mode) ?? snapshot.mode,
         pointsEarned: res.points_earned ?? 0,
         anomaly: !!res.anomaly,
         anomalyReason: res.anomaly_reason ?? null,
+        breakdown: res.breakdown ?? undefined,
         challenges: (activeChallenges ?? [])
           .filter((c: any) => challengeMatchesMode(c.type, snapshot.mode as any))
           .map((c: any) => ({
@@ -619,13 +621,21 @@ function MapHome() {
 
       </div>
 
-      {/* Badge viaggio in corso (auto) */}
+      {/* Badge viaggio in corso — colore = mezzo rilevato (bici verde, piedi giallo, auto rosso) */}
       {trip.recording && (
         <div
           className="pointer-events-none absolute inset-x-0 z-[1000] flex justify-center"
           style={{ top: "calc(env(safe-area-inset-top, 0px) + 50px)" }}
         >
-          <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-cicla/95 px-3 py-1 text-cicla-foreground shadow-cicla">
+          <div
+            className={`pointer-events-auto flex items-center gap-2 rounded-full px-3 py-1 shadow-lg ${
+              liveMode === "bike"
+                ? "bg-cicla/95 text-cicla-foreground shadow-cicla"
+                : liveMode === "foot"
+                  ? "bg-amber-500/95 text-black"
+                  : "bg-destructive/90 text-destructive-foreground"
+            }`}
+          >
             <Radio size={11} className="animate-pulse" />
             <span className="font-display text-[11px] font-bold tabular-nums">
               {trip.distanceKm.toFixed(2)} km
@@ -633,7 +643,14 @@ function MapHome() {
             <span className="text-[10px] opacity-80">·</span>
             <span className="font-mono text-[10px]">{fmtDuration(trip.durationS)}</span>
             <span className="text-[10px] opacity-80">·</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider">Auto</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider">
+              {MODE_LABEL[liveMode]}
+            </span>
+            {trip.nativeBackground && (
+              <span className="text-[9px] font-semibold uppercase tracking-wide opacity-70">
+                bg
+              </span>
+            )}
           </div>
         </div>
       )}
