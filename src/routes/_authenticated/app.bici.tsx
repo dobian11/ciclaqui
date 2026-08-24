@@ -647,8 +647,8 @@ function EvidenceSection({ paths }: { paths: string[] }) {
         .createSignedUrls(paths, 3600);
       if (error) throw error;
       return (data ?? [])
-        .map((d, i) => ({ path: paths[i], url: d.signedUrl }))
-        .filter((d) => Boolean(d.url));
+        .map((d, i) => ({ path: paths[i], url: d.signedUrl ?? "" }))
+        .filter((d) => d.url.length > 0);
     },
     staleTime: 1000 * 60 * 45,
   });
