@@ -173,9 +173,15 @@ function StolenBikePanel({ bike }: { bike: NonNullable<StolenBike> }) {
             </div>
           )}
           {bike.stolen_at && (
-            <div className="col-span-2">
+            <div>
               <dt className="text-xs text-muted-foreground">Rubata il</dt>
               <dd>{new Date(bike.stolen_at).toLocaleString("it-IT")}</dd>
+            </div>
+          )}
+          {bike.stolen_place && (
+            <div>
+              <dt className="text-xs text-muted-foreground">Luogo del furto</dt>
+              <dd>{bike.stolen_place}</dd>
             </div>
           )}
           {bike.stolen_note && (
