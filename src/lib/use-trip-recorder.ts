@@ -118,9 +118,25 @@ export function useTripRecorder(currentMode: TripMode) {
 
     const speed = effectiveSpeedKmh(lastFixRef.current, fix);
     const reliable = accuracy == null || accuracy <= CLASSIFY_MAX_ACCURACY_M;
-    const mode: TripMode = reliable
-      ? detectorRef.current.push(speed)
-      : modeAtFixRef.current;
+
+    // Sensor-fusion: se i motion sensor sono attivi e abbiamo campioni recenti,
+    // usiamo il classificatore avanzato; altrimenti fallback sul GPS-only detector.
+    let mode: TripMode = reliable ? detectorRef.current.push(speed) : modeAtFixRef.current;
+    if (reliable && motionStartedRef.current) {
+      const motion = aggregateMotionSamples(flushMotionSamples());
+      const sample: ClassifierSample = {
+        speedKmh: speed,
+        accelVariance: motion.accelVariance,
+        headingDeltaDeg: motion.headingDeltaDeg,
+      };
+      const fused = classifierRef.current.push(sample);
+      // Se il classificatore fusion ha bassa confidenza, rimaniamo sul detector GPS-only
+      // per evitare salti spuri; altrimenti usiamo il fused (con bike boost).
+      if (classifierRef.current.confidence >= FLAG_THRESHOLD) {
+        mode = fused as TripMode;
+      }
+    }
+
     lastFixRef.current = fix;
     lastFixAtRef.current = Date.now();
 
