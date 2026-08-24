@@ -101,6 +101,8 @@ export function useTripRecorder(currentMode: TripMode) {
   const stateRef = useRef<TripRecorderState | null>(null);
   const modeAtFixRef = useRef<TripMode>(currentMode);
   const detectorRef = useRef(new ModeDetector());
+  const classifierRef = useRef(new StreamingModeClassifier());
+  const motionStartedRef = useRef(false);
   const lastFixRef = useRef<GeoFix | null>(null);
   const lastFixAtRef = useRef<number>(0);
   const dbmRef = useRef<Record<TripMode, number>>({ ...EMPTY_DBM });
