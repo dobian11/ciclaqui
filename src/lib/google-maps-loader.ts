@@ -60,7 +60,9 @@ export function loadGoogleMaps(libraries: string[] = ["places", "geometry"]): Pr
   if (typeof window === "undefined") {
     return Promise.reject(new Error("Google Maps requires browser"));
   }
-  if ((window as any).google?.maps) {
+  // Con loading=async la callback può scattare prima che le classi (Map, Size…)
+  // siano pronte: considerate caricate solo se il costruttore Map esiste.
+  if ((window as any).google?.maps?.Map) {
     return Promise.resolve((window as any).google);
   }
   if (loadPromise) return loadPromise;
@@ -70,12 +72,25 @@ export function loadGoogleMaps(libraries: string[] = ["places", "geometry"]): Pr
   loadPromise = new Promise(async (resolve, reject) => {
     const key = await resolveKey();
     if (!key) {
+      loadPromise = null;
       reject(new Error("Missing Google Maps browser key (connector not linked?)"));
       return;
     }
 
     window.__ciclaInitGoogleMaps = () => {
-      resolve((window as any).google);
+      const g = (window as any).google;
+      // Con caricamento async le librerie vanno esplicitamente importate:
+      // senza importLibrary("maps") `new google.maps.Map(...)` lancia
+      // "google.maps.Map is not a constructor".
+      const wanted = ["maps", ...libraries];
+      Promise.all(
+        wanted.map((lib) =>
+          g.maps.importLibrary(lib).catch(() => null),
+        ),
+      ).then(
+        () => resolve(g),
+        () => resolve(g),
+      );
     };
 
     const script = document.createElement("script");
@@ -90,7 +105,10 @@ export function loadGoogleMaps(libraries: string[] = ["places", "geometry"]): Pr
     script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
     script.async = true;
     script.defer = true;
-    script.onerror = () => reject(new Error("Failed to load Google Maps JS"));
+    script.onerror = () => {
+      loadPromise = null;
+      reject(new Error("Failed to load Google Maps JS"));
+    };
     document.head.appendChild(script);
   });
 
