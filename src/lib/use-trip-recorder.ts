@@ -13,6 +13,18 @@ import {
   haversineMeters,
   type GeoFix,
 } from "@/lib/mode-detector";
+import {
+  StreamingModeClassifier,
+  FLAG_THRESHOLD,
+  type Mode as ClassifierMode,
+  type Sample as ClassifierSample,
+} from "@/lib/mode-classifier";
+import {
+  aggregateMotionSamples,
+  flushMotionSamples,
+  startMotionCollection,
+  stopMotionCollection,
+} from "@/lib/motion-sensor";
 
 export interface TripPoint {
   lat: number;
