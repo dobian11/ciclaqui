@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 import {
   ModeDetector,
-  clampModeToSpeed,
   effectiveSpeedKmh,
   haversineMeters,
 } from "./mode-detector";
+import { clampModeToSpeed } from "./mode-classifier";
 
 function feed(d: ModeDetector, speeds: number[]) {
   let m = d.mode;

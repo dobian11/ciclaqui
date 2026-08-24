@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { clampModeToSpeed, type DetectorMode } from "@/lib/mode-detector";
+import { clampModeToSpeed, type Mode as DetectorMode } from "@/lib/mode-classifier";
 
 const pointSchema = z.object({
   lat: z.number().min(-90).max(90),

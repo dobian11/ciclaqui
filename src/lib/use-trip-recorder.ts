@@ -13,6 +13,18 @@ import {
   haversineMeters,
   type GeoFix,
 } from "@/lib/mode-detector";
+import {
+  StreamingModeClassifier,
+  FLAG_THRESHOLD,
+  type Mode as ClassifierMode,
+  type Sample as ClassifierSample,
+} from "@/lib/mode-classifier";
+import {
+  aggregateMotionSamples,
+  flushMotionSamples,
+  startMotionCollection,
+  stopMotionCollection,
+} from "@/lib/motion-sensor";
 
 export interface TripPoint {
   lat: number;
@@ -89,6 +101,8 @@ export function useTripRecorder(currentMode: TripMode) {
   const stateRef = useRef<TripRecorderState | null>(null);
   const modeAtFixRef = useRef<TripMode>(currentMode);
   const detectorRef = useRef(new ModeDetector());
+  const classifierRef = useRef(new StreamingModeClassifier());
+  const motionStartedRef = useRef(false);
   const lastFixRef = useRef<GeoFix | null>(null);
   const lastFixAtRef = useRef<number>(0);
   const dbmRef = useRef<Record<TripMode, number>>({ ...EMPTY_DBM });
@@ -104,9 +118,25 @@ export function useTripRecorder(currentMode: TripMode) {
 
     const speed = effectiveSpeedKmh(lastFixRef.current, fix);
     const reliable = accuracy == null || accuracy <= CLASSIFY_MAX_ACCURACY_M;
-    const mode: TripMode = reliable
-      ? detectorRef.current.push(speed)
-      : modeAtFixRef.current;
+
+    // Sensor-fusion: se i motion sensor sono attivi e abbiamo campioni recenti,
+    // usiamo il classificatore avanzato; altrimenti fallback sul GPS-only detector.
+    let mode: TripMode = reliable ? detectorRef.current.push(speed) : modeAtFixRef.current;
+    if (reliable && motionStartedRef.current) {
+      const motion = aggregateMotionSamples(flushMotionSamples());
+      const sample: ClassifierSample = {
+        speedKmh: speed,
+        accelVariance: motion.accelVariance,
+        headingDeltaDeg: motion.headingDeltaDeg,
+      };
+      const fused = classifierRef.current.push(sample);
+      // Se il classificatore fusion ha bassa confidenza, rimaniamo sul detector GPS-only
+      // per evitare salti spuri; altrimenti usiamo il fused (con bike boost).
+      if (classifierRef.current.confidence >= FLAG_THRESHOLD) {
+        mode = fused as TripMode;
+      }
+    }
+
     lastFixRef.current = fix;
     lastFixAtRef.current = Date.now();
 
@@ -236,6 +266,7 @@ export function useTripRecorder(currentMode: TripMode) {
   const start = useCallback(() => {
     if (typeof navigator === "undefined") return;
     detectorRef.current.reset();
+    classifierRef.current.reset();
     lastFixRef.current = null;
     dbmRef.current = { ...EMPTY_DBM };
     lastFixAtRef.current = Date.now();
@@ -249,6 +280,12 @@ export function useTripRecorder(currentMode: TripMode) {
       dominantMode: currentMode,
       distanceByMode: { ...EMPTY_DBM },
       nativeBackground: false,
+    });
+    // Avvia raccolta motion (accelerometro + heading) in background.
+    // Se i permessi vengono negati, il fallback GPS-only continua a funzionare.
+    motionStartedRef.current = false;
+    void startMotionCollection().then((ok) => {
+      motionStartedRef.current = ok;
     });
     // Prima prova il nativo (background reale); se fallisce, watch web.
     void armNativeWatch().then((native) => {
@@ -281,6 +318,8 @@ export function useTripRecorder(currentMode: TripMode) {
       clearInterval(watchdogRef.current);
       watchdogRef.current = null;
     }
+    stopMotionCollection();
+    motionStartedRef.current = false;
     void wakeLockRef.current?.release();
     clearActiveTrip();
     setState((prev) => ({ ...prev, recording: false, nativeBackground: false }));
@@ -289,6 +328,8 @@ export function useTripRecorder(currentMode: TripMode) {
   const reset = useCallback(() => {
     clearActiveTrip();
     dbmRef.current = { ...EMPTY_DBM };
+    classifierRef.current.reset();
+    detectorRef.current.reset();
     setState({
       recording: false,
       startedAt: null,
@@ -361,6 +402,7 @@ export function useTripRecorder(currentMode: TripMode) {
     if (!stored) return;
     dbmRef.current = stored.distanceByMode ?? { ...EMPTY_DBM };
     detectorRef.current.reset();
+    classifierRef.current.reset();
     lastFixRef.current = null;
     lastFixAtRef.current = Date.now();
     setState({
@@ -372,6 +414,10 @@ export function useTripRecorder(currentMode: TripMode) {
       dominantMode: stored.dominantMode,
       distanceByMode: stored.distanceByMode ?? { ...EMPTY_DBM },
       nativeBackground: false,
+    });
+    motionStartedRef.current = false;
+    void startMotionCollection().then((ok) => {
+      motionStartedRef.current = ok;
     });
     void armNativeWatch().then((native) => {
       if (native) {
