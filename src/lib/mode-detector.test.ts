@@ -63,7 +63,7 @@ describe("ModeDetector", () => {
 });
 
 describe("effectiveSpeedKmh (fallback iOS senza speed GPS)", () => {
-  const base = { lat: 45.4642, lng: 9.19, t: 0 };
+  const base = { lat: 45.4642, lng: 9.19, t: 0, speedKmh: null as number | null };
 
   it("usa la velocità GPS quando presente", () => {
     expect(effectiveSpeedKmh(base, { ...base, t: 1000, speedKmh: 18 })).toBe(18);
