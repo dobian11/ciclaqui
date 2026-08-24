@@ -6,12 +6,20 @@ import {
   loadActiveTrip,
   saveActiveTrip,
 } from "@/lib/trip-persistence";
+import {
+  CLASSIFY_MAX_ACCURACY_M,
+  ModeDetector,
+  effectiveSpeedKmh,
+  haversineMeters,
+  type GeoFix,
+} from "@/lib/mode-detector";
 
 export interface TripPoint {
   lat: number;
   lng: number;
   t: number; // ms epoch
   s?: number; // km/h
+  m?: TripMode; // mezzo classificato al fix
 }
 
 export interface TripRecorderState {
@@ -21,24 +29,45 @@ export interface TripRecorderState {
   distanceKm: number;
   durationS: number;
   dominantMode: TripMode;
+  /** km percorsi per mezzo (per riepilogo e punti per segmento) */
+  distanceByMode: Record<TripMode, number>;
+  /** true su app nativa: il tracking continua anche ad app in background */
+  nativeBackground: boolean;
 }
 
-function haversineKm(a: TripPoint, b: TripPoint) {
-  const R = 6371;
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
-  const h =
-    Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
-  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+const EMPTY_DBM: Record<TripMode, number> = { foot: 0, bike: 0, car: 0 };
+/** Nessun fix per così tanto → il watch web è stato ucciso: riarmalo. */
+const WATCHDOG_STALE_MS = 15_000;
+
+function isNativePlatform(): boolean {
+  try {
+    return (
+      typeof window !== "undefined" &&
+      (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor
+        ?.isNativePlatform?.() === true
+    );
+  } catch {
+    return false;
+  }
+}
+
+interface NativeWatcher {
+  remove: () => Promise<void>;
 }
 
 /**
- * Registratore viaggio: accumula i fix GPS dal momento di Start fino a Stop,
- * calcola distanza e modalità dominante. La scrittura punti avviene lato server
- * con endTrip per impedire frodi client-side.
+ * Registratore viaggio: accumula i fix GPS dal momento di Start fino a Stop.
+ *
+ * Affidabilità:
+ * - su app nativa usa @capacitor-community/background-geolocation: il tracking
+ *   continua davvero con schermo spento / app in background (notifica persistente);
+ * - su web/PWA: watchPosition + Wake Lock + watchdog che riarma il watch se il
+ *   browser lo uccide in background;
+ * - ogni fix è classificato (piedi/bici/auto) con isteresi anti-sfarfallio e
+ *   velocità derivata quando il GPS non la fornisce (iOS);
+ * - persistenza continua su localStorage: reload/chiusura non perdono il viaggio.
+ *
+ * La scrittura definitiva avviene lato server con endTrip (anti-frode).
  */
 export function useTripRecorder(currentMode: TripMode) {
   const [state, setState] = useState<TripRecorderState>({
@@ -48,57 +77,137 @@ export function useTripRecorder(currentMode: TripMode) {
     distanceKm: 0,
     durationS: 0,
     dominantMode: "foot",
+    distanceByMode: EMPTY_DBM,
+    nativeBackground: false,
   });
 
   const watchIdRef = useRef<number | null>(null);
+  const nativeWatcherRef = useRef<NativeWatcher | null>(null);
   const tickRef = useRef<number | null>(null);
+  const watchdogRef = useRef<number | null>(null);
   const wakeLockRef = useRef<ReturnType<typeof createWakeLockKeeper> | null>(null);
   const stateRef = useRef<TripRecorderState | null>(null);
-  const modeCountsRef = useRef<Record<TripMode, number>>({ foot: 0, bike: 0, car: 0 });
   const modeAtFixRef = useRef<TripMode>(currentMode);
+  const detectorRef = useRef(new ModeDetector());
+  const lastFixRef = useRef<GeoFix | null>(null);
+  const lastFixAtRef = useRef<number>(0);
+  const dbmRef = useRef<Record<TripMode, number>>({ ...EMPTY_DBM });
 
-  // tieni traccia del mode "vivo"
+  // tieni traccia del mode "vivo" (fallback se il fix non è classificabile)
   useEffect(() => {
     modeAtFixRef.current = currentMode;
   }, [currentMode]);
 
-  const armWatch = useCallback(() => {
+  const ingestFix = useCallback((fix: GeoFix) => {
+    const accuracy = fix.accuracyM ?? null;
+    if (accuracy != null && accuracy > 50) return; // scarta fix poco precisi
+
+    const speed = effectiveSpeedKmh(lastFixRef.current, fix);
+    const reliable = accuracy == null || accuracy <= CLASSIFY_MAX_ACCURACY_M;
+    const mode: TripMode = reliable
+      ? detectorRef.current.push(speed)
+      : modeAtFixRef.current;
+    lastFixRef.current = fix;
+    lastFixAtRef.current = Date.now();
+
+    const point: TripPoint = {
+      lat: fix.lat,
+      lng: fix.lng,
+      t: fix.t,
+      s: speed > 0 ? Math.round(speed * 10) / 10 : undefined,
+      m: mode,
+    };
+
+    setState((prev) => {
+      if (!prev.recording) return prev;
+      const last = prev.path[prev.path.length - 1];
+      let dist = prev.distanceKm;
+      if (last) {
+        const dM = haversineMeters(last, point);
+        const dKm = dM / 1000;
+        if (dKm < 1) {
+          // ignora salti > 1km tra fix
+          dist += dKm;
+          dbmRef.current[mode] += dKm;
+        }
+      }
+      // modo dominante = mezzo con più km (non più fix): giusto per viaggi misti
+      const dominant = (Object.entries(dbmRef.current).sort((a, b) => b[1] - a[1])[0]?.[1] ?? 0) > 0
+        ? (Object.entries(dbmRef.current).sort((a, b) => b[1] - a[1])[0][0] as TripMode)
+        : mode;
+      return {
+        ...prev,
+        path: [...prev.path, point],
+        distanceKm: dist,
+        dominantMode: dominant,
+        distanceByMode: { ...dbmRef.current },
+      };
+    });
+  }, []);
+
+  /** Watch web (PWA/browser). Su iOS Safari può morire in background: il watchdog lo riarma. */
+  const armWebWatch = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    if (nativeWatcherRef.current) return; // nativo attivo: niente doppio watch
     if (watchIdRef.current != null) navigator.geolocation.clearWatch(watchIdRef.current);
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
-        const acc = pos.coords.accuracy ?? 999;
-        if (acc > 50) return; // scarta fix poco precisi
-        const point: TripPoint = {
+        ingestFix({
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
-          t: Date.now(),
-          s: pos.coords.speed != null ? Math.max(0, pos.coords.speed * 3.6) : undefined,
-        };
-        modeCountsRef.current[modeAtFixRef.current] += 1;
-        setState((prev) => {
-          if (!prev.recording) return prev;
-          const last = prev.path[prev.path.length - 1];
-          let dist = prev.distanceKm;
-          if (last) {
-            const d = haversineKm(last, point);
-            if (d < 1) dist += d; // ignora salti > 1km tra fix
-          }
-          const dominant = (Object.entries(modeCountsRef.current).sort(
-            (a, b) => b[1] - a[1],
-          )[0]?.[0] ?? "foot") as TripMode;
-          return {
-            ...prev,
-            path: [...prev.path, point],
-            distanceKm: dist,
-            dominantMode: dominant,
-          };
+          t: pos.timestamp || Date.now(),
+          speedKmh:
+            pos.coords.speed != null && !Number.isNaN(pos.coords.speed)
+              ? Math.max(0, pos.coords.speed * 3.6)
+              : null,
+          accuracyM: pos.coords.accuracy ?? null,
         });
       },
       () => {},
       { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 },
     );
-  }, []);
+  }, [ingestFix]);
+
+  /** Watch nativo: vero tracking in background su iOS/Android. */
+  const armNativeWatch = useCallback(async (): Promise<boolean> => {
+    if (!isNativePlatform()) return false;
+    try {
+      const mod = await import(
+        /* @vite-ignore */ "@capacitor-community/background-geolocation"
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const BackgroundGeolocation = ((mod as any).default ?? mod) as any;
+      const id = await BackgroundGeolocation.addWatcher(
+        {
+          backgroundMessage: "Cicla Qui sta registrando il tuo viaggio",
+          backgroundTitle: "Cicla Qui · tracking attivo",
+          requestPermissions: true,
+          stale: false,
+          distanceFilter: 10,
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (location: any, error: any) => {
+          if (error || !location) return;
+          ingestFix({
+            lat: location.latitude,
+            lng: location.longitude,
+            t: location.time ?? Date.now(),
+            speedKmh:
+              location.speed != null && !Number.isNaN(location.speed)
+                ? Math.max(0, location.speed * 3.6)
+                : null,
+            accuracyM: location.accuracy ?? null,
+          });
+        },
+      );
+      nativeWatcherRef.current = {
+        remove: () => BackgroundGeolocation.removeWatcher({ id }),
+      };
+      return true;
+    } catch {
+      return false; // plugin non presente nel build nativo → fallback web
+    }
+  }, [ingestFix]);
 
   const armTicker = useCallback(() => {
     if (tickRef.current != null) clearInterval(tickRef.current);
@@ -111,9 +220,22 @@ export function useTripRecorder(currentMode: TripMode) {
     }, 1000);
   }, []);
 
+  /** Watchdog: se non arrivano fix da 15s il watch web è morto → riarmalo. */
+  const armWatchdog = useCallback(() => {
+    if (watchdogRef.current != null) clearInterval(watchdogRef.current);
+    watchdogRef.current = window.setInterval(() => {
+      if (!stateRef.current?.recording) return;
+      if (nativeWatcherRef.current) return; // il nativo non ha bisogno di watchdog
+      if (Date.now() - lastFixAtRef.current > WATCHDOG_STALE_MS) armWebWatch();
+    }, 5000);
+  }, [armWebWatch]);
+
   const start = useCallback(() => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) return;
-    modeCountsRef.current = { foot: 0, bike: 0, car: 0 };
+    if (typeof navigator === "undefined") return;
+    detectorRef.current.reset();
+    lastFixRef.current = null;
+    dbmRef.current = { ...EMPTY_DBM };
+    lastFixAtRef.current = Date.now();
     const startedAt = Date.now();
     setState({
       recording: true,
@@ -122,29 +244,48 @@ export function useTripRecorder(currentMode: TripMode) {
       distanceKm: 0,
       durationS: 0,
       dominantMode: currentMode,
+      distanceByMode: { ...EMPTY_DBM },
+      nativeBackground: false,
     });
-    armWatch();
+    // Prima prova il nativo (background reale); se fallisce, watch web.
+    void armNativeWatch().then((native) => {
+      if (native) {
+        setState((prev) => ({ ...prev, nativeBackground: true }));
+      } else {
+        armWebWatch();
+      }
+    });
     armTicker();
+    armWatchdog();
     wakeLockRef.current = wakeLockRef.current ?? createWakeLockKeeper();
     void wakeLockRef.current.acquire();
-  }, [currentMode, armWatch, armTicker]);
+  }, [currentMode, armNativeWatch, armWebWatch, armTicker, armWatchdog]);
 
   const stop = useCallback(() => {
-    if (watchIdRef.current != null && navigator.geolocation) {
+    if (watchIdRef.current != null && typeof navigator !== "undefined" && navigator.geolocation) {
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
+    }
+    if (nativeWatcherRef.current) {
+      void nativeWatcherRef.current.remove().catch(() => {});
+      nativeWatcherRef.current = null;
     }
     if (tickRef.current != null) {
       clearInterval(tickRef.current);
       tickRef.current = null;
     }
+    if (watchdogRef.current != null) {
+      clearInterval(watchdogRef.current);
+      watchdogRef.current = null;
+    }
     void wakeLockRef.current?.release();
     clearActiveTrip();
-    setState((prev) => ({ ...prev, recording: false }));
+    setState((prev) => ({ ...prev, recording: false, nativeBackground: false }));
   }, []);
 
   const reset = useCallback(() => {
     clearActiveTrip();
+    dbmRef.current = { ...EMPTY_DBM };
     setState({
       recording: false,
       startedAt: null,
@@ -152,6 +293,8 @@ export function useTripRecorder(currentMode: TripMode) {
       distanceKm: 0,
       durationS: 0,
       dominantMode: "foot",
+      distanceByMode: { ...EMPTY_DBM },
+      nativeBackground: false,
     });
   }, []);
 
@@ -160,7 +303,11 @@ export function useTripRecorder(currentMode: TripMode) {
       if (watchIdRef.current != null && navigator.geolocation) {
         navigator.geolocation.clearWatch(watchIdRef.current);
       }
+      if (nativeWatcherRef.current) {
+        void nativeWatcherRef.current.remove().catch(() => {});
+      }
       if (tickRef.current != null) clearInterval(tickRef.current);
+      if (watchdogRef.current != null) clearInterval(watchdogRef.current);
     };
   }, []);
 
@@ -174,17 +321,45 @@ export function useTripRecorder(currentMode: TripMode) {
         path: state.path,
         distanceKm: state.distanceKm,
         dominantMode: state.dominantMode,
-        modeCounts: modeCountsRef.current,
+        modeCounts: { foot: 0, bike: 0, car: 0 },
+        distanceByMode: state.distanceByMode,
         savedAt: Date.now(),
       });
     }
   }, [state]);
 
+  // Flush esplicito quando la pagina sta per essere congelata/chiusa.
+  useEffect(() => {
+    const flush = () => {
+      const s = stateRef.current;
+      if (s?.recording && s.startedAt) {
+        saveActiveTrip({
+          startedAt: s.startedAt,
+          path: s.path,
+          distanceKm: s.distanceKm,
+          dominantMode: s.dominantMode,
+          modeCounts: { foot: 0, bike: 0, car: 0 },
+          distanceByMode: s.distanceByMode,
+          savedAt: Date.now(),
+        });
+      }
+    };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("freeze", flush);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("freeze", flush);
+    };
+  }, []);
+
   // Ripresa automatica all'avvio (reload, tab sospesa, PWA riaperta).
   useEffect(() => {
     const stored = loadActiveTrip();
     if (!stored) return;
-    modeCountsRef.current = stored.modeCounts ?? { foot: 0, bike: 0, car: 0 };
+    dbmRef.current = stored.distanceByMode ?? { ...EMPTY_DBM };
+    detectorRef.current.reset();
+    lastFixRef.current = null;
+    lastFixAtRef.current = Date.now();
     setState({
       recording: true,
       startedAt: stored.startedAt,
@@ -192,9 +367,18 @@ export function useTripRecorder(currentMode: TripMode) {
       distanceKm: stored.distanceKm,
       durationS: Math.round((Date.now() - stored.startedAt) / 1000),
       dominantMode: stored.dominantMode,
+      distanceByMode: stored.distanceByMode ?? { ...EMPTY_DBM },
+      nativeBackground: false,
     });
-    armWatch();
+    void armNativeWatch().then((native) => {
+      if (native) {
+        setState((prev) => ({ ...prev, nativeBackground: true }));
+      } else {
+        armWebWatch();
+      }
+    });
     armTicker();
+    armWatchdog();
     wakeLockRef.current = wakeLockRef.current ?? createWakeLockKeeper();
     void wakeLockRef.current.acquire();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -206,7 +390,7 @@ export function useTripRecorder(currentMode: TripMode) {
     const revive = () => {
       if (!stateRef.current?.recording) return;
       if (document.visibilityState !== "visible") return;
-      armWatch();
+      if (!nativeWatcherRef.current) armWebWatch();
       armTicker();
       void wakeLockRef.current?.acquire();
     };
@@ -218,7 +402,7 @@ export function useTripRecorder(currentMode: TripMode) {
       window.removeEventListener("pageshow", revive);
       window.removeEventListener("focus", revive);
     };
-  }, [armWatch, armTicker]);
+  }, [armWebWatch, armTicker]);
 
   return { ...state, start, stop, reset };
 }
