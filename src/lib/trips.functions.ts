@@ -177,7 +177,9 @@ export const endTrip = createServerFn({ method: "POST" })
     } else if (hasHints) {
       const elBikeKm = bikeKm * eligibleRatio;
       const elFootM = footM * eligibleRatio;
-      points = Math.floor(elBikeKm) * pointsPerKm.bike + Math.floor(elFootM / 100) * pointsPerKm.foot;
+      // Bici: 10 pt/km sui km effettivi (moltiplica prima, arrotonda il punteggio).
+      // Piedi: 3 pt ogni 100 m completati (blocchi da 100 m).
+      points = Math.floor(elBikeKm * pointsPerKm.bike) + Math.floor(elFootM / 100) * pointsPerKm.foot;
     } else if (data.mode === "foot") {
       points = Math.floor(eligibleKm * 10) * pointsPerKm.foot;
     } else {
