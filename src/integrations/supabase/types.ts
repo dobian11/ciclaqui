@@ -1472,6 +1472,7 @@ export type Database = {
         Row: {
           company_id: string | null
           created_at: string
+          created_by: string | null
           declared_mode: string
           id: string
           predicted_mode: string
@@ -1486,6 +1487,7 @@ export type Database = {
         Insert: {
           company_id?: string | null
           created_at?: string
+          created_by?: string | null
           declared_mode: string
           id?: string
           predicted_mode: string
@@ -1500,6 +1502,7 @@ export type Database = {
         Update: {
           company_id?: string | null
           created_at?: string
+          created_by?: string | null
           declared_mode?: string
           id?: string
           predicted_mode?: string
@@ -1524,6 +1527,47 @@ export type Database = {
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_flags_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_role: string
+          created_at: string
+          id: string
+          new_row: Json | null
+          old_row: Json | null
+          trip_flag_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_role?: string
+          created_at?: string
+          id?: string
+          new_row?: Json | null
+          old_row?: Json | null
+          trip_flag_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_role?: string
+          created_at?: string
+          id?: string
+          new_row?: Json | null
+          old_row?: Json | null
+          trip_flag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_flags_audit_trip_flag_id_fkey"
+            columns: ["trip_flag_id"]
+            isOneToOne: false
+            referencedRelation: "trip_flags"
             referencedColumns: ["id"]
           },
         ]
