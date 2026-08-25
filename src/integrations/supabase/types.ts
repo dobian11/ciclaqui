@@ -1562,15 +1562,7 @@ export type Database = {
           old_row?: Json | null
           trip_flag_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "trip_flags_audit_trip_flag_id_fkey"
-            columns: ["trip_flag_id"]
-            isOneToOne: false
-            referencedRelation: "trip_flags"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       trips: {
         Row: {

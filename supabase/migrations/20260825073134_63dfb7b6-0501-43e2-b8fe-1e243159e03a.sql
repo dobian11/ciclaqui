@@ -1,0 +1,1 @@
+ALTER TABLE public.trip_flags_audit DROP CONSTRAINT IF EXISTS trip_flags_audit_trip_flag_id_fkey;
