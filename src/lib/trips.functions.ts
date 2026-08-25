@@ -168,23 +168,18 @@ export const endTrip = createServerFn({ method: "POST" })
     const eligibleKm = Math.max(0, Math.min(distance, dailyCapKm - kmToday));
     const eligibleRatio = distance > 0 ? eligibleKm / distance : 0;
 
-    // A piedi: 3 punti ogni 100 m completati (blocchi da 0,1 km).
-    // Bici/auto: punti per km secondo app_config.
-    // Con hint per-fix: punti per segmento, con quota cap proporzionale.
-    let points: number;
-    if (anomaly) {
-      points = 0;
-    } else if (hasHints) {
-      const elBikeKm = bikeKm * eligibleRatio;
-      const elFootM = footM * eligibleRatio;
-      // Bici: 10 pt/km sui km effettivi (moltiplica prima, arrotonda il punteggio).
-      // Piedi: 3 pt ogni 100 m completati (blocchi da 100 m).
-      points = Math.floor(elBikeKm * pointsPerKm.bike) + Math.floor(elFootM / 100) * pointsPerKm.foot;
-    } else if (data.mode === "foot") {
-      points = Math.floor(eligibleKm * 10) * pointsPerKm.foot;
-    } else {
-      points = Math.floor(eligibleKm * pointsPerKm[data.mode]);
-    }
+    // Punti: logica pura e testata in src/lib/trip-points.ts
+    // Bici 10 pt/km (frazioni incluse) · piedi 3 pt ogni 100 m · auto 0.
+    const points = computeTripPoints({
+      anomaly,
+      hasHints,
+      bikeKm,
+      footM,
+      eligibleRatio,
+      eligibleKm,
+      mode: data.mode,
+      pointsPerKm,
+    });
     const calories = Math.round((MET[effectiveMode] * 3.5 * 70 * (durationMs / 60000)) / 200);
     const co2Saved = effectiveMode === "car" ? 0 : distance * CO2_KG_PER_KM_CAR_AVOIDED;
 
