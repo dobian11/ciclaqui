@@ -104,6 +104,11 @@ describe("computeTripPoints — senza hint (mezzo dichiarato)", () => {
     expect(computeTripPoints({ ...noHints, mode: "foot", eligibleKm: 0.099 })).toBe(0);
   });
 
+  it("piedi: regressione 900 m (0,9 km) → 27 pt, 1,0 km → 30 pt", () => {
+    expect(computeTripPoints({ ...noHints, mode: "foot", eligibleKm: 0.9 })).toBe(27);
+    expect(computeTripPoints({ ...noHints, mode: "foot", eligibleKm: 1 })).toBe(30);
+  });
+
   it("auto: sempre 0 pt", () => {
     expect(computeTripPoints({ ...noHints, mode: "car", eligibleKm: 12 })).toBe(0);
   });
