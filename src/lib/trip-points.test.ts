@@ -23,8 +23,23 @@ describe("computeTripPoints — con hint per-fix", () => {
     expect(computeTripPoints({ ...base, bikeKm: 0.9 })).toBe(9);
   });
 
+  it("bici: 1,0 km esatto → 10 pt", () => {
+    expect(computeTripPoints({ ...base, bikeKm: 1 })).toBe(10);
+  });
+
   it("bici: 10 km esatti → 100 pt", () => {
     expect(computeTripPoints({ ...base, bikeKm: 10 })).toBe(100);
+  });
+
+  it("bici: regressioni arrotondamento (0,1→1, 0,99→9, 1,99→19, 3,33→33)", () => {
+    expect(computeTripPoints({ ...base, bikeKm: 0.1 })).toBe(1);
+    expect(computeTripPoints({ ...base, bikeKm: 0.99 })).toBe(9);
+    expect(computeTripPoints({ ...base, bikeKm: 1.99 })).toBe(19);
+    expect(computeTripPoints({ ...base, bikeKm: 3.33 })).toBe(33);
+  });
+
+  it("bici: distanza nulla → 0 pt", () => {
+    expect(computeTripPoints({ ...base, bikeKm: 0 })).toBe(0);
   });
 
   it("piedi: 3 pt ogni 100 m completati (137 m → 3 pt)", () => {
