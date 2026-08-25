@@ -264,43 +264,19 @@ export const endTrip = createServerFn({ method: "POST" })
       }
     }
 
-    // Aggiorna wallet + transazione punti
-    if (points > 0) {
-      await supabaseAdmin.from("point_transactions").insert({
-        user_id: userId,
-        trip_id: trip.id,
-        delta_points: points,
-        delta_eur: Math.round(points * eurPerPoint * 100) / 100,
-        reason: "trip",
-      });
-      const { data: wallet } = await supabaseAdmin
-        .from("wallets")
-        .select("points_balance, lifetime_points, lifetime_km, eur_balance")
-        .eq("user_id", userId)
-        .maybeSingle();
-      await supabaseAdmin
-        .from("wallets")
-        .update({
-          points_balance: (wallet?.points_balance ?? 0) + points,
-          lifetime_points: (wallet?.lifetime_points ?? 0) + points,
-          lifetime_km: Math.round(((wallet?.lifetime_km ?? 0) + distance) * 100) / 100,
-          eur_balance:
-            Math.round(((wallet?.eur_balance ?? 0) + points * eurPerPoint) * 100) / 100,
-        })
-        .eq("user_id", userId);
-    } else {
-      // aggiorna solo km lifetime
-      const { data: wallet } = await supabaseAdmin
-        .from("wallets")
-        .select("lifetime_km")
-        .eq("user_id", userId)
-        .maybeSingle();
-      await supabaseAdmin
-        .from("wallets")
-        .update({
-          lifetime_km: Math.round(((wallet?.lifetime_km ?? 0) + distance) * 100) / 100,
-        })
-        .eq("user_id", userId);
+    // Accredito atomico: point_transaction + wallet in un'unica operazione
+    // lato DB (incrementale, niente read-modify-write → nessun punto perso
+    // in caso di viaggi simultanei o wallet mancante).
+    const { error: creditErr } = await supabaseAdmin.rpc("credit_trip_points", {
+      _user_id: userId,
+      _trip_id: trip.id,
+      _points: points,
+      _eur_per_point: eurPerPoint,
+      _distance_km: distance,
+    } as any);
+    if (creditErr) {
+      console.error("[endTrip] credit_trip_points failed", creditErr);
+      throw new Error("Viaggio salvato ma accredito punti fallito, riprova");
     }
 
     // ── Gamification: streak + sfide attive ────────────────
