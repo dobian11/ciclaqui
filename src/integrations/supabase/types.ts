@@ -1472,6 +1472,7 @@ export type Database = {
         Row: {
           company_id: string | null
           created_at: string
+          created_by: string | null
           declared_mode: string
           id: string
           predicted_mode: string
@@ -1486,6 +1487,7 @@ export type Database = {
         Insert: {
           company_id?: string | null
           created_at?: string
+          created_by?: string | null
           declared_mode: string
           id?: string
           predicted_mode: string
@@ -1500,6 +1502,7 @@ export type Database = {
         Update: {
           company_id?: string | null
           created_at?: string
+          created_by?: string | null
           declared_mode?: string
           id?: string
           predicted_mode?: string
@@ -1527,6 +1530,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      trip_flags_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_role: string
+          created_at: string
+          id: string
+          new_row: Json | null
+          old_row: Json | null
+          trip_flag_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_role?: string
+          created_at?: string
+          id?: string
+          new_row?: Json | null
+          old_row?: Json | null
+          trip_flag_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_role?: string
+          created_at?: string
+          id?: string
+          new_row?: Json | null
+          old_row?: Json | null
+          trip_flag_id?: string
+        }
+        Relationships: []
       }
       trips: {
         Row: {
