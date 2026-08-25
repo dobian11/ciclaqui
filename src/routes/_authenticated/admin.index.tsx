@@ -51,6 +51,7 @@ import {
   LayoutDashboard,
   TicketPercent,
   Landmark,
+  Terminal,
 } from "lucide-react";
 
 type TabId =
