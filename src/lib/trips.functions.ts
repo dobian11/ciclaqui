@@ -52,7 +52,7 @@ export const endTrip = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const log = createServerLogger("endTrip");
+    const log = createServerLogger("endTrip", { userId });
     // Niente PII nei log: solo id troncato e metriche.
     const uid = userId.slice(0, 8);
     log.debug("received", {
@@ -375,6 +375,8 @@ export const endTrip = createServerFn({ method: "POST" })
     } catch (e) {
       log.error("gamification-failed", { user: uid, message: (e as Error)?.message ?? String(e) });
     }
+
+    await log.flush();
 
     return {
       id: trip.id,
