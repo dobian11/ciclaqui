@@ -662,6 +662,13 @@ function MapHome() {
             <span className="text-[10px] font-bold uppercase tracking-wider">
               {MODE_LABEL[liveMode]}
             </span>
+            <span className="text-[10px] opacity-80">·</span>
+            <span
+              className="text-[10px] font-bold tabular-nums"
+              title="Stima live: il server ricalcola i punti al salvataggio"
+            >
+              ~{livePoints ?? 0} pt
+            </span>
             {trip.nativeBackground && (
               <span className="text-[9px] font-semibold uppercase tracking-wide opacity-70">
                 bg
@@ -828,14 +835,7 @@ function MapHome() {
         aqLoading={aqQuery.isFetching}
         aqError={aqQuery.isError}
         aqRetry={() => aqQuery.refetch()}
-        livePoints={
-          trip.recording
-            ? Math.floor(
-                trip.distanceKm *
-                  (trip.dominantMode === "bike" ? 10 : trip.dominantMode === "foot" ? 3 : 0),
-              )
-            : null
-        }
+        livePoints={livePoints}
       />
     </div>
   );
