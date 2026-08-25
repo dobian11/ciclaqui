@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { clampModeToSpeed, type Mode as DetectorMode } from "@/lib/mode-classifier";
 import { computeTripPoints } from "@/lib/trip-points";
+import { createServerLogger } from "@/lib/server-log";
 
 const pointSchema = z.object({
   lat: z.number().min(-90).max(90),
