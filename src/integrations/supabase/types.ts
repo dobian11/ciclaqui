@@ -1820,6 +1820,16 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      credit_trip_points: {
+        Args: {
+          _distance_km: number
+          _eur_per_point: number
+          _points: number
+          _trip_id: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { clampModeToSpeed, type Mode as DetectorMode } from "@/lib/mode-classifier";
+import { computeTripPoints } from "@/lib/trip-points";
 
 const pointSchema = z.object({
   lat: z.number().min(-90).max(90),
@@ -168,23 +169,18 @@ export const endTrip = createServerFn({ method: "POST" })
     const eligibleKm = Math.max(0, Math.min(distance, dailyCapKm - kmToday));
     const eligibleRatio = distance > 0 ? eligibleKm / distance : 0;
 
-    // A piedi: 3 punti ogni 100 m completati (blocchi da 0,1 km).
-    // Bici/auto: punti per km secondo app_config.
-    // Con hint per-fix: punti per segmento, con quota cap proporzionale.
-    let points: number;
-    if (anomaly) {
-      points = 0;
-    } else if (hasHints) {
-      const elBikeKm = bikeKm * eligibleRatio;
-      const elFootM = footM * eligibleRatio;
-      // Bici: 10 pt/km sui km effettivi (moltiplica prima, arrotonda il punteggio).
-      // Piedi: 3 pt ogni 100 m completati (blocchi da 100 m).
-      points = Math.floor(elBikeKm * pointsPerKm.bike) + Math.floor(elFootM / 100) * pointsPerKm.foot;
-    } else if (data.mode === "foot") {
-      points = Math.floor(eligibleKm * 10) * pointsPerKm.foot;
-    } else {
-      points = Math.floor(eligibleKm * pointsPerKm[data.mode]);
-    }
+    // Punti: logica pura e testata in src/lib/trip-points.ts
+    // Bici 10 pt/km (frazioni incluse) · piedi 3 pt ogni 100 m · auto 0.
+    const points = computeTripPoints({
+      anomaly,
+      hasHints,
+      bikeKm,
+      footM,
+      eligibleRatio,
+      eligibleKm,
+      mode: data.mode,
+      pointsPerKm,
+    });
     const calories = Math.round((MET[effectiveMode] * 3.5 * 70 * (durationMs / 60000)) / 200);
     const co2Saved = effectiveMode === "car" ? 0 : distance * CO2_KG_PER_KM_CAR_AVOIDED;
 
@@ -264,43 +260,19 @@ export const endTrip = createServerFn({ method: "POST" })
       }
     }
 
-    // Aggiorna wallet + transazione punti
-    if (points > 0) {
-      await supabaseAdmin.from("point_transactions").insert({
-        user_id: userId,
-        trip_id: trip.id,
-        delta_points: points,
-        delta_eur: Math.round(points * eurPerPoint * 100) / 100,
-        reason: "trip",
-      });
-      const { data: wallet } = await supabaseAdmin
-        .from("wallets")
-        .select("points_balance, lifetime_points, lifetime_km, eur_balance")
-        .eq("user_id", userId)
-        .maybeSingle();
-      await supabaseAdmin
-        .from("wallets")
-        .update({
-          points_balance: (wallet?.points_balance ?? 0) + points,
-          lifetime_points: (wallet?.lifetime_points ?? 0) + points,
-          lifetime_km: Math.round(((wallet?.lifetime_km ?? 0) + distance) * 100) / 100,
-          eur_balance:
-            Math.round(((wallet?.eur_balance ?? 0) + points * eurPerPoint) * 100) / 100,
-        })
-        .eq("user_id", userId);
-    } else {
-      // aggiorna solo km lifetime
-      const { data: wallet } = await supabaseAdmin
-        .from("wallets")
-        .select("lifetime_km")
-        .eq("user_id", userId)
-        .maybeSingle();
-      await supabaseAdmin
-        .from("wallets")
-        .update({
-          lifetime_km: Math.round(((wallet?.lifetime_km ?? 0) + distance) * 100) / 100,
-        })
-        .eq("user_id", userId);
+    // Accredito atomico: point_transaction + wallet in un'unica operazione
+    // lato DB (incrementale, niente read-modify-write → nessun punto perso
+    // in caso di viaggi simultanei o wallet mancante).
+    const { error: creditErr } = await supabaseAdmin.rpc("credit_trip_points", {
+      _user_id: userId,
+      _trip_id: trip.id,
+      _points: points,
+      _eur_per_point: eurPerPoint,
+      _distance_km: distance,
+    } as any);
+    if (creditErr) {
+      console.error("[endTrip] credit_trip_points failed", creditErr);
+      throw new Error("Viaggio salvato ma accredito punti fallito, riprova");
     }
 
     // ── Gamification: streak + sfide attive ────────────────
