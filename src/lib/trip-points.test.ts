@@ -122,3 +122,33 @@ describe("computeTripPoints — anomalie", () => {
     ).toBe(0);
   });
 });
+
+describe("computeLivePointsPreview — anteprima client (specchio del ramo hasHints)", () => {
+  const d = (foot: number, bike: number, car = 0) => ({ foot, bike, car });
+
+  it("bici: regressione 0,9 km → 9 pt, 2,9 km → 29 pt, 1,0 km → 10 pt", () => {
+    expect(computeLivePointsPreview(d(0, 0.9), PPK)).toBe(9);
+    expect(computeLivePointsPreview(d(0, 2.9), PPK)).toBe(29);
+    expect(computeLivePointsPreview(d(0, 1.0), PPK)).toBe(10);
+  });
+
+  it("piedi: regressione 900 m → 27 pt, blocchi da 100 m", () => {
+    expect(computeLivePointsPreview(d(0.9, 0), PPK)).toBe(27);
+    expect(computeLivePointsPreview(d(0.199, 0), PPK)).toBe(3);
+    expect(computeLivePointsPreview(d(0.2, 0), PPK)).toBe(6);
+  });
+
+  it("viaggio misto: somma bici + piedi, auto ignorata", () => {
+    expect(computeLivePointsPreview(d(0.3, 1.5, 4.2), PPK)).toBe(15 + 9);
+  });
+
+  it("viaggio vuoto / solo auto → 0 pt", () => {
+    expect(computeLivePointsPreview(d(0, 0, 0), PPK)).toBe(0);
+    expect(computeLivePointsPreview(d(0, 0, 8.5), PPK)).toBe(0);
+  });
+
+  it("rispetta le tariffe configurate dall'ente", () => {
+    const custom = { foot: 5, bike: 12, car: 0 };
+    expect(computeLivePointsPreview(d(0.5, 2.0), custom)).toBe(24 + 25);
+  });
+});
