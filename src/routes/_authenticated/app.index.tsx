@@ -16,7 +16,8 @@ import { Wind, Flame, Locate, Loader2, Layers, X, Radio, AlertTriangle, RefreshC
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAirQuality } from "@/lib/air-quality.functions";
-import { endTrip } from "@/lib/trips.functions";
+import { endTrip, getPointsConfig } from "@/lib/trips.functions";
+import { computeLivePointsPreview } from "@/lib/trip-points";
 import { getMyTrackingWindow } from "@/lib/companies.functions";
 import { listActiveChallenges } from "@/lib/gamification.functions";
 import { ActiveCupsBanner } from "@/components/cicla/ActiveCupsBanner";
