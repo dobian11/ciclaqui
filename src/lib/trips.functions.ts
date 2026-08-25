@@ -266,6 +266,7 @@ export const endTrip = createServerFn({ method: "POST" })
 
     if (tripErr || !trip) {
       log.error("insert-failed", { user: uid, message: tripErr?.message ?? "nessuna riga" });
+      await log.flush();
       throw new Error("Impossibile salvare il viaggio");
     }
 
@@ -331,6 +332,7 @@ export const endTrip = createServerFn({ method: "POST" })
     } as any);
     if (creditErr) {
       log.error("credit-failed", { user: uid, tripId: trip.id, points, message: creditErr.message });
+      await log.flush();
       throw new Error("Viaggio salvato ma accredito punti fallito, riprova");
     }
 
