@@ -342,6 +342,21 @@ function MapHome() {
 
   const liveMode = trip.recording ? trip.dominantMode : geo.mode;
 
+  // Config punti (pubblica) per l'anteprima live: stessa formula del server.
+  const pointsCfgFn = useServerFn(getPointsConfig);
+  const pointsCfgQuery = useQuery({
+    queryKey: ["points-config"],
+    queryFn: () => pointsCfgFn(),
+    staleTime: 30 * 60_000,
+  });
+  const pointsPerKm = pointsCfgQuery.data ?? { foot: 3, bike: 10, car: 0 };
+  // Anteprima punti lato client dai km per mezzo accumulati: formula identica
+  // al server (ramo con hint per segmento). Cap giornaliero e anti-frode li
+  // applica il server al salvataggio — qui è una stima istantanea.
+  const livePoints = trip.recording
+    ? computeLivePointsPreview(trip.distanceByMode, pointsPerKm)
+    : null;
+
   const userWeight = 70;
   const met = liveMode === "bike" ? 6.8 : liveMode === "foot" ? 3.5 : 1.3;
   const caloriesPerMin = Math.round((met * 3.5 * userWeight) / 200);
