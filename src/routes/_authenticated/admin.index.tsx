@@ -25,6 +25,7 @@ import { AdminListControls, AdminPagination } from "@/components/cicla/AdminList
 import { useAdminList } from "@/hooks/use-admin-list";
 import { AdminUsersPanel } from "@/components/cicla/AdminUsersPanel";
 import { AdminTopupsPanel } from "@/components/cicla/AdminTopupsPanel";
+import { AdminLogsPanel } from "@/components/cicla/AdminLogsPanel";
 import { AdminDiscountCodes } from "@/components/cicla/AdminDiscountCodes";
 import { DocumentViewerDialog, type DocTarget } from "@/components/cicla/DocumentViewerDialog";
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,8 @@ type TabId =
   | "prelievi"
   | "ricariche"
   | "sconti"
-  | "notifiche";
+  | "notifiche"
+  | "diagnostica";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   ssr: false,
@@ -372,6 +374,7 @@ function AdminDashboard() {
     { id: "ricariche", label: "Ricariche", icon: Landmark },
     { id: "sconti", label: "Codici sconto", icon: TicketPercent },
     { id: "notifiche", label: "Notifiche", icon: Bell, count: unreadCount },
+    { id: "diagnostica", label: "Diagnostica", icon: Terminal },
   ];
 
   return (
@@ -668,6 +671,8 @@ function AdminDashboard() {
           {tab === "utenti" && <AdminUsersPanel />}
 
           {tab === "ricariche" && <AdminTopupsPanel />}
+
+          {tab === "diagnostica" && <AdminLogsPanel />}
 
           {tab === "sconti" && <AdminDiscountCodes />}
 
