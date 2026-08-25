@@ -172,6 +172,16 @@ export const endTrip = createServerFn({ method: "POST" })
       anomaly = true;
       anomalyReason = "Mezzo dichiarato non coerente con la velocità misurata";
     }
+    if (anomaly) {
+      log.warn("anomaly", {
+        user: uid,
+        reason: anomalyReason,
+        effectiveMode,
+        maxSpeedKmh: Math.round(maxSpeed * 10) / 10,
+        bikeKm: Math.round(bikeKm * 1000) / 1000,
+        carKm: Math.round(carKm * 1000) / 1000,
+      });
+    }
 
     // Cap giornaliero
     const today = new Date();
@@ -197,6 +207,39 @@ export const endTrip = createServerFn({ method: "POST" })
       mode: data.mode,
       pointsPerKm,
     });
+    // Traccia completa del calcolo: è la riga da cercare in QA per capire
+    // perché un viaggio ha dato X punti (km per mezzo, ramo, cap, tariffe).
+    log.info("scored", {
+      user: uid,
+      hasHints,
+      bikeKm: Math.round(bikeKm * 1000) / 1000,
+      footM: Math.round(footM),
+      carKm: Math.round(carKm * 1000) / 1000,
+      eligibleKm: Math.round(eligibleKm * 1000) / 1000,
+      eligibleRatio: Math.round(eligibleRatio * 1000) / 1000,
+      kmToday: Math.round(kmToday * 100) / 100,
+      dailyCapKm,
+      pointsPerKm,
+      points,
+      effectiveMode,
+      maxSpeedKmh: Math.round(maxSpeed * 10) / 10,
+      anomaly,
+    });
+    // Spia QA: distanza eleggibile green ma 0 punti → quasi sempre un bug.
+    if (
+      !anomaly &&
+      points === 0 &&
+      eligibleRatio > 0.5 &&
+      (bikeKm >= 0.2 || footM >= 200)
+    ) {
+      log.warn("zero-points-unexpected", {
+        user: uid,
+        bikeKm: Math.round(bikeKm * 1000) / 1000,
+        footM: Math.round(footM),
+        eligibleRatio: Math.round(eligibleRatio * 1000) / 1000,
+        pointsPerKm,
+      });
+    }
     const calories = Math.round((MET[effectiveMode] * 3.5 * 70 * (durationMs / 60000)) / 200);
     const co2Saved = effectiveMode === "car" ? 0 : distance * CO2_KG_PER_KM_CAR_AVOIDED;
 
