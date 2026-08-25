@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+// placeholder-anchor
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 // La mappa (componente + SDK Google) è il chunk più pesante della schermata:
 // caricandola in lazy, controlli, GPS e UI si vedono subito.
