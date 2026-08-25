@@ -265,7 +265,7 @@ export const endTrip = createServerFn({ method: "POST" })
       .single();
 
     if (tripErr || !trip) {
-      console.error("[endTrip] insert failed", tripErr);
+      log.error("insert-failed", { user: uid, message: tripErr?.message ?? "nessuna riga" });
       throw new Error("Impossibile salvare il viaggio");
     }
 
@@ -315,7 +315,7 @@ export const endTrip = createServerFn({ method: "POST" })
           });
         }
       } catch (e) {
-        console.error("[endTrip] notify flag failed", e);
+        log.error("notify-flag-failed", { user: uid, message: (e as Error)?.message ?? String(e) });
       }
     }
 
@@ -330,7 +330,7 @@ export const endTrip = createServerFn({ method: "POST" })
       _distance_km: distance,
     } as any);
     if (creditErr) {
-      console.error("[endTrip] credit_trip_points failed", creditErr);
+      log.error("credit-failed", { user: uid, tripId: trip.id, points, message: creditErr.message });
       throw new Error("Viaggio salvato ma accredito punti fallito, riprova");
     }
 
@@ -373,7 +373,7 @@ export const endTrip = createServerFn({ method: "POST" })
         } as any);
       }
     } catch (e) {
-      console.error("[endTrip] gamification rpc failed", e);
+      log.error("gamification-failed", { user: uid, message: (e as Error)?.message ?? String(e) });
     }
 
     return {
