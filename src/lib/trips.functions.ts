@@ -335,6 +335,25 @@ export const endTrip = createServerFn({ method: "POST" })
   });
 
 
+/**
+ * Config punti pubblica (non sensibile): serve al client per l'anteprima
+ * live dei punti durante il tracking. Non richiede autenticazione.
+ */
+export const getPointsConfig = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: cfg } = await supabaseAdmin
+    .from("app_config")
+    .select("points_per_km_bike, points_per_km_foot, points_per_km_car, daily_cap_km")
+    .eq("id", 1)
+    .maybeSingle();
+  return {
+    foot: cfg?.points_per_km_foot ?? 3,
+    bike: cfg?.points_per_km_bike ?? 10,
+    car: cfg?.points_per_km_car ?? 0,
+    dailyCapKm: Number(cfg?.daily_cap_km ?? 50),
+  };
+});
+
 /** Lista viaggi recenti dell'utente (per la sezione punti). */
 export const listMyTrips = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

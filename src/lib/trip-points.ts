@@ -53,3 +53,19 @@ export function computeTripPoints(input: TripPointsInput): number {
   }
   return Math.floor(input.eligibleKm * pointsPerKm[input.mode]);
 }
+
+/**
+ * Anteprima live lato client: stima i punti del viaggio in corso dai km
+ * per mezzo accumulati on-device, con la STESSA formula del server
+ * (ramo hasHints, quota cap 100%, nessuna anomalia).
+ * Il valore definitivo resta quello calcolato dal server al salvataggio:
+ * il server ri-valida i segmenti e applica cap giornaliero e anti-frode.
+ */
+export function computeLivePointsPreview(
+  distanceByMode: { foot: number; bike: number; car: number },
+  pointsPerKm: PointsPerKm,
+): number {
+  const bikePts = Math.floor(distanceByMode.bike * pointsPerKm.bike);
+  const footPts = Math.floor(distanceByMode.foot * 10) * pointsPerKm.foot;
+  return bikePts + footPts;
+}

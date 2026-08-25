@@ -16,7 +16,8 @@ import { Wind, Flame, Locate, Loader2, Layers, X, Radio, AlertTriangle, RefreshC
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAirQuality } from "@/lib/air-quality.functions";
-import { endTrip } from "@/lib/trips.functions";
+import { endTrip, getPointsConfig } from "@/lib/trips.functions";
+import { computeLivePointsPreview } from "@/lib/trip-points";
 import { getMyTrackingWindow } from "@/lib/companies.functions";
 import { listActiveChallenges } from "@/lib/gamification.functions";
 import { ActiveCupsBanner } from "@/components/cicla/ActiveCupsBanner";
@@ -341,6 +342,21 @@ function MapHome() {
 
   const liveMode = trip.recording ? trip.dominantMode : geo.mode;
 
+  // Config punti (pubblica) per l'anteprima live: stessa formula del server.
+  const pointsCfgFn = useServerFn(getPointsConfig);
+  const pointsCfgQuery = useQuery({
+    queryKey: ["points-config"],
+    queryFn: () => pointsCfgFn(),
+    staleTime: 30 * 60_000,
+  });
+  const pointsPerKm = pointsCfgQuery.data ?? { foot: 3, bike: 10, car: 0 };
+  // Anteprima punti lato client dai km per mezzo accumulati: formula identica
+  // al server (ramo con hint per segmento). Cap giornaliero e anti-frode li
+  // applica il server al salvataggio — qui è una stima istantanea.
+  const livePoints = trip.recording
+    ? computeLivePointsPreview(trip.distanceByMode, pointsPerKm)
+    : null;
+
   const userWeight = 70;
   const met = liveMode === "bike" ? 6.8 : liveMode === "foot" ? 3.5 : 1.3;
   const caloriesPerMin = Math.round((met * 3.5 * userWeight) / 200);
@@ -646,6 +662,13 @@ function MapHome() {
             <span className="text-[10px] font-bold uppercase tracking-wider">
               {MODE_LABEL[liveMode]}
             </span>
+            <span className="text-[10px] opacity-80">·</span>
+            <span
+              className="text-[10px] font-bold tabular-nums"
+              title="Stima live: il server ricalcola i punti al salvataggio"
+            >
+              ~{livePoints ?? 0} pt
+            </span>
             {trip.nativeBackground && (
               <span className="text-[9px] font-semibold uppercase tracking-wide opacity-70">
                 bg
@@ -812,14 +835,7 @@ function MapHome() {
         aqLoading={aqQuery.isFetching}
         aqError={aqQuery.isError}
         aqRetry={() => aqQuery.refetch()}
-        livePoints={
-          trip.recording
-            ? Math.floor(
-                trip.distanceKm *
-                  (trip.dominantMode === "bike" ? 10 : trip.dominantMode === "foot" ? 3 : 0),
-              )
-            : null
-        }
+        livePoints={livePoints}
       />
     </div>
   );
