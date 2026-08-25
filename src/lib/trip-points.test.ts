@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeTripPoints, type PointsPerKm } from "./trip-points";
+import { computeLivePointsPreview, computeTripPoints, type PointsPerKm } from "./trip-points";
 
 const PPK: PointsPerKm = { foot: 3, bike: 10, car: 0 };
 
