@@ -52,6 +52,14 @@ export const endTrip = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const log = createServerLogger("endTrip");
+    // Niente PII nei log: solo id troncato e metriche.
+    const uid = userId.slice(0, 8);
+    log.debug("received", {
+      user: uid,
+      pathPoints: data.path.length,
+      declaredMode: data.mode,
+    });
 
     // Carica config corrente
     const { data: cfg } = await supabaseAdmin
@@ -84,6 +92,13 @@ export const endTrip = createServerFn({ method: "POST" })
     }
 
     const hasHints = cleaned.some((p) => p.m != null);
+    log.debug("path-cleaned", {
+      user: uid,
+      raw: data.path.length,
+      kept: cleaned.length,
+      dropped: data.path.length - cleaned.length,
+      hasHints,
+    });
 
     let distance = 0;
     let maxSpeed = 0;
