@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { clampModeToSpeed, type Mode as DetectorMode } from "@/lib/mode-classifier";
 import { computeTripPoints } from "@/lib/trip-points";
+import { createServerLogger } from "@/lib/server-log";
 
 const pointSchema = z.object({
   lat: z.number().min(-90).max(90),
@@ -51,6 +52,14 @@ export const endTrip = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const log = createServerLogger("endTrip");
+    // Niente PII nei log: solo id troncato e metriche.
+    const uid = userId.slice(0, 8);
+    log.debug("received", {
+      user: uid,
+      pathPoints: data.path.length,
+      declaredMode: data.mode,
+    });
 
     // Carica config corrente
     const { data: cfg } = await supabaseAdmin
@@ -83,6 +92,13 @@ export const endTrip = createServerFn({ method: "POST" })
     }
 
     const hasHints = cleaned.some((p) => p.m != null);
+    log.debug("path-cleaned", {
+      user: uid,
+      raw: data.path.length,
+      kept: cleaned.length,
+      dropped: data.path.length - cleaned.length,
+      hasHints,
+    });
 
     let distance = 0;
     let maxSpeed = 0;
@@ -156,6 +172,16 @@ export const endTrip = createServerFn({ method: "POST" })
       anomaly = true;
       anomalyReason = "Mezzo dichiarato non coerente con la velocità misurata";
     }
+    if (anomaly) {
+      log.warn("anomaly", {
+        user: uid,
+        reason: anomalyReason,
+        effectiveMode,
+        maxSpeedKmh: Math.round(maxSpeed * 10) / 10,
+        bikeKm: Math.round(bikeKm * 1000) / 1000,
+        carKm: Math.round(carKm * 1000) / 1000,
+      });
+    }
 
     // Cap giornaliero
     const today = new Date();
@@ -181,6 +207,39 @@ export const endTrip = createServerFn({ method: "POST" })
       mode: data.mode,
       pointsPerKm,
     });
+    // Traccia completa del calcolo: è la riga da cercare in QA per capire
+    // perché un viaggio ha dato X punti (km per mezzo, ramo, cap, tariffe).
+    log.info("scored", {
+      user: uid,
+      hasHints,
+      bikeKm: Math.round(bikeKm * 1000) / 1000,
+      footM: Math.round(footM),
+      carKm: Math.round(carKm * 1000) / 1000,
+      eligibleKm: Math.round(eligibleKm * 1000) / 1000,
+      eligibleRatio: Math.round(eligibleRatio * 1000) / 1000,
+      kmToday: Math.round(kmToday * 100) / 100,
+      dailyCapKm,
+      pointsPerKm,
+      points,
+      effectiveMode,
+      maxSpeedKmh: Math.round(maxSpeed * 10) / 10,
+      anomaly,
+    });
+    // Spia QA: distanza eleggibile green ma 0 punti → quasi sempre un bug.
+    if (
+      !anomaly &&
+      points === 0 &&
+      eligibleRatio > 0.5 &&
+      (bikeKm >= 0.2 || footM >= 200)
+    ) {
+      log.warn("zero-points-unexpected", {
+        user: uid,
+        bikeKm: Math.round(bikeKm * 1000) / 1000,
+        footM: Math.round(footM),
+        eligibleRatio: Math.round(eligibleRatio * 1000) / 1000,
+        pointsPerKm,
+      });
+    }
     const calories = Math.round((MET[effectiveMode] * 3.5 * 70 * (durationMs / 60000)) / 200);
     const co2Saved = effectiveMode === "car" ? 0 : distance * CO2_KG_PER_KM_CAR_AVOIDED;
 
@@ -206,7 +265,7 @@ export const endTrip = createServerFn({ method: "POST" })
       .single();
 
     if (tripErr || !trip) {
-      console.error("[endTrip] insert failed", tripErr);
+      log.error("insert-failed", { user: uid, message: tripErr?.message ?? "nessuna riga" });
       throw new Error("Impossibile salvare il viaggio");
     }
 
@@ -256,7 +315,7 @@ export const endTrip = createServerFn({ method: "POST" })
           });
         }
       } catch (e) {
-        console.error("[endTrip] notify flag failed", e);
+        log.error("notify-flag-failed", { user: uid, message: (e as Error)?.message ?? String(e) });
       }
     }
 
@@ -271,7 +330,7 @@ export const endTrip = createServerFn({ method: "POST" })
       _distance_km: distance,
     } as any);
     if (creditErr) {
-      console.error("[endTrip] credit_trip_points failed", creditErr);
+      log.error("credit-failed", { user: uid, tripId: trip.id, points, message: creditErr.message });
       throw new Error("Viaggio salvato ma accredito punti fallito, riprova");
     }
 
@@ -314,7 +373,7 @@ export const endTrip = createServerFn({ method: "POST" })
         } as any);
       }
     } catch (e) {
-      console.error("[endTrip] gamification rpc failed", e);
+      log.error("gamification-failed", { user: uid, message: (e as Error)?.message ?? String(e) });
     }
 
     return {
