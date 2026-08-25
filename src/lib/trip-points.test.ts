@@ -51,6 +51,23 @@ describe("computeTripPoints — con hint per-fix", () => {
     expect(computeTripPoints({ ...base, mode: "foot", footM: 250 })).toBe(6);
   });
 
+  it("piedi: regressione 900 m → 27 pt (9 blocchi da 100 m × 3 pt)", () => {
+    expect(computeTripPoints({ ...base, mode: "foot", footM: 900 })).toBe(27);
+  });
+
+  it("piedi: valori di confine blocchi (100 m→3, 199 m→3, 200 m→6, 1000 m→30)", () => {
+    expect(computeTripPoints({ ...base, mode: "foot", footM: 100 })).toBe(3);
+    expect(computeTripPoints({ ...base, mode: "foot", footM: 199 })).toBe(3);
+    expect(computeTripPoints({ ...base, mode: "foot", footM: 200 })).toBe(6);
+    expect(computeTripPoints({ ...base, mode: "foot", footM: 1000 })).toBe(30);
+  });
+
+  it("piedi: cap proporzionale — 900 m con ratio 0,5 → 450 m → 12 pt", () => {
+    expect(
+      computeTripPoints({ ...base, mode: "foot", footM: 900, eligibleRatio: 0.5 }),
+    ).toBe(12);
+  });
+
   it("misto bici+piedi somma i due contributi", () => {
     // 1,5 km bici (15 pt) + 350 m piedi (9 pt) = 24 pt
     expect(computeTripPoints({ ...base, bikeKm: 1.5, footM: 350 })).toBe(24);
