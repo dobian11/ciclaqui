@@ -356,6 +356,7 @@ export const endTrip = createServerFn({ method: "POST" })
             _mode: "bike",
             _distance_km: kmBike,
             _company_id: companyId,
+            _count_trip: true,
           } as any);
         }
         if (kmFoot > 0.05) {
@@ -364,6 +365,8 @@ export const endTrip = createServerFn({ method: "POST" })
             _mode: "foot",
             _distance_km: kmFoot,
             _company_id: companyId,
+            // il viaggio è già stato conteggiato dal ramo bici, se presente
+            _count_trip: kmBike <= 0.05,
           } as any);
         }
       } else {
