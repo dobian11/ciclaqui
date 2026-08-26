@@ -508,7 +508,7 @@ export function useTripRecorder(currentMode: TripMode) {
       window.removeEventListener("pageshow", revive);
       window.removeEventListener("focus", revive);
     };
-  }, [armWebWatch, armTicker]);
+  }, [armWebWatch, armTicker, noteSuspension]);
 
   return { ...state, start, stop, reset };
 }
