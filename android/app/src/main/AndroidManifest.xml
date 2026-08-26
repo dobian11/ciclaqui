@@ -30,7 +30,7 @@
             android:foregroundServiceType="location"
             android:enabled="true"
             android:exported="false"
-            tools:replace="android:exported" />
+            tools:node="replace" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
