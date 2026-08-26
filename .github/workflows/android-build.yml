@@ -10,13 +10,13 @@ jobs:
   android:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
@@ -26,8 +26,8 @@ jobs:
       - name: Install deps
         run: bun install
 
-      - name: Build web
-        run: bun run build
+      # L'app nativa carica il sito pubblicato (server.url in capacitor.config.ts):
+      # non serve compilare gli asset web in CI.
 
       - name: Capacitor sync
         run: |
