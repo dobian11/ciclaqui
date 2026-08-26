@@ -91,3 +91,35 @@ Nel bundle vanno solo chiavi pubbliche (Supabase anon, Google Maps con restrizio
 ## 9. Aggiornamenti
 
 Ogni release richiede una nuova build inviata agli store. Per hotfix rapidi si può valutare Capgo o Appflow.
+
+---
+
+## Focus attuale: solo Android
+
+iOS resta pronto nel repo (`ios/`) ma la pipeline CI ora costruisce **solo Android**.
+
+### Build automatica su GitHub
+1. GitHub → **Actions** → *Build Android (APK + AAB)* → **Run workflow**
+2. Scarica l'artifact `ciclaqui-android`:
+   - `app-debug.apk` → installabile subito sul telefono (test tracking in background)
+   - `app-release.aab` → da caricare su Play Console
+
+### Firma per il Play Store
+Crea il keystore una volta sola:
+```bash
+keytool -genkey -v -keystore ciclaqui.keystore -alias ciclaqui \
+  -keyalg RSA -keysize 2048 -validity 10000
+base64 -i ciclaqui.keystore | pbcopy   # su Linux: base64 -w0 ciclaqui.keystore
+```
+Poi in GitHub → Settings → Secrets and variables → Actions aggiungi:
+- `ANDROID_KEYSTORE_BASE64` (il base64 copiato)
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_ALIAS` (es. `ciclaqui`)
+- `ANDROID_KEY_PASSWORD`
+
+Al run successivo l'AAB esce già firmato e caricabile su Play Console.
+Senza secrets la build funziona comunque, ma l'AAB resta non firmato (solo per test).
+
+### Versioni
+Prima di ogni upload su Play Console aumenta `versionCode` (e `versionName`) in
+`android/app/build.gradle`.
