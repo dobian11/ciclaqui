@@ -159,7 +159,7 @@ export function clampModeToSpeed(hint: Mode, segSpeedKmh: number): Mode {
     return segSpeedKmh <= 45 ? "bike" : "car";
   }
   if (hint === "bike") {
-    return segSpeedKmh <= 45 ? "bike" : "car";
+    return segSpeedKmh <= 50 ? "bike" : "car";
   }
   return "car";
 }

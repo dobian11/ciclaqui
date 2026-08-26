@@ -24,13 +24,13 @@ export interface GeoFix {
 const STATIONARY_KMH = 1.2;
 const ENTER_BIKE_KMH = 8;
 const EXIT_BIKE_KMH = 6;
-const ENTER_CAR_KMH = 34;
-const EXIT_CAR_KMH = 25;
+const ENTER_CAR_KMH = 42;
+const EXIT_CAR_KMH = 32;
 
 /* Fasce "forti": qui il segnale è inequivocabile, cambiamo in 2 sample */
 const STRONG_BIKE_MIN = 12;
-const STRONG_BIKE_MAX = 28;
-const STRONG_CAR_KMH = 45;
+const STRONG_BIKE_MAX = 38;
+const STRONG_CAR_KMH = 55;
 
 const WINDOW = 6;
 const STABLE_FAST = 2;
@@ -180,7 +180,7 @@ export function clampModeToSpeed(hint: DetectorMode, segSpeedKmh: number): Detec
     return segSpeedKmh <= 45 ? "bike" : "car";
   }
   if (hint === "bike") {
-    return segSpeedKmh <= 45 ? "bike" : "car";
+    return segSpeedKmh <= 50 ? "bike" : "car";
   }
   return "car";
 }
