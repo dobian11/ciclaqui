@@ -25,6 +25,8 @@ import {
   startMotionCollection,
   stopMotionCollection,
 } from "@/lib/motion-sensor";
+import { startKeepAlive, stopKeepAlive } from "@/lib/keep-alive";
+
 
 export interface TripPoint {
   lat: number;
@@ -117,6 +119,9 @@ export function useTripRecorder(currentMode: TripMode) {
   const dbmRef = useRef<Record<TripMode, number>>({ ...EMPTY_DBM });
   /** true quando l'app è stata sospesa: il fix successivo non deve creare un salto. */
   const gapPendingRef = useRef(false);
+  /** true se il keep-alive audio è attivo (anti-sospensione su web/PWA). */
+  const keepAliveRef = useRef(false);
+
 
   /** Registra una sospensione del sistema (schermo spento su web/PWA). */
   const noteSuspension = useCallback((gapMs: number) => {
@@ -342,6 +347,12 @@ export function useTripRecorder(currentMode: TripMode) {
     armWatchdog();
     wakeLockRef.current = wakeLockRef.current ?? createWakeLockKeeper();
     void wakeLockRef.current.acquire();
+    // Keep-alive audio: impedisce al sistema di congelare la pagina a schermo
+    // bloccato. Chiamato qui perché start() nasce da un tap dell'utente.
+    void startKeepAlive().then((ok) => {
+      keepAliveRef.current = ok;
+    });
+
   }, [currentMode, armNativeWatch, armWebWatch, armTicker, armWatchdog]);
 
   const stop = useCallback(() => {
@@ -363,7 +374,10 @@ export function useTripRecorder(currentMode: TripMode) {
     }
     stopMotionCollection();
     motionStartedRef.current = false;
+    stopKeepAlive();
+    keepAliveRef.current = false;
     void wakeLockRef.current?.release();
+
     clearActiveTrip();
     setState((prev) => ({ ...prev, recording: false, nativeBackground: false }));
   }, []);
@@ -498,6 +512,12 @@ export function useTripRecorder(currentMode: TripMode) {
       if (!nativeWatcherRef.current) armWebWatch();
       armTicker();
       void wakeLockRef.current?.acquire();
+      if (!nativeWatcherRef.current && !keepAliveRef.current) {
+        void startKeepAlive().then((ok) => {
+          keepAliveRef.current = ok;
+        });
+      }
+
     };
 
     document.addEventListener("visibilitychange", revive);
