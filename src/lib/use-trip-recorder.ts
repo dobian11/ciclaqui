@@ -119,6 +119,9 @@ export function useTripRecorder(currentMode: TripMode) {
   const dbmRef = useRef<Record<TripMode, number>>({ ...EMPTY_DBM });
   /** true quando l'app è stata sospesa: il fix successivo non deve creare un salto. */
   const gapPendingRef = useRef(false);
+  /** true se il keep-alive audio è attivo (anti-sospensione su web/PWA). */
+  const keepAliveRef = useRef(false);
+
 
   /** Registra una sospensione del sistema (schermo spento su web/PWA). */
   const noteSuspension = useCallback((gapMs: number) => {
