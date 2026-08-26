@@ -98,6 +98,8 @@ export function useTripRecorder(currentMode: TripMode) {
     dominantMode: "foot",
     distanceByMode: EMPTY_DBM,
     nativeBackground: false,
+      suspendedGapS: 0,
+      lastGapAt: null,
   });
 
   const watchIdRef = useRef<number | null>(null);
@@ -287,6 +289,8 @@ export function useTripRecorder(currentMode: TripMode) {
       dominantMode: currentMode,
       distanceByMode: { ...EMPTY_DBM },
       nativeBackground: false,
+      suspendedGapS: 0,
+      lastGapAt: null,
     });
     // Avvia raccolta motion (accelerometro + heading) in background.
     // Se i permessi vengono negati, il fallback GPS-only continua a funzionare.
@@ -346,6 +350,8 @@ export function useTripRecorder(currentMode: TripMode) {
       dominantMode: "foot",
       distanceByMode: { ...EMPTY_DBM },
       nativeBackground: false,
+      suspendedGapS: 0,
+      lastGapAt: null,
     });
   }, []);
 
@@ -421,6 +427,8 @@ export function useTripRecorder(currentMode: TripMode) {
       dominantMode: stored.dominantMode,
       distanceByMode: stored.distanceByMode ?? { ...EMPTY_DBM },
       nativeBackground: false,
+      suspendedGapS: 0,
+      lastGapAt: null,
     });
     motionStartedRef.current = false;
     void startMotionCollection().then((ok) => {
