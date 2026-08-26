@@ -45,6 +45,25 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Cicla Qui usa la posizione per tracciare i tuoi viaggi in bici o a piedi e assegnarti i punti.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Serve l'accesso «Sempre» per registrare il viaggio anche con lo schermo bloccato o l'app in background.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Serve l'accesso «Sempre» per registrare il viaggio anche con lo schermo bloccato o l'app in background.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Usiamo accelerometro e bussola per distinguere bici, piedi e auto ed evitare punti non validi.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>La fotocamera serve per scansionare il QR del passaporto bici e allegare foto alle segnalazioni.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Serve per caricare foto della bici o documenti dell'ente.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>remote-notification</string>
+	</array>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 </dict>
