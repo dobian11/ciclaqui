@@ -357,6 +357,39 @@ function MapHome() {
     ? computeLivePointsPreview(trip.distanceByMode, pointsPerKm)
     : null;
 
+
+
+  // ── Tracking in background su web/PWA ──
+  // Con schermo bloccato iOS/Android sospendono la pagina: il GPS si ferma.
+  // Avvisiamo all'avvio e segnaliamo i buchi rilevati al ritorno in primo piano.
+  const bgWarnedRef = useRef(false);
+  useEffect(() => {
+    if (!trip.recording || trip.nativeBackground) {
+      bgWarnedRef.current = false;
+      return;
+    }
+    if (bgWarnedRef.current) return;
+    bgWarnedRef.current = true;
+    toast.warning("Tieni l'app in primo piano", {
+      description:
+        "Con lo schermo bloccato il telefono sospende la web app e il viaggio non viene registrato. Lo schermo resta acceso finché l'app è aperta.",
+      duration: 8000,
+    });
+  }, [trip.recording, trip.nativeBackground]);
+
+  const lastGapNotifiedRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!trip.lastGapAt || trip.lastGapAt === lastGapNotifiedRef.current) return;
+    lastGapNotifiedRef.current = trip.lastGapAt;
+    const min = Math.max(1, Math.round(trip.suspendedGapS / 60));
+    toast.warning(`Tracking interrotto per ~${min} min`, {
+      description:
+        "Il telefono ha sospeso l'app: quel tratto non è stato registrato. Riprendo da qui.",
+      duration: 7000,
+    });
+  }, [trip.lastGapAt, trip.suspendedGapS]);
+
+
   const userWeight = 70;
   const met = liveMode === "bike" ? 6.8 : liveMode === "foot" ? 3.5 : 1.3;
   const caloriesPerMin = Math.round((met * 3.5 * userWeight) / 200);
@@ -669,11 +702,27 @@ function MapHome() {
             >
               ~{livePoints ?? 0} pt
             </span>
-            {trip.nativeBackground && (
+            {trip.nativeBackground ? (
               <span className="text-[9px] font-semibold uppercase tracking-wide opacity-70">
                 bg
               </span>
+            ) : (
+              <span
+                className="text-[9px] font-semibold uppercase tracking-wide opacity-80"
+                title="Con lo schermo bloccato il tracking si mette in pausa: tieni l'app aperta"
+              >
+                app aperta
+              </span>
             )}
+            {trip.suspendedGapS > 0 && (
+              <span
+                className="text-[9px] font-bold uppercase tracking-wide"
+                title="Minuti non registrati perché il telefono ha sospeso l'app"
+              >
+                −{Math.max(1, Math.round(trip.suspendedGapS / 60))}m
+              </span>
+            )}
+
           </div>
         </div>
       )}

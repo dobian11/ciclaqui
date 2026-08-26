@@ -45,11 +45,18 @@ export interface TripRecorderState {
   distanceByMode: Record<TripMode, number>;
   /** true su app nativa: il tracking continua anche ad app in background */
   nativeBackground: boolean;
+  /** secondi totali in cui il sistema ha sospeso l'app (schermo spento su web/PWA) */
+  suspendedGapS: number;
+  /** timestamp dell'ultima interruzione rilevata (per avvisare l'utente) */
+  lastGapAt: number | null;
 }
 
 const EMPTY_DBM: Record<TripMode, number> = { foot: 0, bike: 0, car: 0 };
 /** Nessun fix per così tanto → il watch web è stato ucciso: riarmalo. */
 const WATCHDOG_STALE_MS = 15_000;
+/** Oltre questo silenzio consideriamo l'app sospesa dal sistema (schermo spento). */
+const SUSPEND_GAP_MS = 25_000;
+
 
 function isNativePlatform(): boolean {
   try {
@@ -91,6 +98,8 @@ export function useTripRecorder(currentMode: TripMode) {
     dominantMode: "foot",
     distanceByMode: EMPTY_DBM,
     nativeBackground: false,
+    suspendedGapS: 0,
+    lastGapAt: null,
   });
 
   const watchIdRef = useRef<number | null>(null);
@@ -106,6 +115,27 @@ export function useTripRecorder(currentMode: TripMode) {
   const lastFixRef = useRef<GeoFix | null>(null);
   const lastFixAtRef = useRef<number>(0);
   const dbmRef = useRef<Record<TripMode, number>>({ ...EMPTY_DBM });
+  /** true quando l'app è stata sospesa: il fix successivo non deve creare un salto. */
+  const gapPendingRef = useRef(false);
+
+  /** Registra una sospensione del sistema (schermo spento su web/PWA). */
+  const noteSuspension = useCallback((gapMs: number) => {
+    if (gapMs < SUSPEND_GAP_MS) return;
+    gapPendingRef.current = true;
+    lastFixRef.current = null;
+    detectorRef.current.reset();
+    classifierRef.current.reset();
+    setState((prev) =>
+      prev.recording
+        ? {
+            ...prev,
+            suspendedGapS: prev.suspendedGapS + Math.round(gapMs / 1000),
+            lastGapAt: Date.now(),
+          }
+        : prev,
+    );
+  }, []);
+
 
   // tieni traccia del mode "vivo" (fallback se il fix non è classificabile)
   useEffect(() => {
@@ -116,8 +146,15 @@ export function useTripRecorder(currentMode: TripMode) {
     const accuracy = fix.accuracyM ?? null;
     if (accuracy != null && accuracy > 50) return; // scarta fix poco precisi
 
+    // Silenzio lungo tra due fix = app sospesa dal sistema (schermo spento su
+    // web/PWA): non possiamo inventare il tratto mancante, lo marchiamo come buco.
+    if (lastFixAtRef.current > 0 && Date.now() - lastFixAtRef.current > SUSPEND_GAP_MS) {
+      noteSuspension(Date.now() - lastFixAtRef.current);
+    }
+
     const speed = effectiveSpeedKmh(lastFixRef.current, fix);
     const reliable = accuracy == null || accuracy <= CLASSIFY_MAX_ACCURACY_M;
+
 
     // Sensor-fusion: se i motion sensor sono attivi e abbiamo campioni recenti,
     // usiamo il classificatore avanzato; altrimenti fallback sul GPS-only detector.
@@ -148,11 +185,14 @@ export function useTripRecorder(currentMode: TripMode) {
       m: mode,
     };
 
+    const skipSegment = gapPendingRef.current;
+    gapPendingRef.current = false;
+
     setState((prev) => {
       if (!prev.recording) return prev;
       const last = prev.path[prev.path.length - 1];
       let dist = prev.distanceKm;
-      if (last) {
+      if (last && !skipSegment) {
         const dM = haversineMeters(last, point);
         const dKm = dM / 1000;
         if (dKm < 1) {
@@ -173,7 +213,8 @@ export function useTripRecorder(currentMode: TripMode) {
         distanceByMode: { ...dbmRef.current },
       };
     });
-  }, []);
+  }, [noteSuspension]);
+
 
   /** Watch web (PWA/browser). Su iOS Safari può morire in background: il watchdog lo riarma. */
   const armWebWatch = useCallback(() => {
@@ -280,6 +321,8 @@ export function useTripRecorder(currentMode: TripMode) {
       dominantMode: currentMode,
       distanceByMode: { ...EMPTY_DBM },
       nativeBackground: false,
+      suspendedGapS: 0,
+      lastGapAt: null,
     });
     // Avvia raccolta motion (accelerometro + heading) in background.
     // Se i permessi vengono negati, il fallback GPS-only continua a funzionare.
@@ -339,6 +382,8 @@ export function useTripRecorder(currentMode: TripMode) {
       dominantMode: "foot",
       distanceByMode: { ...EMPTY_DBM },
       nativeBackground: false,
+      suspendedGapS: 0,
+      lastGapAt: null,
     });
   }, []);
 
@@ -405,6 +450,11 @@ export function useTripRecorder(currentMode: TripMode) {
     classifierRef.current.reset();
     lastFixRef.current = null;
     lastFixAtRef.current = Date.now();
+    // Il tempo trascorso da quando l'app è stata congelata è un buco di tracking:
+    // niente salto in linea d'aria sul primo fix e utente avvisato.
+    const gapMs = Math.max(0, Date.now() - (stored.savedAt ?? stored.startedAt));
+    const suspended = gapMs >= SUSPEND_GAP_MS;
+    if (suspended) gapPendingRef.current = true;
     setState({
       recording: true,
       startedAt: stored.startedAt,
@@ -414,7 +464,10 @@ export function useTripRecorder(currentMode: TripMode) {
       dominantMode: stored.dominantMode,
       distanceByMode: stored.distanceByMode ?? { ...EMPTY_DBM },
       nativeBackground: false,
+      suspendedGapS: suspended ? Math.round(gapMs / 1000) : 0,
+      lastGapAt: suspended ? Date.now() : null,
     });
+
     motionStartedRef.current = false;
     void startMotionCollection().then((ok) => {
       motionStartedRef.current = ok;
@@ -439,10 +492,14 @@ export function useTripRecorder(currentMode: TripMode) {
     const revive = () => {
       if (!stateRef.current?.recording) return;
       if (document.visibilityState !== "visible") return;
+      if (!nativeWatcherRef.current && lastFixAtRef.current > 0) {
+        noteSuspension(Date.now() - lastFixAtRef.current);
+      }
       if (!nativeWatcherRef.current) armWebWatch();
       armTicker();
       void wakeLockRef.current?.acquire();
     };
+
     document.addEventListener("visibilitychange", revive);
     window.addEventListener("pageshow", revive);
     window.addEventListener("focus", revive);
@@ -451,7 +508,7 @@ export function useTripRecorder(currentMode: TripMode) {
       window.removeEventListener("pageshow", revive);
       window.removeEventListener("focus", revive);
     };
-  }, [armWebWatch, armTicker]);
+  }, [armWebWatch, armTicker, noteSuspension]);
 
   return { ...state, start, stop, reset };
 }
