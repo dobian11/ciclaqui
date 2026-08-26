@@ -355,6 +355,9 @@ function MapHome() {
   // applica il server al salvataggio — qui è una stima istantanea.
   const livePoints = trip.recording
     ? computeLivePointsPreview(trip.distanceByMode, pointsPerKm)
+    : null;
+
+
 
   // ── Tracking in background su web/PWA ──
   // Con schermo bloccato iOS/Android sospendono la pagina: il GPS si ferma.
