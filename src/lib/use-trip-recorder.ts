@@ -25,6 +25,8 @@ import {
   startMotionCollection,
   stopMotionCollection,
 } from "@/lib/motion-sensor";
+import { startKeepAlive, stopKeepAlive } from "@/lib/keep-alive";
+
 
 export interface TripPoint {
   lat: number;
