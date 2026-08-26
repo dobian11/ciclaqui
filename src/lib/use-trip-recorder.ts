@@ -507,6 +507,12 @@ export function useTripRecorder(currentMode: TripMode) {
       if (!nativeWatcherRef.current) armWebWatch();
       armTicker();
       void wakeLockRef.current?.acquire();
+      if (!nativeWatcherRef.current && !keepAliveRef.current) {
+        void startKeepAlive().then((ok) => {
+          keepAliveRef.current = ok;
+        });
+      }
+
     };
 
     document.addEventListener("visibilitychange", revive);
