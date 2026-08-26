@@ -450,7 +450,7 @@ function EmployeesSection({ memberLabel }: { memberLabel: string }) {
                 <div className="min-w-0">
                   <div className="truncate text-sm font-medium">{e.full_name}</div>
                   <div className="text-[11px] text-muted-foreground">
-                    {e.trips_count} viaggi · {e.total_km} km · {e.co2_saved_kg} kg CO₂ · {e.badges_count} badge
+                    {e.trips_count} viaggi · {(e.bike_km + e.foot_km).toFixed(2)} km green ({e.bike_km} bici · {e.foot_km} piedi) · {e.co2_saved_kg} kg CO₂ · {e.badges_count} badge
                   </div>
                 </div>
                 <div className="text-right">
