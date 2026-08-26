@@ -370,11 +370,12 @@ function MapHome() {
     }
     if (bgWarnedRef.current) return;
     bgWarnedRef.current = true;
-    toast.warning("Tieni l'app in primo piano", {
+    toast.warning("Tracking attivo · schermo bloccato a rischio", {
       description:
-        "Con lo schermo bloccato il telefono sospende la web app e il viaggio non viene registrato. Lo schermo resta acceso finché l'app è aperta.",
+        "Sul web teniamo la sessione sveglia, ma se blocchi lo schermo il telefono può sospendere l'app. Per il tracking garantito in tasca usa l'app dagli store.",
       duration: 8000,
     });
+
   }, [trip.recording, trip.nativeBackground]);
 
   const lastGapNotifiedRef = useRef<number | null>(null);
