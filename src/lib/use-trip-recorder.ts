@@ -369,7 +369,10 @@ export function useTripRecorder(currentMode: TripMode) {
     }
     stopMotionCollection();
     motionStartedRef.current = false;
+    stopKeepAlive();
+    keepAliveRef.current = false;
     void wakeLockRef.current?.release();
+
     clearActiveTrip();
     setState((prev) => ({ ...prev, recording: false, nativeBackground: false }));
   }, []);
