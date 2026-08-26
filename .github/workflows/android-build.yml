@@ -32,17 +32,38 @@ jobs:
       - name: Capacitor sync
         run: bunx cap sync android
 
+      # Firma opzionale: aggiungi i secrets nel repo per ottenere AAB firmato.
+      # ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+      - name: Decode keystore (se presente)
+        id: keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/ciclaqui.keystore"
+            echo "path=$RUNNER_TEMP/ciclaqui.keystore" >> "$GITHUB_OUTPUT"
+          else
+            echo "Nessun keystore configurato: build release non firmata."
+            echo "path=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build debug APK (installabile subito)
         working-directory: android
         run: ./gradlew assembleDebug
 
       - name: Build release AAB (per Play Console)
         working-directory: android
-        run: ./gradlew bundleRelease
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ steps.keystore.outputs.path }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease assembleRelease
 
       - uses: actions/upload-artifact@v4
         with:
           name: ciclaqui-android
           path: |
             android/app/build/outputs/apk/debug/*.apk
+            android/app/build/outputs/apk/release/*.apk
             android/app/build/outputs/bundle/release/*.aab
