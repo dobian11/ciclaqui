@@ -1,0 +1,48 @@
+name: Build Android (APK + AAB)
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install deps
+        run: bun install
+
+      - name: Build web
+        run: bun run build
+
+      - name: Capacitor sync
+        run: bunx cap sync android
+
+      - name: Build debug APK (installabile subito)
+        working-directory: android
+        run: ./gradlew assembleDebug
+
+      - name: Build release AAB (per Play Console)
+        working-directory: android
+        run: ./gradlew bundleRelease
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ciclaqui-android
+          path: |
+            android/app/build/outputs/apk/debug/*.apk
+            android/app/build/outputs/bundle/release/*.aab
