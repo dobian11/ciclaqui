@@ -1,0 +1,41 @@
+name: Build iOS (archivio Xcode)
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  ios:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install deps
+        run: bun install
+
+      - name: Build web
+        run: bun run build
+
+      - name: Capacitor sync
+        run: bunx cap sync ios
+
+      # Build senza firma: utile per verificare che compili.
+      # Per TestFlight servono certificati Apple nei secrets del repo.
+      - name: Build (no signing)
+        working-directory: ios/App
+        run: |
+          xcodebuild -scheme App -workspace App.xcworkspace \
+            -configuration Release -sdk iphoneos \
+            -archivePath "$PWD/build/App.xcarchive" archive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ciclaqui-ios-archive
+          path: ios/App/build/App.xcarchive
