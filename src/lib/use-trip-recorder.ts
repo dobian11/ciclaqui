@@ -492,10 +492,14 @@ export function useTripRecorder(currentMode: TripMode) {
     const revive = () => {
       if (!stateRef.current?.recording) return;
       if (document.visibilityState !== "visible") return;
+      if (!nativeWatcherRef.current && lastFixAtRef.current > 0) {
+        noteSuspension(Date.now() - lastFixAtRef.current);
+      }
       if (!nativeWatcherRef.current) armWebWatch();
       armTicker();
       void wakeLockRef.current?.acquire();
     };
+
     document.addEventListener("visibilitychange", revive);
     window.addEventListener("pageshow", revive);
     window.addEventListener("focus", revive);
