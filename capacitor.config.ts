@@ -6,6 +6,7 @@ const config: CapacitorConfig = {
   webDir: "dist",
   ios: {
     contentInset: "always",
+    limitsNavigationsToAppBoundDomains: false,
   },
   android: {
     allowMixedContent: false,
@@ -15,6 +16,9 @@ const config: CapacitorConfig = {
       launchShowDuration: 1500,
       backgroundColor: "#0a0f0d",
       showSpinner: false,
+    },
+    PushNotifications: {
+      presentationOptions: ["badge", "sound", "alert"],
     },
     Geolocation: {
       // iOS Info.plist & Android manifest sono gestiti dai plugin Capacitor
