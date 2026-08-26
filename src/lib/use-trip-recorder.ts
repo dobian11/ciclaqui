@@ -342,6 +342,12 @@ export function useTripRecorder(currentMode: TripMode) {
     armWatchdog();
     wakeLockRef.current = wakeLockRef.current ?? createWakeLockKeeper();
     void wakeLockRef.current.acquire();
+    // Keep-alive audio: impedisce al sistema di congelare la pagina a schermo
+    // bloccato. Chiamato qui perché start() nasce da un tap dell'utente.
+    void startKeepAlive().then((ok) => {
+      keepAliveRef.current = ok;
+    });
+
   }, [currentMode, armNativeWatch, armWebWatch, armTicker, armWatchdog]);
 
   const stop = useCallback(() => {
