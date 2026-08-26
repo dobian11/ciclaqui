@@ -45,11 +45,18 @@ export interface TripRecorderState {
   distanceByMode: Record<TripMode, number>;
   /** true su app nativa: il tracking continua anche ad app in background */
   nativeBackground: boolean;
+  /** secondi totali in cui il sistema ha sospeso l'app (schermo spento su web/PWA) */
+  suspendedGapS: number;
+  /** timestamp dell'ultima interruzione rilevata (per avvisare l'utente) */
+  lastGapAt: number | null;
 }
 
 const EMPTY_DBM: Record<TripMode, number> = { foot: 0, bike: 0, car: 0 };
 /** Nessun fix per così tanto → il watch web è stato ucciso: riarmalo. */
 const WATCHDOG_STALE_MS = 15_000;
+/** Oltre questo silenzio consideriamo l'app sospesa dal sistema (schermo spento). */
+const SUSPEND_GAP_MS = 25_000;
+
 
 function isNativePlatform(): boolean {
   try {
