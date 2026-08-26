@@ -96,10 +96,11 @@ export function classifySample(
       headingScores.car * weights.heading,
   };
 
-  // Bike boost: in fascia ciclismo (8–35 km/h) aumenta il punteggio bici.
-  if (v >= 8 && v <= 35) {
+  // Bike boost: in fascia ciclismo (6–42 km/h) aumenta il punteggio bici.
+  if (v >= 6 && v <= 42) {
     raw.bike += weights.bikeBoost;
   }
+
 
   const scores = normalizeScores(raw);
   const winner: Mode = scores.bike >= scores.foot && scores.bike >= scores.car
