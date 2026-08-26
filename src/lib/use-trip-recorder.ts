@@ -185,11 +185,14 @@ export function useTripRecorder(currentMode: TripMode) {
       m: mode,
     };
 
+    const skipSegment = gapPendingRef.current;
+    gapPendingRef.current = false;
+
     setState((prev) => {
       if (!prev.recording) return prev;
       const last = prev.path[prev.path.length - 1];
       let dist = prev.distanceKm;
-      if (last) {
+      if (last && !skipSegment) {
         const dM = haversineMeters(last, point);
         const dKm = dM / 1000;
         if (dKm < 1) {
@@ -210,7 +213,8 @@ export function useTripRecorder(currentMode: TripMode) {
         distanceByMode: { ...dbmRef.current },
       };
     });
-  }, []);
+  }, [noteSuspension]);
+
 
   /** Watch web (PWA/browser). Su iOS Safari può morire in background: il watchdog lo riarma. */
   const armWebWatch = useCallback(() => {
