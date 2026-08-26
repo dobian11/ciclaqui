@@ -9,60 +9,49 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as CercaBiciRouteImport } from './routes/cerca-bici'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as LegalTermsRouteImport } from './routes/legal.terms'
-import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
-import { Route as LegalPermessiRouteImport } from './routes/legal.permessi'
-import { Route as LegalCookieRouteImport } from './routes/legal.cookie'
-import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
-import { Route as AziendaAuthRouteImport } from './routes/azienda.auth'
-import { Route as AuthenticatedAziendaRouteImport } from './routes/_authenticated/azienda'
-import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CercaBiciRouteImport } from './routes/cerca-bici'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedAziendaIndexRouteImport } from './routes/_authenticated/azienda.index'
-import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
+import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as AuthenticatedAziendaRouteImport } from './routes/_authenticated/azienda'
+import { Route as AziendaAuthRouteImport } from './routes/azienda.auth'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
+import { Route as LegalCookieRouteImport } from './routes/legal.cookie'
+import { Route as LegalPermessiRouteImport } from './routes/legal.permessi'
+import { Route as LegalPrivacyRouteImport } from './routes/legal.privacy'
+import { Route as LegalTermsRouteImport } from './routes/legal.terms'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
-import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
-import { Route as AuthenticatedAziendaOnboardingRouteImport } from './routes/_authenticated/azienda.onboarding'
-import { Route as AuthenticatedAppSfideRouteImport } from './routes/_authenticated/app.sfide'
-import { Route as AuthenticatedAppPuntiRouteImport } from './routes/_authenticated/app.punti'
-import { Route as AuthenticatedAppProfiloRouteImport } from './routes/_authenticated/app.profilo'
-import { Route as AuthenticatedAppPrivacyRouteImport } from './routes/_authenticated/app.privacy'
-import { Route as AuthenticatedAppPremiRouteImport } from './routes/_authenticated/app.premi'
-import { Route as AuthenticatedAppNotificheRouteImport } from './routes/_authenticated/app.notifiche'
-import { Route as AuthenticatedAppBiciRouteImport } from './routes/_authenticated/app.bici'
 import { Route as AuthenticatedAdminVerificheRouteImport } from './routes/_authenticated/admin.verifiche'
-import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
-import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
-import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as AuthenticatedAppIndexRouteImport } from './routes/_authenticated/app.index'
+import { Route as AuthenticatedAppBiciRouteImport } from './routes/_authenticated/app.bici'
+import { Route as AuthenticatedAppNotificheRouteImport } from './routes/_authenticated/app.notifiche'
+import { Route as AuthenticatedAppPremiRouteImport } from './routes/_authenticated/app.premi'
+import { Route as AuthenticatedAppPrivacyRouteImport } from './routes/_authenticated/app.privacy'
+import { Route as AuthenticatedAppProfiloRouteImport } from './routes/_authenticated/app.profilo'
+import { Route as AuthenticatedAppPuntiRouteImport } from './routes/_authenticated/app.punti'
+import { Route as AuthenticatedAppSfideRouteImport } from './routes/_authenticated/app.sfide'
+import { Route as AuthenticatedAziendaIndexRouteImport } from './routes/_authenticated/azienda.index'
+import { Route as AuthenticatedAziendaOnboardingRouteImport } from './routes/_authenticated/azienda.onboarding'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/public/cron/maintenance'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 
-const UnsubscribeRoute = UnsubscribeRouteImport.update({
-  id: '/unsubscribe',
-  path: '/unsubscribe',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CercaBiciRoute = CercaBiciRouteImport.update({
-  id: '/cerca-bici',
-  path: '/cerca-bici',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -70,48 +59,29 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const CercaBiciRoute = CercaBiciRouteImport.update({
+  id: '/cerca-bici',
+  path: '/cerca-bici',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LegalTermsRoute = LegalTermsRouteImport.update({
-  id: '/legal/terms',
-  path: '/legal/terms',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
-  id: '/legal/privacy',
-  path: '/legal/privacy',
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LegalPermessiRoute = LegalPermessiRouteImport.update({
-  id: '/legal/permessi',
-  path: '/legal/permessi',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LegalCookieRoute = LegalCookieRouteImport.update({
-  id: '/legal/cookie',
-  path: '/legal/cookie',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
-  id: '/email/unsubscribe',
-  path: '/email/unsubscribe',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AziendaAuthRoute = AziendaAuthRouteImport.update({
-  id: '/azienda/auth',
-  path: '/azienda/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedAziendaRoute = AuthenticatedAziendaRouteImport.update({
-  id: '/azienda',
-  path: '/azienda',
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
@@ -119,61 +89,60 @@ const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   path: '/app',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const AuthenticatedAziendaRoute = AuthenticatedAziendaRouteImport.update({
+  id: '/azienda',
+  path: '/azienda',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAziendaIndexRoute =
-  AuthenticatedAziendaIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedAziendaRoute,
-  } as any)
-const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedAppRoute,
+const AziendaAuthRoute = AziendaAuthRouteImport.update({
+  id: '/azienda/auth',
+  path: '/azienda/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalCookieRoute = LegalCookieRouteImport.update({
+  id: '/legal/cookie',
+  path: '/legal/cookie',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalPermessiRoute = LegalPermessiRouteImport.update({
+  id: '/legal/permessi',
+  path: '/legal/permessi',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalPrivacyRoute = LegalPrivacyRouteImport.update({
+  id: '/legal/privacy',
+  path: '/legal/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalTermsRoute = LegalTermsRouteImport.update({
+  id: '/legal/terms',
+  path: '/legal/terms',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
-  id: '/lovable/email/suppression',
-  path: '/lovable/email/suppression',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedAziendaOnboardingRoute =
-  AuthenticatedAziendaOnboardingRouteImport.update({
-    id: '/onboarding',
-    path: '/onboarding',
-    getParentRoute: () => AuthenticatedAziendaRoute,
+const AuthenticatedAdminVerificheRoute =
+  AuthenticatedAdminVerificheRouteImport.update({
+    id: '/verifiche',
+    path: '/verifiche',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedAppSfideRoute = AuthenticatedAppSfideRouteImport.update({
-  id: '/sfide',
-  path: '/sfide',
+const AuthenticatedAppIndexRoute = AuthenticatedAppIndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
-const AuthenticatedAppPuntiRoute = AuthenticatedAppPuntiRouteImport.update({
-  id: '/punti',
-  path: '/punti',
-  getParentRoute: () => AuthenticatedAppRoute,
-} as any)
-const AuthenticatedAppProfiloRoute = AuthenticatedAppProfiloRouteImport.update({
-  id: '/profilo',
-  path: '/profilo',
-  getParentRoute: () => AuthenticatedAppRoute,
-} as any)
-const AuthenticatedAppPrivacyRoute = AuthenticatedAppPrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => AuthenticatedAppRoute,
-} as any)
-const AuthenticatedAppPremiRoute = AuthenticatedAppPremiRouteImport.update({
-  id: '/premi',
-  path: '/premi',
+const AuthenticatedAppBiciRoute = AuthenticatedAppBiciRouteImport.update({
+  id: '/bici',
+  path: '/bici',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
 const AuthenticatedAppNotificheRoute =
@@ -182,21 +151,68 @@ const AuthenticatedAppNotificheRoute =
     path: '/notifiche',
     getParentRoute: () => AuthenticatedAppRoute,
   } as any)
-const AuthenticatedAppBiciRoute = AuthenticatedAppBiciRouteImport.update({
-  id: '/bici',
-  path: '/bici',
+const AuthenticatedAppPremiRoute = AuthenticatedAppPremiRouteImport.update({
+  id: '/premi',
+  path: '/premi',
   getParentRoute: () => AuthenticatedAppRoute,
 } as any)
-const AuthenticatedAdminVerificheRoute =
-  AuthenticatedAdminVerificheRouteImport.update({
-    id: '/verifiche',
-    path: '/verifiche',
-    getParentRoute: () => AuthenticatedAdminRoute,
+const AuthenticatedAppPrivacyRoute = AuthenticatedAppPrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppProfiloRoute = AuthenticatedAppProfiloRouteImport.update({
+  id: '/profilo',
+  path: '/profilo',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppPuntiRoute = AuthenticatedAppPuntiRouteImport.update({
+  id: '/punti',
+  path: '/punti',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAppSfideRoute = AuthenticatedAppSfideRouteImport.update({
+  id: '/sfide',
+  path: '/sfide',
+  getParentRoute: () => AuthenticatedAppRoute,
+} as any)
+const AuthenticatedAziendaIndexRoute =
+  AuthenticatedAziendaIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAziendaRoute,
   } as any)
-const LovableEmailTransactionalSendRoute =
-  LovableEmailTransactionalSendRouteImport.update({
-    id: '/lovable/email/transactional/send',
-    path: '/lovable/email/transactional/send',
+const AuthenticatedAziendaOnboardingRoute =
+  AuthenticatedAziendaOnboardingRouteImport.update({
+    id: '/onboarding',
+    path: '/onboarding',
+    getParentRoute: () => AuthenticatedAziendaRoute,
+  } as any)
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCronMaintenanceRoute =
+  ApiPublicCronMaintenanceRouteImport.update({
+    id: '/api/public/cron/maintenance',
+    path: '/api/public/cron/maintenance',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
 const LovableEmailTransactionalPreviewRoute =
@@ -205,26 +221,10 @@ const LovableEmailTransactionalPreviewRoute =
     path: '/lovable/email/transactional/preview',
     getParentRoute: () => rootRouteImport,
   } as any)
-const LovableEmailQueueProcessRoute =
-  LovableEmailQueueProcessRouteImport.update({
-    id: '/lovable/email/queue/process',
-    path: '/lovable/email/queue/process',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicCronMaintenanceRoute =
-  ApiPublicCronMaintenanceRouteImport.update({
-    id: '/api/public/cron/maintenance',
-    path: '/api/public/cron/maintenance',
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -469,39 +469,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/unsubscribe': {
-      id: '/unsubscribe'
-      path: '/unsubscribe'
-      fullPath: '/unsubscribe'
-      preLoaderRoute: typeof UnsubscribeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/cerca-bici': {
-      id: '/cerca-bici'
-      path: '/cerca-bici'
-      fullPath: '/cerca-bici'
-      preLoaderRoute: typeof CercaBiciRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -511,60 +483,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/legal/terms': {
-      id: '/legal/terms'
-      path: '/legal/terms'
-      fullPath: '/legal/terms'
-      preLoaderRoute: typeof LegalTermsRouteImport
+    '/cerca-bici': {
+      id: '/cerca-bici'
+      path: '/cerca-bici'
+      fullPath: '/cerca-bici'
+      preLoaderRoute: typeof CercaBiciRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/legal/privacy': {
-      id: '/legal/privacy'
-      path: '/legal/privacy'
-      fullPath: '/legal/privacy'
-      preLoaderRoute: typeof LegalPrivacyRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/legal/permessi': {
-      id: '/legal/permessi'
-      path: '/legal/permessi'
-      fullPath: '/legal/permessi'
-      preLoaderRoute: typeof LegalPermessiRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/legal/cookie': {
-      id: '/legal/cookie'
-      path: '/legal/cookie'
-      fullPath: '/legal/cookie'
-      preLoaderRoute: typeof LegalCookieRouteImport
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/email/unsubscribe': {
-      id: '/email/unsubscribe'
-      path: '/email/unsubscribe'
-      fullPath: '/email/unsubscribe'
-      preLoaderRoute: typeof EmailUnsubscribeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/azienda/auth': {
-      id: '/azienda/auth'
-      path: '/azienda/auth'
-      fullPath: '/azienda/auth'
-      preLoaderRoute: typeof AziendaAuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/azienda': {
-      id: '/_authenticated/azienda'
-      path: '/azienda'
-      fullPath: '/azienda'
-      preLoaderRoute: typeof AuthenticatedAziendaRouteImport
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/app': {
@@ -574,26 +532,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+    '/_authenticated/azienda': {
+      id: '/_authenticated/azienda'
+      path: '/azienda'
+      fullPath: '/azienda'
+      preLoaderRoute: typeof AuthenticatedAziendaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/azienda/': {
-      id: '/_authenticated/azienda/'
-      path: '/'
-      fullPath: '/azienda/'
-      preLoaderRoute: typeof AuthenticatedAziendaIndexRouteImport
-      parentRoute: typeof AuthenticatedAziendaRoute
+    '/azienda/auth': {
+      id: '/azienda/auth'
+      path: '/azienda/auth'
+      fullPath: '/azienda/auth'
+      preLoaderRoute: typeof AziendaAuthRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/app/': {
-      id: '/_authenticated/app/'
-      path: '/'
-      fullPath: '/app/'
-      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/cookie': {
+      id: '/legal/cookie'
+      path: '/legal/cookie'
+      fullPath: '/legal/cookie'
+      preLoaderRoute: typeof LegalCookieRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/permessi': {
+      id: '/legal/permessi'
+      path: '/legal/permessi'
+      fullPath: '/legal/permessi'
+      preLoaderRoute: typeof LegalPermessiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/privacy': {
+      id: '/legal/privacy'
+      path: '/legal/privacy'
+      fullPath: '/legal/privacy'
+      preLoaderRoute: typeof LegalPrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/terms': {
+      id: '/legal/terms'
+      path: '/legal/terms'
+      fullPath: '/legal/terms'
+      preLoaderRoute: typeof LegalTermsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
@@ -602,60 +588,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/lovable/email/suppression': {
-      id: '/lovable/email/suppression'
-      path: '/lovable/email/suppression'
-      fullPath: '/lovable/email/suppression'
-      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/admin/verifiche': {
+      id: '/_authenticated/admin/verifiche'
+      path: '/verifiche'
+      fullPath: '/admin/verifiche'
+      preLoaderRoute: typeof AuthenticatedAdminVerificheRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/azienda/onboarding': {
-      id: '/_authenticated/azienda/onboarding'
-      path: '/onboarding'
-      fullPath: '/azienda/onboarding'
-      preLoaderRoute: typeof AuthenticatedAziendaOnboardingRouteImport
-      parentRoute: typeof AuthenticatedAziendaRoute
-    }
-    '/_authenticated/app/sfide': {
-      id: '/_authenticated/app/sfide'
-      path: '/sfide'
-      fullPath: '/app/sfide'
-      preLoaderRoute: typeof AuthenticatedAppSfideRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
-    '/_authenticated/app/punti': {
-      id: '/_authenticated/app/punti'
-      path: '/punti'
-      fullPath: '/app/punti'
-      preLoaderRoute: typeof AuthenticatedAppPuntiRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
-    '/_authenticated/app/profilo': {
-      id: '/_authenticated/app/profilo'
-      path: '/profilo'
-      fullPath: '/app/profilo'
-      preLoaderRoute: typeof AuthenticatedAppProfiloRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
-    '/_authenticated/app/privacy': {
-      id: '/_authenticated/app/privacy'
-      path: '/privacy'
-      fullPath: '/app/privacy'
-      preLoaderRoute: typeof AuthenticatedAppPrivacyRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
-    '/_authenticated/app/premi': {
-      id: '/_authenticated/app/premi'
-      path: '/premi'
-      fullPath: '/app/premi'
-      preLoaderRoute: typeof AuthenticatedAppPremiRouteImport
-      parentRoute: typeof AuthenticatedAppRoute
-    }
-    '/_authenticated/app/notifiche': {
-      id: '/_authenticated/app/notifiche'
-      path: '/notifiche'
-      fullPath: '/app/notifiche'
-      preLoaderRoute: typeof AuthenticatedAppNotificheRouteImport
+    '/_authenticated/app/': {
+      id: '/_authenticated/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AuthenticatedAppIndexRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
     '/_authenticated/app/bici': {
@@ -665,39 +609,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppBiciRouteImport
       parentRoute: typeof AuthenticatedAppRoute
     }
-    '/_authenticated/admin/verifiche': {
-      id: '/_authenticated/admin/verifiche'
-      path: '/verifiche'
-      fullPath: '/admin/verifiche'
-      preLoaderRoute: typeof AuthenticatedAdminVerificheRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/_authenticated/app/notifiche': {
+      id: '/_authenticated/app/notifiche'
+      path: '/notifiche'
+      fullPath: '/app/notifiche'
+      preLoaderRoute: typeof AuthenticatedAppNotificheRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
     }
-    '/lovable/email/transactional/send': {
-      id: '/lovable/email/transactional/send'
-      path: '/lovable/email/transactional/send'
-      fullPath: '/lovable/email/transactional/send'
-      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+    '/_authenticated/app/premi': {
+      id: '/_authenticated/app/premi'
+      path: '/premi'
+      fullPath: '/app/premi'
+      preLoaderRoute: typeof AuthenticatedAppPremiRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/privacy': {
+      id: '/_authenticated/app/privacy'
+      path: '/privacy'
+      fullPath: '/app/privacy'
+      preLoaderRoute: typeof AuthenticatedAppPrivacyRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/profilo': {
+      id: '/_authenticated/app/profilo'
+      path: '/profilo'
+      fullPath: '/app/profilo'
+      preLoaderRoute: typeof AuthenticatedAppProfiloRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/punti': {
+      id: '/_authenticated/app/punti'
+      path: '/punti'
+      fullPath: '/app/punti'
+      preLoaderRoute: typeof AuthenticatedAppPuntiRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/app/sfide': {
+      id: '/_authenticated/app/sfide'
+      path: '/sfide'
+      fullPath: '/app/sfide'
+      preLoaderRoute: typeof AuthenticatedAppSfideRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
+    }
+    '/_authenticated/azienda/': {
+      id: '/_authenticated/azienda/'
+      path: '/'
+      fullPath: '/azienda/'
+      preLoaderRoute: typeof AuthenticatedAziendaIndexRouteImport
+      parentRoute: typeof AuthenticatedAziendaRoute
+    }
+    '/_authenticated/azienda/onboarding': {
+      id: '/_authenticated/azienda/onboarding'
+      path: '/onboarding'
+      fullPath: '/azienda/onboarding'
+      preLoaderRoute: typeof AuthenticatedAziendaOnboardingRouteImport
+      parentRoute: typeof AuthenticatedAziendaRoute
+    }
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/queue/process': {
-      id: '/lovable/email/queue/process'
-      path: '/lovable/email/queue/process'
-      fullPath: '/lovable/email/queue/process'
-      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/webhook': {
-      id: '/lovable/email/auth/webhook'
-      path: '/lovable/email/auth/webhook'
-      fullPath: '/lovable/email/auth/webhook'
-      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+    '/api/public/cron/maintenance': {
+      id: '/api/public/cron/maintenance'
+      path: '/api/public/cron/maintenance'
+      fullPath: '/api/public/cron/maintenance'
+      preLoaderRoute: typeof ApiPublicCronMaintenanceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/auth/preview': {
@@ -707,11 +686,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/cron/maintenance': {
-      id: '/api/public/cron/maintenance'
-      path: '/api/public/cron/maintenance'
-      fullPath: '/api/public/cron/maintenance'
-      preLoaderRoute: typeof ApiPublicCronMaintenanceRouteImport
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
