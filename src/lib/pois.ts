@@ -110,14 +110,17 @@ export async function fetchPois(
   let elements: OverpassElement[];
   try {
     const res = await fetchPoisServer({ data: { bbox, categories }, signal });
+    if (res.error) throw new Error(res.error);
     elements = res.elements as OverpassElement[];
   } catch (err) {
     if (signal?.aborted) throw err;
     // Fallback lato client: se la serverFn non è disponibile (nessuna sessione,
-    // offline dal worker, errore 401/500) interroghiamo Overpass dal browser.
+    // offline dal worker, errore 401/500) o Overpass è sovraccarico lato server,
+    // interroghiamo Overpass direttamente dal browser.
     console.warn("POI server fallback:", err);
     elements = await fetchPoisFromBrowser(bbox, categories, signal);
   }
+
 
   const pois: Poi[] = [];
   for (const el of elements) {
