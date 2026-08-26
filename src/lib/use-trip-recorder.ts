@@ -146,8 +146,15 @@ export function useTripRecorder(currentMode: TripMode) {
     const accuracy = fix.accuracyM ?? null;
     if (accuracy != null && accuracy > 50) return; // scarta fix poco precisi
 
+    // Silenzio lungo tra due fix = app sospesa dal sistema (schermo spento su
+    // web/PWA): non possiamo inventare il tratto mancante, lo marchiamo come buco.
+    if (lastFixAtRef.current > 0 && Date.now() - lastFixAtRef.current > SUSPEND_GAP_MS) {
+      noteSuspension(Date.now() - lastFixAtRef.current);
+    }
+
     const speed = effectiveSpeedKmh(lastFixRef.current, fix);
     const reliable = accuracy == null || accuracy <= CLASSIFY_MAX_ACCURACY_M;
+
 
     // Sensor-fusion: se i motion sensor sono attivi e abbiamo campioni recenti,
     // usiamo il classificatore avanzato; altrimenti fallback sul GPS-only detector.
