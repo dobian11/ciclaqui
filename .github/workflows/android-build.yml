@@ -30,7 +30,9 @@ jobs:
         run: bun run build
 
       - name: Capacitor sync
-        run: bunx cap sync android
+        run: |
+          mkdir -p android/app/src/main/assets
+          bunx cap sync android
 
       # Firma opzionale: aggiungi i secrets nel repo per ottenere AAB firmato.
       # ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
