@@ -450,6 +450,11 @@ export function useTripRecorder(currentMode: TripMode) {
     classifierRef.current.reset();
     lastFixRef.current = null;
     lastFixAtRef.current = Date.now();
+    // Il tempo trascorso da quando l'app è stata congelata è un buco di tracking:
+    // niente salto in linea d'aria sul primo fix e utente avvisato.
+    const gapMs = Math.max(0, Date.now() - (stored.savedAt ?? stored.startedAt));
+    const suspended = gapMs >= SUSPEND_GAP_MS;
+    if (suspended) gapPendingRef.current = true;
     setState({
       recording: true,
       startedAt: stored.startedAt,
@@ -459,9 +464,10 @@ export function useTripRecorder(currentMode: TripMode) {
       dominantMode: stored.dominantMode,
       distanceByMode: stored.distanceByMode ?? { ...EMPTY_DBM },
       nativeBackground: false,
-      suspendedGapS: 0,
-      lastGapAt: null,
+      suspendedGapS: suspended ? Math.round(gapMs / 1000) : 0,
+      lastGapAt: suspended ? Date.now() : null,
     });
+
     motionStartedRef.current = false;
     void startMotionCollection().then((ok) => {
       motionStartedRef.current = ok;
