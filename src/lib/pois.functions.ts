@@ -45,7 +45,7 @@ export const fetchPoisServer = createServerFn({ method: "POST" })
             "Accept": "application/json",
             "Referer": "https://ciclaqui.app",
           },
-          signal: AbortSignal.timeout(9000),
+          signal: AbortSignal.timeout(6000),
         });
         if (!res.ok) {
           lastErr = new Error(`Overpass ${res.status}`);
@@ -61,12 +61,23 @@ export const fetchPoisServer = createServerFn({ method: "POST" })
             tags?: Record<string, string>;
           }>;
         };
-        return { elements: json.elements ?? [] };
+        return { elements: json.elements ?? [], error: null as string | null };
       } catch (e) {
         lastErr = e;
       }
     }
-    throw new Error(
-      `Overpass non raggiungibile: ${lastErr instanceof Error ? lastErr.message : "errore rete"}`,
-    );
+    // Overpass è spesso sovraccarico: non lanciamo (romperebbe la schermata),
+    // segnaliamo l'errore così il client ritenta direttamente dal browser.
+    return {
+      elements: [] as Array<{
+        type: string;
+        id: number;
+        lat?: number;
+        lon?: number;
+        center?: { lat: number; lon: number };
+        tags?: Record<string, string>;
+      }>,
+      error: `Overpass non raggiungibile: ${lastErr instanceof Error ? lastErr.message : "errore rete"}`,
+    };
   });
+
