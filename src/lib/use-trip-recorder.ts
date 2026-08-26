@@ -98,8 +98,8 @@ export function useTripRecorder(currentMode: TripMode) {
     dominantMode: "foot",
     distanceByMode: EMPTY_DBM,
     nativeBackground: false,
-      suspendedGapS: 0,
-      lastGapAt: null,
+    suspendedGapS: 0,
+    lastGapAt: null,
   });
 
   const watchIdRef = useRef<number | null>(null);
@@ -115,6 +115,27 @@ export function useTripRecorder(currentMode: TripMode) {
   const lastFixRef = useRef<GeoFix | null>(null);
   const lastFixAtRef = useRef<number>(0);
   const dbmRef = useRef<Record<TripMode, number>>({ ...EMPTY_DBM });
+  /** true quando l'app è stata sospesa: il fix successivo non deve creare un salto. */
+  const gapPendingRef = useRef(false);
+
+  /** Registra una sospensione del sistema (schermo spento su web/PWA). */
+  const noteSuspension = useCallback((gapMs: number) => {
+    if (gapMs < SUSPEND_GAP_MS) return;
+    gapPendingRef.current = true;
+    lastFixRef.current = null;
+    detectorRef.current.reset();
+    classifierRef.current.reset();
+    setState((prev) =>
+      prev.recording
+        ? {
+            ...prev,
+            suspendedGapS: prev.suspendedGapS + Math.round(gapMs / 1000),
+            lastGapAt: Date.now(),
+          }
+        : prev,
+    );
+  }, []);
+
 
   // tieni traccia del mode "vivo" (fallback se il fix non è classificabile)
   useEffect(() => {
