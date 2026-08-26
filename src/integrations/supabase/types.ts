@@ -1765,15 +1765,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      apply_trip_to_challenges: {
-        Args: {
-          _company_id: string
-          _distance_km: number
-          _mode: string
-          _user_id: string
-        }
-        Returns: undefined
-      }
+      apply_trip_to_challenges:
+        | {
+            Args: {
+              _company_id: string
+              _distance_km: number
+              _mode: string
+              _user_id: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              _company_id: string
+              _count_trip?: boolean
+              _distance_km: number
+              _mode: string
+              _user_id: string
+            }
+            Returns: undefined
+          }
       award_challenge_podium: {
         Args: { _challenge_id: string }
         Returns: {
