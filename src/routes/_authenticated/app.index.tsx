@@ -702,11 +702,27 @@ function MapHome() {
             >
               ~{livePoints ?? 0} pt
             </span>
-            {trip.nativeBackground && (
+            {trip.nativeBackground ? (
               <span className="text-[9px] font-semibold uppercase tracking-wide opacity-70">
                 bg
               </span>
+            ) : (
+              <span
+                className="text-[9px] font-semibold uppercase tracking-wide opacity-80"
+                title="Con lo schermo bloccato il tracking si mette in pausa: tieni l'app aperta"
+              >
+                app aperta
+              </span>
             )}
+            {trip.suspendedGapS > 0 && (
+              <span
+                className="text-[9px] font-bold uppercase tracking-wide"
+                title="Minuti non registrati perché il telefono ha sospeso l'app"
+              >
+                −{Math.max(1, Math.round(trip.suspendedGapS / 60))}m
+              </span>
+            )}
+
           </div>
         </div>
       )}
