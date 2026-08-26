@@ -34,11 +34,14 @@ function scoreSpeed(v: number): Record<Mode, number> {
   if (v < 1.2) return { foot: 0.9, bike: 0.05, car: 0.05 };
   if (v < 7) return { foot: 0.7, bike: 0.25, car: 0.05 };
   if (v < 12) return { foot: 0.25, bike: 0.65, car: 0.1 };
-  if (v < 28) return { foot: 0.05, bike: 0.85, car: 0.1 }; // fascia ciclismo preferita
-  if (v < 40) return { foot: 0, bike: 0.45, car: 0.55 };
-  if (v < 60) return { foot: 0, bike: 0.15, car: 0.85 };
+  // Fascia ciclismo allargata: e-bike, cargo bike e discese arrivano
+  // tranquillamente a 35-40 km/h → restano bici (verde).
+  if (v < 40) return { foot: 0.05, bike: 0.85, car: 0.1 };
+  if (v < 50) return { foot: 0, bike: 0.45, car: 0.55 };
+  if (v < 65) return { foot: 0, bike: 0.15, car: 0.85 };
   return { foot: 0, bike: 0.05, car: 0.95 };
 }
+
 
 function scoreAccel(av: number): Record<Mode, number> {
   // auto = bassa varianza, bici = media, piedi = alta
@@ -93,10 +96,11 @@ export function classifySample(
       headingScores.car * weights.heading,
   };
 
-  // Bike boost: in fascia ciclismo (8–35 km/h) aumenta il punteggio bici.
-  if (v >= 8 && v <= 35) {
+  // Bike boost: in fascia ciclismo (6–42 km/h) aumenta il punteggio bici.
+  if (v >= 6 && v <= 42) {
     raw.bike += weights.bikeBoost;
   }
+
 
   const scores = normalizeScores(raw);
   const winner: Mode = scores.bike >= scores.foot && scores.bike >= scores.car
@@ -155,7 +159,7 @@ export function clampModeToSpeed(hint: Mode, segSpeedKmh: number): Mode {
     return segSpeedKmh <= 45 ? "bike" : "car";
   }
   if (hint === "bike") {
-    return segSpeedKmh <= 45 ? "bike" : "car";
+    return segSpeedKmh <= 50 ? "bike" : "car";
   }
   return "car";
 }

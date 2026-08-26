@@ -126,6 +126,25 @@ export const endTrip = createServerFn({ method: "POST" })
       }
     }
 
+    // Recupero segmenti "auto" spuri dentro una pedalata: un tratto breve
+    // rilevato come auto (discesa, e-bike/cargo, picco GPS) in un viaggio
+    // chiaramente in bici viene riportato a bici, purché nessun segmento
+    // superi la velocità massima plausibile per una bici.
+    if (hasHints && carKm > 0 && bikeKm >= 1 && maxSpeed <= 50) {
+      const spurious = Math.min(1, bikeKm * 0.3);
+      if (carKm <= spurious) {
+        log.info("car-segment-recovered", {
+          user: uid,
+          carKm: Math.round(carKm * 1000) / 1000,
+          bikeKm: Math.round(bikeKm * 1000) / 1000,
+        });
+        bikeKm += carKm;
+        carKm = 0;
+      }
+    }
+
+
+
     // Durata "attiva": somma degli intervalli tra fix GPS, escludendo le pause
     // (app sospesa / viaggio ripreso) più lunghe di IDLE_GAP_MS.
     const IDLE_GAP_MS = 120000;
