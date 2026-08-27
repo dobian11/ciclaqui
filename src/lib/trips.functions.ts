@@ -297,16 +297,21 @@ export const endTrip = createServerFn({ method: "POST" })
         .select("company_id")
         .eq("id", userId)
         .maybeSingle();
-      await supabaseAdmin.from("trip_flags").insert({
-        trip_id: trip.id,
-        user_id: userId,
-        company_id: prof0?.company_id ?? null,
-        score: Math.min(1, maxSpeed / 100),
-        declared_mode: data.mode,
-        predicted_mode: predicted,
-        reason: anomalyReason,
-        status: "pending",
+      // RPC security-definer: la segnalazione entra in coda anche se le policy
+      // RLS di trip_flags rifiuterebbero l'insert diretto.
+      const { error: flagErr } = await supabaseAdmin.rpc("create_trip_flag", {
+        _trip_id: trip.id,
+        _user_id: userId,
+        _company_id: prof0?.company_id ?? null,
+        _score: Math.min(1, maxSpeed / 100),
+        _declared_mode: data.mode,
+        _predicted_mode: predicted,
+        _reason: anomalyReason ?? null,
       });
+      if (flagErr) {
+        log.error("trip-flag-insert-failed", { user: uid, message: flagErr.message });
+      }
+
 
       try {
         const { notifyUsers, companyManagerIds } = await import("@/lib/notify.server");
