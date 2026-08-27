@@ -52,7 +52,7 @@ Cicla Qui non è utilizzabile senza il codice di un ente aderente.
 
 **Email di contatto:** (inserisci l'indirizzo dell'assistenza)
 
-**Privacy policy:** https://ciclaqui.it/privacy
+**Privacy policy:** https://ciclaqui.it/legal/privacy
 
 ## 4. Grafica richiesta
 - Icona 512×512 PNG

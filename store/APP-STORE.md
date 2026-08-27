@@ -46,7 +46,7 @@ Cicla Qui non è utilizzabile senza il codice di un ente aderente.
 **Parole chiave:** bici,mobilità,sostenibile,ciclabile,punti,premi,azienda,comune,CO2,tracker
 
 **URL supporto:** https://ciclaqui.it
-**URL privacy:** https://ciclaqui.it/privacy
+**URL privacy:** https://ciclaqui.it/legal/privacy
 
 ## 3. Materiali grafici
 - Icona 1024×1024 PNG (senza trasparenza né angoli arrotondati)
