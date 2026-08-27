@@ -710,6 +710,10 @@ function MapHome() {
               <span className="text-[9px] font-semibold uppercase tracking-wide opacity-70">
                 bg
               </span>
+            ) : trip.nativePending ? (
+              <span className="text-[9px] font-semibold uppercase tracking-wide opacity-60">
+                bg…
+              </span>
             ) : (
               <span
                 className="text-[9px] font-semibold uppercase tracking-wide opacity-80"
@@ -718,6 +722,7 @@ function MapHome() {
                 app aperta
               </span>
             )}
+
             {trip.suspendedGapS > 0 && (
               <span
                 className="text-[9px] font-bold uppercase tracking-wide"
