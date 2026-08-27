@@ -161,7 +161,13 @@ export function useTripRecorder(currentMode: TripMode) {
 
     // Silenzio lungo tra due fix = app sospesa dal sistema (schermo spento su
     // web/PWA): non possiamo inventare il tratto mancante, lo marchiamo come buco.
-    if (lastFixAtRef.current > 0 && Date.now() - lastFixAtRef.current > SUSPEND_GAP_MS) {
+    // Sul nativo il tracking gira in background per davvero: una sosta lunga
+    // (semaforo, pausa, distanceFilter) non è una sospensione.
+    if (
+      !nativeWatcherRef.current &&
+      lastFixAtRef.current > 0 &&
+      Date.now() - lastFixAtRef.current > SUSPEND_GAP_MS
+    ) {
       noteSuspension(Date.now() - lastFixAtRef.current);
     }
 
