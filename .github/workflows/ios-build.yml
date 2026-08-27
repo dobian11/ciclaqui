@@ -1,0 +1,52 @@
+name: Build iOS (archivio non firmato)
+
+# Verifica che il progetto iOS compili e produce un archivio NON firmato.
+# Per pubblicare su App Store serve comunque Xcode con il tuo account Apple
+# Developer (firma + upload): vedi store/APP-STORE.md.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install deps
+        run: bun install
+
+      - name: Capacitor sync
+        run: bunx cap sync ios
+
+      - name: Pod install
+        working-directory: ios/App
+        run: pod install
+
+      - name: Build archivio (senza firma)
+        working-directory: ios/App
+        run: |
+          xcodebuild \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/CiclaQui.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            archive
+
+      - name: Comprimi archivio
+        run: cd "$RUNNER_TEMP" && zip -qr CiclaQui-xcarchive.zip CiclaQui.xcarchive
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ciclaqui-ios-archive
+          path: ${{ runner.temp }}/CiclaQui-xcarchive.zip
