@@ -47,6 +47,8 @@ export interface TripRecorderState {
   distanceByMode: Record<TripMode, number>;
   /** true su app nativa: il tracking continua anche ad app in background */
   nativeBackground: boolean;
+  /** true finché stiamo attivando il tracking nativo (permessi/avvio watcher) */
+  nativePending: boolean;
   /** secondi totali in cui il sistema ha sospeso l'app (schermo spento su web/PWA) */
   suspendedGapS: number;
   /** timestamp dell'ultima interruzione rilevata (per avvisare l'utente) */
@@ -57,7 +59,7 @@ const EMPTY_DBM: Record<TripMode, number> = { foot: 0, bike: 0, car: 0 };
 /** Nessun fix per così tanto → il watch web è stato ucciso: riarmalo. */
 const WATCHDOG_STALE_MS = 15_000;
 /** Oltre questo silenzio consideriamo l'app sospesa dal sistema (schermo spento). */
-const SUSPEND_GAP_MS = 25_000;
+const SUSPEND_GAP_MS = 90_000;
 
 
 function isNativePlatform(): boolean {
@@ -100,6 +102,7 @@ export function useTripRecorder(currentMode: TripMode) {
     dominantMode: "foot",
     distanceByMode: EMPTY_DBM,
     nativeBackground: false,
+    nativePending: false,
     suspendedGapS: 0,
     lastGapAt: null,
   });
@@ -149,7 +152,12 @@ export function useTripRecorder(currentMode: TripMode) {
 
   const ingestFix = useCallback((fix: GeoFix) => {
     const accuracy = fix.accuracyM ?? null;
-    if (accuracy != null && accuracy > 50) return; // scarta fix poco precisi
+    if (accuracy != null && accuracy > 50) {
+      // fix poco preciso: non lo usiamo per la distanza, ma il GPS è vivo →
+      // non deve essere scambiato per una sospensione dell'app.
+      lastFixAtRef.current = Date.now();
+      return;
+    }
 
     // Silenzio lungo tra due fix = app sospesa dal sistema (schermo spento su
     // web/PWA): non possiamo inventare il tratto mancante, lo marchiamo come buco.
@@ -326,6 +334,7 @@ export function useTripRecorder(currentMode: TripMode) {
       dominantMode: currentMode,
       distanceByMode: { ...EMPTY_DBM },
       nativeBackground: false,
+      nativePending: isNativePlatform(),
       suspendedGapS: 0,
       lastGapAt: null,
     });
@@ -337,11 +346,8 @@ export function useTripRecorder(currentMode: TripMode) {
     });
     // Prima prova il nativo (background reale); se fallisce, watch web.
     void armNativeWatch().then((native) => {
-      if (native) {
-        setState((prev) => ({ ...prev, nativeBackground: true }));
-      } else {
-        armWebWatch();
-      }
+      setState((prev) => ({ ...prev, nativeBackground: native, nativePending: false }));
+      if (!native) armWebWatch();
     });
     armTicker();
     armWatchdog();
@@ -379,7 +385,7 @@ export function useTripRecorder(currentMode: TripMode) {
     void wakeLockRef.current?.release();
 
     clearActiveTrip();
-    setState((prev) => ({ ...prev, recording: false, nativeBackground: false }));
+    setState((prev) => ({ ...prev, recording: false, nativeBackground: false, nativePending: false }));
   }, []);
 
   const reset = useCallback(() => {
@@ -396,6 +402,7 @@ export function useTripRecorder(currentMode: TripMode) {
       dominantMode: "foot",
       distanceByMode: { ...EMPTY_DBM },
       nativeBackground: false,
+      nativePending: false,
       suspendedGapS: 0,
       lastGapAt: null,
     });
@@ -478,6 +485,7 @@ export function useTripRecorder(currentMode: TripMode) {
       dominantMode: stored.dominantMode,
       distanceByMode: stored.distanceByMode ?? { ...EMPTY_DBM },
       nativeBackground: false,
+      nativePending: isNativePlatform(),
       suspendedGapS: suspended ? Math.round(gapMs / 1000) : 0,
       lastGapAt: suspended ? Date.now() : null,
     });
@@ -487,11 +495,8 @@ export function useTripRecorder(currentMode: TripMode) {
       motionStartedRef.current = ok;
     });
     void armNativeWatch().then((native) => {
-      if (native) {
-        setState((prev) => ({ ...prev, nativeBackground: true }));
-      } else {
-        armWebWatch();
-      }
+      setState((prev) => ({ ...prev, nativeBackground: native, nativePending: false }));
+      if (!native) armWebWatch();
     });
     armTicker();
     armWatchdog();

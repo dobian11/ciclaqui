@@ -364,7 +364,9 @@ function MapHome() {
   // Avvisiamo all'avvio e segnaliamo i buchi rilevati al ritorno in primo piano.
   const bgWarnedRef = useRef(false);
   useEffect(() => {
-    if (!trip.recording || trip.nativeBackground) {
+    // Su app nativa il watcher background si arma in modo asincrono: finché è
+    // in corso (nativePending) non mostriamo l'avviso "usa l'app dagli store".
+    if (!trip.recording || trip.nativeBackground || trip.nativePending) {
       bgWarnedRef.current = false;
       return;
     }
@@ -376,7 +378,8 @@ function MapHome() {
       duration: 8000,
     });
 
-  }, [trip.recording, trip.nativeBackground]);
+  }, [trip.recording, trip.nativeBackground, trip.nativePending]);
+
 
   const lastGapNotifiedRef = useRef<number | null>(null);
   useEffect(() => {
@@ -707,6 +710,10 @@ function MapHome() {
               <span className="text-[9px] font-semibold uppercase tracking-wide opacity-70">
                 bg
               </span>
+            ) : trip.nativePending ? (
+              <span className="text-[9px] font-semibold uppercase tracking-wide opacity-60">
+                bg…
+              </span>
             ) : (
               <span
                 className="text-[9px] font-semibold uppercase tracking-wide opacity-80"
@@ -715,6 +722,7 @@ function MapHome() {
                 app aperta
               </span>
             )}
+
             {trip.suspendedGapS > 0 && (
               <span
                 className="text-[9px] font-bold uppercase tracking-wide"

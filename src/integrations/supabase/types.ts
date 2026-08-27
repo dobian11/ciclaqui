@@ -1821,6 +1821,18 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_trip_flag: {
+        Args: {
+          _company_id: string
+          _declared_mode: string
+          _predicted_mode: string
+          _reason: string
+          _score: number
+          _trip_id: string
+          _user_id: string
+        }
+        Returns: string
+      }
       credit_trip_points: {
         Args: {
           _distance_km: number
