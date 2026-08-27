@@ -302,11 +302,11 @@ export const endTrip = createServerFn({ method: "POST" })
       const { error: flagErr } = await supabaseAdmin.rpc("create_trip_flag", {
         _trip_id: trip.id,
         _user_id: userId,
-        _company_id: prof0?.company_id ?? null,
+        _company_id: (prof0?.company_id ?? null) as string,
         _score: Math.min(1, maxSpeed / 100),
         _declared_mode: data.mode,
         _predicted_mode: predicted,
-        _reason: anomalyReason ?? null,
+        _reason: (anomalyReason ?? null) as string,
       });
       if (flagErr) {
         log.error("trip-flag-insert-failed", { user: uid, message: flagErr.message });
