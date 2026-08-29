@@ -18,6 +18,8 @@ export function CompanyRedemptionsSection() {
   const list = useServerFn(listCompanyRedemptions);
   const decide = useServerFn(confirmCompanyRedemption);
   const [busy, setBusy] = useState<string | null>(null);
+  const [reasonOpenId, setReasonOpenId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["company-redemptions"],
@@ -28,11 +30,13 @@ export function CompanyRedemptionsSection() {
   const items = data ?? [];
   const pending = items.filter((r) => r.status === "pending" || r.status === "active");
 
-  async function act(id: string, action: "confirm" | "cancel") {
+  async function act(id: string, action: "confirm" | "cancel", reason?: string) {
     if (action === "cancel") {
       const c = await confirm({
         title: "Annullare questo riscatto?",
-        description: "Il dipendente riceverà una notifica di annullamento.",
+        description: reason
+          ? "Il dipendente riceverà una notifica con la motivazione indicata."
+          : "Il dipendente riceverà una notifica di annullamento. Consigliato indicare un motivo.",
         confirmLabel: "Annulla riscatto",
         destructive: true,
       });
@@ -40,8 +44,10 @@ export function CompanyRedemptionsSection() {
     }
     setBusy(id);
     try {
-      await decide({ data: { id, action } });
+      await decide({ data: { id, action, reason: reason?.trim() || null } });
       toast.success(action === "confirm" ? "Riscatto confermato" : "Riscatto annullato");
+      setReasonOpenId(null);
+      setCancelReason("");
       await qc.invalidateQueries({ queryKey: ["company-redemptions"] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Errore");
