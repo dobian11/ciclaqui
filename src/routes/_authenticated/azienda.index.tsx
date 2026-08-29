@@ -14,6 +14,7 @@ import { PendingCompanyDashboard } from "@/components/cicla/PendingCompanyDashbo
 import { CompanyRejectionSection } from "@/components/cicla/CompanyRejectionSection";
 import { CompanyAccessStatus } from "@/components/cicla/CompanyAccessStatus";
 import { CompanyRewardsSection } from "@/components/cicla/CompanyRewardsSection";
+import { CompanyRedemptionsSection } from "@/components/cicla/CompanyRedemptionsSection";
 import { CompanyChallengesSection } from "@/components/cicla/CompanyChallengesSection";
 import { CompanyBadgesSection } from "@/components/cicla/CompanyBadgesSection";
 import { CompanyPayoutsSection } from "@/components/cicla/CompanyPayoutsSection";
@@ -328,7 +329,12 @@ function CompanyDashboard() {
 
       {section === "badge" && <CompanyBadgesSection memberLabel={memberLabel.toLowerCase()} />}
 
-      {section === "premi" && <CompanyRewardsSection />}
+      {section === "premi" && (
+        <>
+          <CompanyRewardsSection />
+          <CompanyRedemptionsSection />
+        </>
+      )}
 
       {section === "prelievi" && <CompanyPayoutsSection memberLabel={memberLabel} />}
 
