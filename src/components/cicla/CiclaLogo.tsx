@@ -55,6 +55,11 @@ export function CiclaLogo({
             mobilità sostenibile, misurabile
           </div>
         ) : null}
+        {showPoweredBy ? (
+          <div className="truncate text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/80">
+            Powered by <span className="text-cicla">Doctorbike Italia</span>
+          </div>
+        ) : null}
       </div>
     </div>
   );
