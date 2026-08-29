@@ -184,7 +184,12 @@ export function RewardsCatalog() {
             : "Nessun premio disponibile in questa categoria. Stiamo aggiungendo nuovi partner ogni settimana."}
         </div>
       )}
-      {tab !== "mine" && rewards.map((r) => (
+      {tab !== "mine" && rewards.map((r) => {
+        const already = redeemedIds.includes(r.id);
+        const soldOut = r.stock !== null && r.stock <= 0;
+        const missing = Math.max(0, r.points_cost - balance);
+        const pct = Math.min(100, Math.round((balance / Math.max(1, r.points_cost)) * 100));
+        return (
         <div key={r.id} className="rounded-2xl border border-border bg-card/50 p-4">
           <div className="flex items-start gap-3">
             {r.image_url ? <img src={r.image_url} alt="" className="size-14 rounded-xl object-cover" /> : <div className="grid size-14 place-items-center rounded-xl bg-cicla/15"><Gift size={20} className="text-cicla" /></div>}
@@ -195,16 +200,42 @@ export function RewardsCatalog() {
                   {rewardCategoryMeta(r.category).emoji} {rewardCategoryMeta(r.category).label}
                 </span>
                 {r.partner && <span className="text-[11px] text-muted-foreground">{r.partner}</span>}
+                {r.stock !== null && (
+                  <span className="text-[11px] text-muted-foreground">
+                    {soldOut ? "Esaurito" : `${r.stock} disponibili`}
+                  </span>
+                )}
               </div>
               {r.description && <p className="mt-1 text-xs text-muted-foreground">{r.description}</p>}
+              {r.category === "cash" && r.cash_value_eur ? (
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Valore € {Number(r.cash_value_eur).toFixed(2)} — pagato dal tuo ente sull'IBAN del profilo.
+                </p>
+              ) : null}
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between">
-            <div className="text-xs"><span className="font-bold text-cicla">{r.points_cost}</span> punti</div>
-            <button onClick={() => redeem(r)} disabled={balance < r.points_cost} className="rounded-full bg-cicla px-4 py-1.5 text-xs font-bold text-cicla-foreground disabled:opacity-40">Riscatta</button>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div className="h-full rounded-full bg-cicla transition-all" style={{ width: `${pct}%` }} />
+          </div>
+          <div className="mt-2 flex items-center justify-between">
+            <div className="text-xs">
+              <span className="font-bold text-cicla">{r.points_cost}</span> punti
+              {missing > 0 && !already && (
+                <span className="ml-1 text-muted-foreground">· ti mancano {missing}</span>
+              )}
+            </div>
+            <button
+              onClick={() => redeem(r)}
+              disabled={balance < r.points_cost || already || soldOut}
+              className="rounded-full bg-cicla px-4 py-1.5 text-xs font-bold text-cicla-foreground disabled:opacity-40"
+            >
+              {already ? "Già riscattato" : soldOut ? "Esaurito" : "Riscatta"}
+            </button>
           </div>
         </div>
-      ))}
+        );
+      })}
+
     </div>
   );
 }
