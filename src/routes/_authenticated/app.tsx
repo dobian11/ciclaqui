@@ -54,6 +54,7 @@ function AppLayout() {
       </main>
       <BottomNav />
       <PermissionsOnboarding />
+      <InstallPrompt />
     </div>
   );
 }
