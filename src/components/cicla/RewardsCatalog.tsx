@@ -27,8 +27,20 @@ type Redemption = {
   points_spent: number;
   status: string;
   redeemed_at: string;
-  rewards_catalog: { title: string; category: string } | null;
+  used_at: string | null;
+  expires_at: string | null;
+  cancel_reason: string | null;
+  rewards_catalog: { title: string; category: string; cash_value_eur: number | null; partner: string | null } | null;
 };
+
+/** Stato del riscatto dal punto di vista del dipendente. */
+function redemptionStatus(r: Redemption): { label: string; tone: "ok" | "wait" | "bad" } {
+  if (r.status === "cancelled") return { label: "Annullato", tone: "bad" };
+  if (r.status === "confirmed" || r.status === "used") return { label: "Confermato", tone: "ok" };
+  const isCash = r.rewards_catalog?.category === "cash" && Number(r.rewards_catalog?.cash_value_eur ?? 0) > 0;
+  // voucher sbloccato subito; premio in denaro = richiesta inviata all'ente
+  return isCash ? { label: "Inviato all'ente", tone: "wait" } : { label: "Sbloccato", tone: "ok" };
+}
 
 export function RewardsCatalog() {
   const [tab, setTab] = useState<"national" | "local" | "cash" | "donation" | "company" | "mine">("company");

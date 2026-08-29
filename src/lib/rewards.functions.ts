@@ -207,7 +207,7 @@ export const listCompanyRedemptions = createServerFn({ method: "GET" })
 
     const { data: rows } = await supabaseAdmin
       .from("reward_redemptions")
-      .select("id, code, status, points_spent, redeemed_at, used_at, reward_id, user_id")
+      .select("id, code, status, points_spent, redeemed_at, used_at, cancel_reason, reward_id, user_id")
       .in("reward_id", [...byId.keys()])
       .order("redeemed_at", { ascending: false })
       .limit(100);
