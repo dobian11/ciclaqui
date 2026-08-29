@@ -19,7 +19,10 @@ interface Props {
  * il tragitto in corso sta accumulando progressi.
  */
 export function ActiveCupsBanner({ challenges, mode, recording, distanceKm }: Props) {
-  const [open, setOpen] = useState(false);
+  // Aperto di default: l'utente deve vedere subito tutte le gare a cui
+  // sta partecipando con il mezzo selezionato (km + tragitti + CO₂).
+  const [open, setOpen] = useState(true);
+
 
   const matching = useMemo(
     () => (challenges ?? []).filter((c) => challengeMatchesMode(c.type, mode)),
