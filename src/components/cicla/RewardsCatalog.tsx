@@ -17,7 +17,9 @@ type Reward = {
   region: string | null;
   scope: string;
   company_id: string | null;
+  stock: number | null;
 };
+
 
 type Redemption = {
   id: string;
