@@ -9,10 +9,13 @@ type Size = "sm" | "md" | "lg";
 export function CiclaLogo({
   size = "md",
   showTagline = true,
+  showPoweredBy = true,
   className = "",
 }: {
   size?: Size;
   showTagline?: boolean;
+  /** Dicitura "Powered by Doctorbike Italia" sotto il marchio. */
+  showPoweredBy?: boolean;
   className?: string;
 }) {
   const sizes = {
