@@ -149,8 +149,9 @@ export function ChallengePodiumEditor({
   return (
     <div className="mt-3 space-y-3 rounded-lg border border-border/60 bg-secondary/30 p-3">
       <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        <Medal className="size-3.5" /> Premi del podio
+        <Medal className="size-3.5" /> Podio della sfida · premi 1°/2°/3°
       </div>
+
 
       {drafts.map((d, i) => (
         <div key={d.position} className="rounded-lg border border-border/50 bg-background/60 p-2.5">
