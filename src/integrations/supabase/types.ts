@@ -1864,15 +1864,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      delete_email: {
-        Args: { message_id: number; queue_name: string }
-        Returns: boolean
-      }
-      email_queue_dispatch: { Args: never; Returns: undefined }
-      enqueue_email: {
-        Args: { payload: Json; queue_name: string }
-        Returns: number
-      }
       generate_company_code: { Args: { _name: string }; Returns: string }
       get_my_prize_code: { Args: { _prize_id: string }; Returns: string }
       has_role: {
@@ -1881,15 +1872,6 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
-      }
-      move_to_dlq: {
-        Args: {
-          dlq_name: string
-          message_id: number
-          payload: Json
-          source_queue: string
-        }
-        Returns: number
       }
       owns_company: { Args: { _company_id: string }; Returns: boolean }
       pay_payout_from_company: {
@@ -1914,14 +1896,6 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
-      }
-      read_email_batch: {
-        Args: { batch_size: number; queue_name: string; vt: number }
-        Returns: {
-          message: Json
-          msg_id: number
-          read_ct: number
-        }[]
       }
       redeem_reward_for_user: {
         Args: { _reward_id: string; _user_id: string }
