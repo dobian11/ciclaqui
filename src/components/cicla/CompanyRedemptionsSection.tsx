@@ -119,7 +119,10 @@ export function CompanyRedemptionsSection() {
                           className="size-7 p-0 text-destructive"
                           aria-label="Annulla riscatto"
                           disabled={busy === r.id}
-                          onClick={() => act(r.id, "cancel")}
+                          onClick={() => {
+                            setReasonOpenId(reasonOpenId === r.id ? null : r.id);
+                            setCancelReason("");
+                          }}
                         >
                           <X className="size-3.5" />
                         </Button>
@@ -127,6 +130,43 @@ export function CompanyRedemptionsSection() {
                     )}
                   </div>
                 </div>
+
+                {cancelled && r.cancel_reason && (
+                  <p className="mt-2 rounded-md bg-destructive/10 px-2 py-1.5 text-[10px] text-destructive">
+                    Motivo: {r.cancel_reason}
+                  </p>
+                )}
+
+                {reasonOpenId === r.id && !done && !cancelled && (
+                  <div className="mt-2 space-y-2 rounded-md border border-destructive/30 bg-destructive/5 p-2">
+                    <label htmlFor={`cancel-reason-${r.id}`} className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Motivazione (visibile al dipendente)
+                    </label>
+                    <textarea
+                      id={`cancel-reason-${r.id}`}
+                      value={cancelReason}
+                      onChange={(e) => setCancelReason(e.target.value)}
+                      maxLength={300}
+                      rows={2}
+                      placeholder="Es. premio non più disponibile, verrà riaccreditato…"
+                      className="w-full rounded-md border border-border bg-background p-2 text-xs outline-none focus:border-destructive/60"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button size="sm" variant="ghost" className="h-7 text-[11px]" onClick={() => setReasonOpenId(null)}>
+                        Chiudi
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="h-7 text-[11px]"
+                        disabled={busy === r.id}
+                        onClick={() => act(r.id, "cancel", cancelReason)}
+                      >
+                        {busy === r.id ? <Loader2 className="size-3 animate-spin" /> : "Annulla riscatto"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </li>
             );
           })}

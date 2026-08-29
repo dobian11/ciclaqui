@@ -583,6 +583,14 @@ function MapHome() {
         />
       </Suspense>
 
+      {/* Centro notifiche: campanella fluttuante con badge non lette */}
+      <div
+        className="absolute right-3 z-[60] flex flex-col gap-2"
+        style={{ top: "calc(env(safe-area-inset-top, 0px) + 12px)" }}
+      >
+        <NotificationsBell />
+      </div>
+
 
       <GpsPermissionSheet
         error={geo.error}
