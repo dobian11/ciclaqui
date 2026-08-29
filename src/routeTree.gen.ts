@@ -15,7 +15,6 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CercaBiciRouteImport } from './routes/cerca-bici'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedAziendaRouteImport } from './routes/_authenticated/azienda'
@@ -69,11 +68,6 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const UnsubscribeRoute = UnsubscribeRouteImport.update({
-  id: '/unsubscribe',
-  path: '/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -214,7 +208,6 @@ export interface FileRoutesByFullPath {
   '/cerca-bici': typeof CercaBiciRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/unsubscribe': typeof UnsubscribeRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/app': typeof AuthenticatedAppRouteWithChildren
   '/azienda': typeof AuthenticatedAziendaRouteWithChildren
@@ -247,7 +240,6 @@ export interface FileRoutesByTo {
   '/cerca-bici': typeof CercaBiciRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/unsubscribe': typeof UnsubscribeRoute
   '/azienda/auth': typeof AziendaAuthRoute
   '/legal/cookie': typeof LegalCookieRoute
   '/legal/permessi': typeof LegalPermessiRoute
@@ -279,7 +271,6 @@ export interface FileRoutesById {
   '/cerca-bici': typeof CercaBiciRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/unsubscribe': typeof UnsubscribeRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRouteWithChildren
   '/_authenticated/azienda': typeof AuthenticatedAziendaRouteWithChildren
@@ -314,7 +305,6 @@ export interface FileRouteTypes {
     | '/cerca-bici'
     | '/reset-password'
     | '/sitemap.xml'
-    | '/unsubscribe'
     | '/admin'
     | '/app'
     | '/azienda'
@@ -347,7 +337,6 @@ export interface FileRouteTypes {
     | '/cerca-bici'
     | '/reset-password'
     | '/sitemap.xml'
-    | '/unsubscribe'
     | '/azienda/auth'
     | '/legal/cookie'
     | '/legal/permessi'
@@ -378,7 +367,6 @@ export interface FileRouteTypes {
     | '/cerca-bici'
     | '/reset-password'
     | '/sitemap.xml'
-    | '/unsubscribe'
     | '/_authenticated/admin'
     | '/_authenticated/app'
     | '/_authenticated/azienda'
@@ -413,7 +401,6 @@ export interface RootRouteChildren {
   CercaBiciRoute: typeof CercaBiciRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  UnsubscribeRoute: typeof UnsubscribeRoute
   AziendaAuthRoute: typeof AziendaAuthRoute
   LegalCookieRoute: typeof LegalCookieRoute
   LegalPermessiRoute: typeof LegalPermessiRoute
@@ -468,13 +455,6 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/unsubscribe': {
-      id: '/unsubscribe'
-      path: '/unsubscribe'
-      fullPath: '/unsubscribe'
-      preLoaderRoute: typeof UnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -728,7 +708,6 @@ const rootRouteChildren: RootRouteChildren = {
   CercaBiciRoute: CercaBiciRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  UnsubscribeRoute: UnsubscribeRoute,
   AziendaAuthRoute: AziendaAuthRoute,
   LegalCookieRoute: LegalCookieRoute,
   LegalPermessiRoute: LegalPermessiRoute,
