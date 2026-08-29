@@ -1853,6 +1853,7 @@ export type Database = {
         Returns: number
       }
       generate_company_code: { Args: { _name: string }; Returns: string }
+      get_my_prize_code: { Args: { _prize_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
