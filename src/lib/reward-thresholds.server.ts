@@ -64,7 +64,7 @@ export async function notifyRewardThresholds(userId: string): Promise<number> {
     for (const r of toNotify) {
       await notifyUsers({
         userIds: [userId],
-        topic: "rewards",
+        topic: "reward_threshold",
         type: "reward_threshold",
         title: "Hai raggiunto la soglia di un premio",
         body: `Con ${balance} punti puoi riscattare "${r.title}" (${r.points_cost} punti).`,

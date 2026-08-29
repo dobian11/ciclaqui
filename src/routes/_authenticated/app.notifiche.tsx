@@ -25,18 +25,24 @@ export const Route = createFileRoute("/_authenticated/app/notifiche")({
 
 type Prefs = {
   inapp_streak: boolean; inapp_challenges: boolean; inapp_bike: boolean; inapp_trip_flag: boolean; inapp_rewards: boolean; inapp_company: boolean;
+  inapp_reward_threshold: boolean; inapp_reward_confirm: boolean;
   email_streak: boolean; email_challenges: boolean; email_bike: boolean; email_trip_flag: boolean; email_rewards: boolean; email_company: boolean; email_product: boolean;
+  email_reward_threshold: boolean; email_reward_confirm: boolean;
   push_streak: boolean; push_challenges: boolean; push_bike: boolean; push_trip_flag: boolean; push_rewards: boolean; push_company: boolean;
+  push_reward_threshold: boolean; push_reward_confirm: boolean;
 };
 
 const DEFAULTS: Prefs = {
   inapp_streak: true, inapp_challenges: true, inapp_bike: true, inapp_trip_flag: true, inapp_rewards: true, inapp_company: true,
+  inapp_reward_threshold: true, inapp_reward_confirm: true,
   email_streak: false, email_challenges: true, email_bike: true, email_trip_flag: true, email_rewards: false, email_company: true, email_product: false,
+  email_reward_threshold: true, email_reward_confirm: true,
   push_streak: true, push_challenges: true, push_bike: true, push_trip_flag: true, push_rewards: true, push_company: true,
+  push_reward_threshold: true, push_reward_confirm: true,
 };
 
 type Row = {
-  key: "streak" | "challenges" | "bike" | "trip_flag" | "rewards" | "company";
+  key: "streak" | "challenges" | "bike" | "trip_flag" | "rewards" | "reward_threshold" | "reward_confirm" | "company";
   label: string;
   desc: string;
   email: boolean;
@@ -47,7 +53,9 @@ const ROWS: Row[] = [
   { key: "challenges", label: "Sfide e traguardi", desc: "Nuove sfide, progressi e sfide completate.", email: true },
   { key: "bike", label: "Bici e segnalazioni", desc: "Avvistamenti, recuperi e aggiornamenti sul passaporto bici.", email: true },
   { key: "trip_flag", label: "Viaggi da rivedere", desc: "Quando un viaggio viene messo in revisione o sbloccato.", email: true },
-  { key: "rewards", label: "Premi disponibili", desc: "Nuovi premi del tuo ente e conferme di riscatto.", email: true },
+  { key: "rewards", label: "Premi disponibili", desc: "Nuovi premi pubblicati dal tuo ente.", email: true },
+  { key: "reward_threshold", label: "Soglia premio raggiunta", desc: "Quando i tuoi punti raggiungono la soglia di un premio del tuo ente.", email: true },
+  { key: "reward_confirm", label: "Esito riscatto premi", desc: "Conferma o annullamento (con motivazione) di un riscatto da parte dell'ente.", email: true },
   { key: "company", label: "Comunicazioni dell'ente", desc: "Messaggi e aggiornamenti dalla tua azienda o dal tuo comune.", email: true },
 ];
 

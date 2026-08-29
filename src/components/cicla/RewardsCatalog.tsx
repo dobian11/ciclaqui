@@ -27,8 +27,20 @@ type Redemption = {
   points_spent: number;
   status: string;
   redeemed_at: string;
-  rewards_catalog: { title: string; category: string } | null;
+  used_at: string | null;
+  expires_at: string | null;
+  cancel_reason: string | null;
+  rewards_catalog: { title: string; category: string; cash_value_eur: number | null; partner: string | null } | null;
 };
+
+/** Stato del riscatto dal punto di vista del dipendente. */
+function redemptionStatus(r: Redemption): { label: string; tone: "ok" | "wait" | "bad" } {
+  if (r.status === "cancelled") return { label: "Annullato", tone: "bad" };
+  if (r.status === "confirmed" || r.status === "used") return { label: "Confermato", tone: "ok" };
+  const isCash = r.rewards_catalog?.category === "cash" && Number(r.rewards_catalog?.cash_value_eur ?? 0) > 0;
+  // voucher sbloccato subito; premio in denaro = richiesta inviata all'ente
+  return isCash ? { label: "Inviato all'ente", tone: "wait" } : { label: "Sbloccato", tone: "ok" };
+}
 
 export function RewardsCatalog() {
   const [tab, setTab] = useState<"national" | "local" | "cash" | "donation" | "company" | "mine">("company");
@@ -69,7 +81,7 @@ export function RewardsCatalog() {
         }
         const { data } = await supabase
           .from("reward_redemptions")
-          .select("id, code, points_spent, status, redeemed_at, rewards_catalog(title, category)")
+          .select("id, code, points_spent, status, redeemed_at, used_at, expires_at, cancel_reason, rewards_catalog(title, category, cash_value_eur, partner)")
           .eq("user_id", user.id)
           .order("redeemed_at", { ascending: false });
         setMine((data ?? []) as unknown as Redemption[]);
@@ -149,7 +161,10 @@ export function RewardsCatalog() {
             Non hai ancora premi riscattati o vinti sul podio.
           </div>
         ) : (
-          mine.map((m) => (
+          mine.map((m) => {
+            const st = redemptionStatus(m);
+            const cash = m.rewards_catalog?.category === "cash" && Number(m.rewards_catalog?.cash_value_eur ?? 0) > 0;
+            return (
             <div key={m.id} className="rounded-2xl border border-border bg-card/50 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -164,16 +179,46 @@ export function RewardsCatalog() {
                     </span>
                   </div>
                 </div>
-                <span className="rounded-full bg-cicla/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-cicla">
-                  {m.status}
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                    st.tone === "ok"
+                      ? "bg-cicla/15 text-cicla"
+                      : st.tone === "wait"
+                        ? "bg-amber-500/15 text-amber-400"
+                        : "bg-destructive/15 text-destructive"
+                  }`}
+                >
+                  {st.label}
                 </span>
               </div>
-              <div className="mt-3 rounded-xl bg-black/30 px-3 py-2 font-mono text-sm tracking-widest">{m.code}</div>
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                {new Date(m.redeemed_at).toLocaleDateString("it-IT")}
-              </p>
+
+              {m.status !== "cancelled" && (
+                <div className="mt-3 rounded-xl bg-black/30 px-3 py-2 font-mono text-sm tracking-widest">{m.code}</div>
+              )}
+
+              <div className="mt-2 space-y-0.5 text-[11px] text-muted-foreground">
+                <p>Richiesto il {new Date(m.redeemed_at).toLocaleString("it-IT")}</p>
+                {m.used_at && <p>Confermato il {new Date(m.used_at).toLocaleString("it-IT")}</p>}
+                {m.expires_at && m.status !== "cancelled" && (
+                  <p>Valido fino al {new Date(m.expires_at).toLocaleDateString("it-IT")}</p>
+                )}
+                {cash && (
+                  <p>
+                    Valore € {Number(m.rewards_catalog?.cash_value_eur).toFixed(2)} — bonifico dell'ente sull'IBAN del
+                    profilo.
+                  </p>
+                )}
+                {m.rewards_catalog?.partner && <p>Partner: {m.rewards_catalog.partner}</p>}
+              </div>
+
+              {m.status === "cancelled" && m.cancel_reason && (
+                <p className="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-[11px] text-destructive">
+                  Motivo dell'annullamento: {m.cancel_reason}
+                </p>
+              )}
             </div>
-          ))
+            );
+          })
         )
       )}
 

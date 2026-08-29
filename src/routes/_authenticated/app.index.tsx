@@ -23,6 +23,7 @@ import { computeLivePointsPreview } from "@/lib/trip-points";
 import { getMyTrackingWindow } from "@/lib/companies.functions";
 import { listActiveChallenges } from "@/lib/gamification.functions";
 import { ActiveCupsBanner } from "@/components/cicla/ActiveCupsBanner";
+import { NotificationsBell } from "@/components/cicla/NotificationsBell";
 import { challengeMatchesMode, estimateDelta, challengeUnit } from "@/lib/challenge-match";
 import { computeRoute } from "@/lib/routes.functions";
 import { decodePolyline } from "@/lib/polyline";
@@ -582,6 +583,14 @@ function MapHome() {
           interactionsLocked={mapInteractionsLocked}
         />
       </Suspense>
+
+      {/* Centro notifiche: campanella fluttuante con badge non lette */}
+      <div
+        className="absolute right-3 z-[60] flex flex-col gap-2"
+        style={{ top: "calc(env(safe-area-inset-top, 0px) + 12px)" }}
+      >
+        <NotificationsBell />
+      </div>
 
 
       <GpsPermissionSheet
