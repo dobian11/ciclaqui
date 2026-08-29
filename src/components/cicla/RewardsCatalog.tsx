@@ -34,8 +34,10 @@ export function RewardsCatalog() {
   const [tab, setTab] = useState<"national" | "local" | "cash" | "donation" | "company" | "mine">("company");
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [mine, setMine] = useState<Redemption[]>([]);
+  const [redeemedIds, setRedeemedIds] = useState<string[]>([]);
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -44,9 +46,21 @@ export function RewardsCatalog() {
       if (user) {
         const { data: w } = await supabase.from("wallets").select("points_balance").eq("user_id", user.id).maybeSingle();
         setBalance(w?.points_balance ?? 0);
+        // Premi già riscattati: uno stesso premio non può essere riscattato due volte.
+        const { data: red } = await supabase
+          .from("reward_redemptions")
+          .select("reward_id, status")
+          .eq("user_id", user.id);
+        setRedeemedIds(
+          (red ?? [])
+            .filter((r: { status: string }) => r.status !== "cancelled")
+            .map((r: { reward_id: string }) => r.reward_id),
+        );
       } else {
         setBalance(0);
+        setRedeemedIds([]);
       }
+
       if (tab === "mine") {
         if (!user) {
           setMine([]);
