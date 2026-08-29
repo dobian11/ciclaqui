@@ -231,6 +231,7 @@ export const listCompanyRedemptions = createServerFn({ method: "GET" })
         reward_title: rw?.title ?? "Premio",
         category: rw?.category ?? "voucher",
         cash_value_eur: rw?.cash_value_eur ?? null,
+        cancel_reason: r.cancel_reason ?? null,
       };
     });
   });
