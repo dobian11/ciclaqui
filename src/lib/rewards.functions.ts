@@ -191,6 +191,111 @@ export const upsertCompanyReward = createServerFn({ method: "POST" })
     return { ok: true as const, id: row.id };
   });
 
+/** Riscatti dei premi dell'ente, con nome del dipendente. */
+export const listCompanyRedemptions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const companyId = await assertManagerCompany(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: rewards } = await supabaseAdmin
+      .from("rewards_catalog")
+      .select("id, title, category, points_cost, cash_value_eur")
+      .eq("company_id", companyId);
+    const byId = new Map((rewards ?? []).map((r) => [r.id, r]));
+    if (!byId.size) return [];
+
+    const { data: rows } = await supabaseAdmin
+      .from("reward_redemptions")
+      .select("id, code, status, points_spent, redeemed_at, used_at, reward_id, user_id")
+      .in("reward_id", [...byId.keys()])
+      .order("redeemed_at", { ascending: false })
+      .limit(100);
+
+    const userIds = [...new Set((rows ?? []).map((r) => r.user_id))];
+    const { data: profiles } = userIds.length
+      ? await supabaseAdmin.from("profiles").select("id, full_name").in("id", userIds)
+      : { data: [] as { id: string; full_name: string | null }[] };
+    const names = new Map((profiles ?? []).map((p) => [p.id, p.full_name]));
+
+    return (rows ?? []).map((r) => {
+      const rw = byId.get(r.reward_id);
+      return {
+        id: r.id,
+        code: r.code,
+        status: r.status,
+        points_spent: r.points_spent,
+        redeemed_at: r.redeemed_at,
+        used_at: r.used_at,
+        user_name: names.get(r.user_id) ?? "Dipendente",
+        reward_title: rw?.title ?? "Premio",
+        category: rw?.category ?? "voucher",
+        cash_value_eur: rw?.cash_value_eur ?? null,
+      };
+    });
+  });
+
+/** L'ente conferma (o annulla) un riscatto: il dipendente riceve una notifica push. */
+export const confirmCompanyRedemption = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ id: z.string().uuid(), action: z.enum(["confirm", "cancel"]).default("confirm") }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const companyId = await assertManagerCompany(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: red } = await supabaseAdmin
+      .from("reward_redemptions")
+      .select("id, code, status, points_spent, user_id, reward_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!red) throw new Error("Riscatto non trovato");
+
+    const { data: reward } = await supabaseAdmin
+      .from("rewards_catalog")
+      .select("id, title, company_id")
+      .eq("id", red.reward_id)
+      .maybeSingle();
+    if (!reward || reward.company_id !== companyId) throw new Error("Riscatto non appartiene al tuo ente");
+
+    const confirming = data.action === "confirm";
+    const { error } = await supabaseAdmin
+      .from("reward_redemptions")
+      .update({
+        status: confirming ? "confirmed" : "cancelled",
+        used_at: confirming ? new Date().toISOString() : null,
+      })
+      .eq("id", red.id);
+    if (error) throw new Error("Aggiornamento riscatto fallito");
+
+    try {
+      const { notifyUsers } = await import("@/lib/notify.server");
+      await notifyUsers({
+        userIds: [red.user_id],
+        topic: "rewards",
+        type: confirming ? "reward_confirmed" : "reward_cancelled",
+        title: confirming ? "Premio confermato" : "Riscatto annullato",
+        body: confirming
+          ? `Il tuo ente ha confermato "${reward.title}". Mostra il codice ${red.code} per ritirarlo.`
+          : `Il riscatto di "${reward.title}" è stato annullato dal tuo ente. Contattalo per maggiori informazioni.`,
+        url: "/app/punti?tab=rewards",
+        companyId,
+        code: confirming ? red.code : undefined,
+        ctaLabel: "Vedi i miei premi",
+        details: [
+          { label: "Premio", value: reward.title },
+          { label: "Punti spesi", value: String(red.points_spent) },
+        ],
+        payload: { redemption_id: red.id, reward_id: reward.id, ref: red.code },
+      });
+    } catch (e) {
+      console.error("[confirmCompanyRedemption] notify failed", e);
+    }
+
+    return { ok: true as const, status: confirming ? "confirmed" : "cancelled" };
+  });
+
 export const deleteCompanyReward = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))

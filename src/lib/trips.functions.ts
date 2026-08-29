@@ -411,6 +411,17 @@ export const endTrip = createServerFn({ method: "POST" })
       log.error("gamification-failed", { user: uid, message: (e as Error)?.message ?? String(e) });
     }
 
+    // ── Soglie premi: avvisa il dipendente quando può riscattare ──
+    try {
+      const { notifyRewardThresholds } = await import("@/lib/reward-thresholds.server");
+      await notifyRewardThresholds(userId);
+    } catch (e) {
+      log.error("reward-threshold-failed", {
+        user: uid,
+        message: (e as Error)?.message ?? String(e),
+      });
+    }
+
     await log.flush();
 
     return {
