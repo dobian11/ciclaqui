@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { BottomNav } from "@/components/cicla/BottomNav";
 import { PermissionsOnboarding } from "@/components/cicla/PermissionsOnboarding";
+import { InstallPrompt } from "@/components/cicla/InstallPrompt";
 import { prefetchGoogleMaps } from "@/lib/google-maps-loader";
 import { fetchRoleContext } from "@/lib/auth-redirect";
 import { useStableViewportHeight } from "@/hooks/use-stable-viewport";
@@ -53,6 +54,7 @@ function AppLayout() {
       </main>
       <BottomNav />
       <PermissionsOnboarding />
+      <InstallPrompt />
     </div>
   );
 }
