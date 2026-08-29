@@ -5,7 +5,15 @@
  */
 import { PUBLIC_APP_URL } from "@/lib/public-url";
 
-export type NotifyTopic = "company" | "challenges" | "streak" | "bike" | "rewards" | "trip_flag";
+export type NotifyTopic =
+  | "company"
+  | "challenges"
+  | "streak"
+  | "bike"
+  | "rewards"
+  | "trip_flag"
+  | "reward_threshold"
+  | "reward_confirm";
 
 export type NotifyInput = {
   userIds: string[];
