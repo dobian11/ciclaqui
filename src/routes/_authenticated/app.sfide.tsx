@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { PoweredBy } from "@/components/cicla/PoweredBy";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -40,6 +41,7 @@ function SfidePage() {
       <div className="app-page bg-background">
         <div className="app-container">
           <h1 className="font-display text-2xl font-black tracking-tight">Sfide & premi</h1>
+          <PoweredBy className="mt-0.5" />
           <div className="mt-6 rounded-3xl app-glass p-6 text-center text-sm text-muted-foreground shadow-xl">
             Accedi con il tuo codice azienda o Comune per vedere sfide, streak e classifica.
           </div>
@@ -52,6 +54,7 @@ function SfidePage() {
     <div className="app-page bg-background">
       <div className="app-container">
         <h1 className="font-display text-2xl font-black tracking-tight">Sfide & premi</h1>
+        <PoweredBy className="mt-0.5" />
         <p className="mt-1 text-sm text-muted-foreground">
           Completa obiettivi, mantieni la streak e scala la classifica del tuo ente.
         </p>

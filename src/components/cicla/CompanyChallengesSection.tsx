@@ -372,13 +372,15 @@ export function CompanyChallengesSection({ memberLabel }: { memberLabel: string 
                   <div className="flex shrink-0 gap-1">
                     <Button
                       size="sm"
-                      variant="ghost"
-                      className="size-7 p-0"
-                      aria-label="Premi del podio"
+                      variant={podiumFor === c.id ? "default" : "secondary"}
+                      className="h-7 gap-1 px-2 text-[11px]"
+                      aria-label="Podio della sfida"
                       onClick={() => setPodiumFor(podiumFor === c.id ? null : c.id)}
                     >
                       <Medal className="size-3.5" />
+                      Podio
                     </Button>
+
                     <Button
                       size="sm"
                       variant="ghost"

@@ -17,7 +17,9 @@ type Reward = {
   region: string | null;
   scope: string;
   company_id: string | null;
+  stock: number | null;
 };
+
 
 type Redemption = {
   id: string;
@@ -32,8 +34,10 @@ export function RewardsCatalog() {
   const [tab, setTab] = useState<"national" | "local" | "cash" | "donation" | "company" | "mine">("company");
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [mine, setMine] = useState<Redemption[]>([]);
+  const [redeemedIds, setRedeemedIds] = useState<string[]>([]);
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -42,9 +46,21 @@ export function RewardsCatalog() {
       if (user) {
         const { data: w } = await supabase.from("wallets").select("points_balance").eq("user_id", user.id).maybeSingle();
         setBalance(w?.points_balance ?? 0);
+        // Premi già riscattati: uno stesso premio non può essere riscattato due volte.
+        const { data: red } = await supabase
+          .from("reward_redemptions")
+          .select("reward_id, status")
+          .eq("user_id", user.id);
+        setRedeemedIds(
+          (red ?? [])
+            .filter((r: { status: string }) => r.status !== "cancelled")
+            .map((r: { reward_id: string }) => r.reward_id),
+        );
       } else {
         setBalance(0);
+        setRedeemedIds([]);
       }
+
       if (tab === "mine") {
         if (!user) {
           setMine([]);
@@ -92,18 +108,27 @@ export function RewardsCatalog() {
       setRewards((data ?? []) as Reward[]);
       setLoading(false);
     })();
-  }, [tab]);
+  }, [tab, reloadKey]);
 
   async function redeem(r: Reward) {
     if (balance < r.points_cost) return toast.error("Punti insufficienti");
+    if (redeemedIds.includes(r.id)) return toast.error("Hai già riscattato questo premio");
+    if (r.stock !== null && r.stock <= 0) return toast.error("Premio esaurito");
     try {
       const data = await redeemReward({ data: { rewardId: r.id } });
       setBalance(balance - r.points_cost);
-      toast.success(`Riscattato! Codice: ${data.code}`);
-    } catch {
-      toast.error("Impossibile riscattare il premio");
+      setRedeemedIds((prev) => [...prev, r.id]);
+      toast.success(
+        data.cash
+          ? `Richiesta inviata! Il tuo ente pagherà l'importo sul tuo IBAN. Rif. ${data.code}`
+          : `Riscattato! Codice: ${data.code}`,
+      );
+      setReloadKey((k) => k + 1);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Impossibile riscattare il premio");
     }
   }
+
 
   return (
     <div className="space-y-3">
@@ -159,7 +184,12 @@ export function RewardsCatalog() {
             : "Nessun premio disponibile in questa categoria. Stiamo aggiungendo nuovi partner ogni settimana."}
         </div>
       )}
-      {tab !== "mine" && rewards.map((r) => (
+      {tab !== "mine" && rewards.map((r) => {
+        const already = redeemedIds.includes(r.id);
+        const soldOut = r.stock !== null && r.stock <= 0;
+        const missing = Math.max(0, r.points_cost - balance);
+        const pct = Math.min(100, Math.round((balance / Math.max(1, r.points_cost)) * 100));
+        return (
         <div key={r.id} className="rounded-2xl border border-border bg-card/50 p-4">
           <div className="flex items-start gap-3">
             {r.image_url ? <img src={r.image_url} alt="" className="size-14 rounded-xl object-cover" /> : <div className="grid size-14 place-items-center rounded-xl bg-cicla/15"><Gift size={20} className="text-cicla" /></div>}
@@ -170,16 +200,42 @@ export function RewardsCatalog() {
                   {rewardCategoryMeta(r.category).emoji} {rewardCategoryMeta(r.category).label}
                 </span>
                 {r.partner && <span className="text-[11px] text-muted-foreground">{r.partner}</span>}
+                {r.stock !== null && (
+                  <span className="text-[11px] text-muted-foreground">
+                    {soldOut ? "Esaurito" : `${r.stock} disponibili`}
+                  </span>
+                )}
               </div>
               {r.description && <p className="mt-1 text-xs text-muted-foreground">{r.description}</p>}
+              {r.category === "cash" && r.cash_value_eur ? (
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Valore € {Number(r.cash_value_eur).toFixed(2)} — pagato dal tuo ente sull'IBAN del profilo.
+                </p>
+              ) : null}
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between">
-            <div className="text-xs"><span className="font-bold text-cicla">{r.points_cost}</span> punti</div>
-            <button onClick={() => redeem(r)} disabled={balance < r.points_cost} className="rounded-full bg-cicla px-4 py-1.5 text-xs font-bold text-cicla-foreground disabled:opacity-40">Riscatta</button>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div className="h-full rounded-full bg-cicla transition-all" style={{ width: `${pct}%` }} />
+          </div>
+          <div className="mt-2 flex items-center justify-between">
+            <div className="text-xs">
+              <span className="font-bold text-cicla">{r.points_cost}</span> punti
+              {missing > 0 && !already && (
+                <span className="ml-1 text-muted-foreground">· ti mancano {missing}</span>
+              )}
+            </div>
+            <button
+              onClick={() => redeem(r)}
+              disabled={balance < r.points_cost || already || soldOut}
+              className="rounded-full bg-cicla px-4 py-1.5 text-xs font-bold text-cicla-foreground disabled:opacity-40"
+            >
+              {already ? "Già riscattato" : soldOut ? "Esaurito" : "Riscatta"}
+            </button>
           </div>
         </div>
-      ))}
+        );
+      })}
+
     </div>
   );
 }

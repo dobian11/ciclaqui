@@ -41,21 +41,36 @@ export const redeemReward = createServerFn({ method: "POST" })
       _user_id: context.userId,
       _reward_id: data.rewardId,
     });
-    if (error || !redemption) throw new Error("Impossibile riscattare il premio");
+    if (error || !redemption) {
+      // Il messaggio della funzione DB è già in italiano e leggibile
+      // (punti insufficienti, premio esaurito, già riscattato, IBAN mancante…).
+      throw new Error(error?.message || "Impossibile riscattare il premio");
+    }
 
+    let isCash = false;
     try {
-      const { notifyUsers } = await import("@/lib/notify.server");
+      const { notifyUsers, companyManagerIds } = await import("@/lib/notify.server");
       const { data: reward } = await supabaseAdmin
         .from("rewards_catalog")
-        .select("title, points_cost")
+        .select("title, points_cost, category, cash_value_eur, company_id")
         .eq("id", data.rewardId)
         .maybeSingle();
+      isCash = reward?.category === "cash" && Number(reward?.cash_value_eur ?? 0) > 0;
+
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("full_name, phone, company_id, iban")
+        .eq("id", context.userId)
+        .maybeSingle();
+
       await notifyUsers({
         userIds: [context.userId],
         topic: "rewards",
         type: "reward_redeemed",
         title: "Premio riscattato",
-        body: `Hai riscattato "${reward?.title ?? "il tuo premio"}". Conserva il codice per usarlo.`,
+        body: isCash
+          ? `Hai richiesto "${reward?.title ?? "il premio"}" in denaro. Il tuo ente effettuerà il bonifico sull'IBAN indicato nel profilo.`
+          : `Hai riscattato "${reward?.title ?? "il tuo premio"}". Conserva il codice per usarlo.`,
         url: "/app/punti?tab=rewards",
         code: redemption.code,
         ctaLabel: "Vedi i miei premi",
@@ -64,12 +79,48 @@ export const redeemReward = createServerFn({ method: "POST" })
           : [],
         payload: { reward_id: data.rewardId, ref: redemption.code },
       });
+
+      // Email + notifica all'ente con il riepilogo del dipendente
+      const companyId = reward?.company_id ?? profile?.company_id ?? null;
+      if (companyId) {
+        const managers = await companyManagerIds(companyId);
+        if (managers.length) {
+          await notifyUsers({
+            userIds: managers,
+            topic: "rewards",
+            type: "reward_redeemed_company",
+            title: "Premio riscattato da un dipendente",
+            body: `${profile?.full_name ?? "Un dipendente"} ha riscattato "${reward?.title ?? "un premio"}".${
+              isCash ? " È stata creata una richiesta di pagamento da saldare dal Conto Ente." : ""
+            }`,
+            url: isCash ? "/azienda?section=payouts" : "/azienda?section=rewards",
+            companyId,
+            code: redemption.code,
+            ctaLabel: isCash ? "Vai ai pagamenti" : "Apri la dashboard ente",
+            details: [
+              { label: "Dipendente", value: profile?.full_name ?? "—" },
+              ...(profile?.phone ? [{ label: "Telefono", value: profile.phone }] : []),
+              { label: "Premio", value: reward?.title ?? "—" },
+              { label: "Punti spesi", value: String(reward?.points_cost ?? 0) },
+              ...(isCash
+                ? [
+                    { label: "Valore", value: `€ ${Number(reward?.cash_value_eur ?? 0).toFixed(2)}` },
+                    { label: "IBAN", value: profile?.iban ?? "—" },
+                  ]
+                : []),
+              { label: "Codice", value: redemption.code },
+            ],
+            payload: { reward_id: data.rewardId, ref: redemption.code, user_id: context.userId },
+          });
+        }
+      }
     } catch (e) {
       console.error("[redeemReward] notify failed", e);
     }
 
-    return { code: redemption.code };
+    return { code: redemption.code, cash: isCash };
   });
+
 
 export const listCompanyRewards = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
