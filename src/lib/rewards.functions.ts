@@ -239,7 +239,13 @@ export const listCompanyRedemptions = createServerFn({ method: "GET" })
 export const confirmCompanyRedemption = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ id: z.string().uuid(), action: z.enum(["confirm", "cancel"]).default("confirm") }).parse(d),
+    z
+      .object({
+        id: z.string().uuid(),
+        action: z.enum(["confirm", "cancel"]).default("confirm"),
+        reason: z.string().trim().max(300).optional().nullable(),
+      })
+      .parse(d),
   )
   .handler(async ({ data, context }) => {
     const companyId = await assertManagerCompany(context.supabase, context.userId);
