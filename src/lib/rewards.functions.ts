@@ -266,11 +266,13 @@ export const confirmCompanyRedemption = createServerFn({ method: "POST" })
     if (!reward || reward.company_id !== companyId) throw new Error("Riscatto non appartiene al tuo ente");
 
     const confirming = data.action === "confirm";
+    const reason = confirming ? null : (data.reason ?? null);
     const { error } = await supabaseAdmin
       .from("reward_redemptions")
       .update({
         status: confirming ? "confirmed" : "cancelled",
         used_at: confirming ? new Date().toISOString() : null,
+        cancel_reason: reason,
       })
       .eq("id", red.id);
     if (error) throw new Error("Aggiornamento riscatto fallito");
@@ -279,12 +281,12 @@ export const confirmCompanyRedemption = createServerFn({ method: "POST" })
       const { notifyUsers } = await import("@/lib/notify.server");
       await notifyUsers({
         userIds: [red.user_id],
-        topic: "rewards",
+        topic: "reward_confirm",
         type: confirming ? "reward_confirmed" : "reward_cancelled",
         title: confirming ? "Premio confermato" : "Riscatto annullato",
         body: confirming
           ? `Il tuo ente ha confermato "${reward.title}". Mostra il codice ${red.code} per ritirarlo.`
-          : `Il riscatto di "${reward.title}" è stato annullato dal tuo ente. Contattalo per maggiori informazioni.`,
+          : `Il riscatto di "${reward.title}" è stato annullato dal tuo ente.${reason ? ` Motivo: ${reason}` : " Contattalo per maggiori informazioni."}`,
         url: "/app/punti?tab=rewards",
         companyId,
         code: confirming ? red.code : undefined,
@@ -292,8 +294,16 @@ export const confirmCompanyRedemption = createServerFn({ method: "POST" })
         details: [
           { label: "Premio", value: reward.title },
           { label: "Punti spesi", value: String(red.points_spent) },
+          { label: "Stato", value: confirming ? "Confermato" : "Annullato" },
+          ...(reason ? [{ label: "Motivazione", value: reason }] : []),
         ],
-        payload: { redemption_id: red.id, reward_id: reward.id, ref: red.code },
+        payload: {
+          redemption_id: red.id,
+          reward_id: reward.id,
+          ref: red.code,
+          decision: confirming ? "confirmed" : "rejected",
+          reason,
+        },
       });
     } catch (e) {
       console.error("[confirmCompanyRedemption] notify failed", e);
