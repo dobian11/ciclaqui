@@ -108,18 +108,27 @@ export function RewardsCatalog() {
       setRewards((data ?? []) as Reward[]);
       setLoading(false);
     })();
-  }, [tab]);
+  }, [tab, reloadKey]);
 
   async function redeem(r: Reward) {
     if (balance < r.points_cost) return toast.error("Punti insufficienti");
+    if (redeemedIds.includes(r.id)) return toast.error("Hai già riscattato questo premio");
+    if (r.stock !== null && r.stock <= 0) return toast.error("Premio esaurito");
     try {
       const data = await redeemReward({ data: { rewardId: r.id } });
       setBalance(balance - r.points_cost);
-      toast.success(`Riscattato! Codice: ${data.code}`);
-    } catch {
-      toast.error("Impossibile riscattare il premio");
+      setRedeemedIds((prev) => [...prev, r.id]);
+      toast.success(
+        data.cash
+          ? `Richiesta inviata! Il tuo ente pagherà l'importo sul tuo IBAN. Rif. ${data.code}`
+          : `Riscattato! Codice: ${data.code}`,
+      );
+      setReloadKey((k) => k + 1);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Impossibile riscattare il premio");
     }
   }
+
 
   return (
     <div className="space-y-3">
