@@ -347,13 +347,16 @@ export const endTrip = createServerFn({ method: "POST" })
     // Accredito atomico: point_transaction + wallet in un'unica operazione
     // lato DB (incrementale, niente read-modify-write → nessun punto perso
     // in caso di viaggi simultanei o wallet mancante).
+    // km "green" accumulati nel wallet: i tratti in auto non contano.
+    const greenKm = hasHints ? bikeKm + footM / 1000 : effectiveMode === "car" ? 0 : distance;
     const { error: creditErr } = await supabaseAdmin.rpc("credit_trip_points", {
       _user_id: userId,
       _trip_id: trip.id,
       _points: points,
       _eur_per_point: eurPerPoint,
-      _distance_km: distance,
+      _distance_km: greenKm,
     } as any);
+
     if (creditErr) {
       log.error("credit-failed", { user: uid, tripId: trip.id, points, message: creditErr.message });
       await log.flush();
