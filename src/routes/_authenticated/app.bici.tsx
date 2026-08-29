@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { PoweredBy } from "@/components/cicla/PoweredBy";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -143,6 +144,7 @@ function BiciPage() {
       <div className="app-page bg-background">
         <div className="app-container py-4 text-center">
           <h1 className="text-2xl font-bold tracking-tight">Le tue bici</h1>
+          <PoweredBy className="mt-0.5" />
           <p className="mt-2 text-sm text-muted-foreground">
             Accedi per registrare il passaporto delle tue bici.
           </p>

@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { PoweredBy } from "@/components/cicla/PoweredBy";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
@@ -99,6 +100,7 @@ function PuntiPage() {
     <div className="app-page bg-background">
       <div className="app-container py-2">
         <h1 className="text-2xl font-bold tracking-tight">Punti & premi</h1>
+        <PoweredBy className="mt-0.5" />
         <p className="mt-1 text-sm text-muted-foreground">
           I punti si trasformano in premi (denaro, voucher o incentivi) decisi dalla
           tua azienda o dal tuo Comune. Bici 10 pt/km · piedi 3 pt/km · auto 0.
