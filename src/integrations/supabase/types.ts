@@ -1064,18 +1064,24 @@ export type Database = {
           email_challenges: boolean
           email_company: boolean
           email_product: boolean
+          email_reward_confirm: boolean
+          email_reward_threshold: boolean
           email_rewards: boolean
           email_streak: boolean
           email_trip_flag: boolean
           inapp_bike: boolean
           inapp_challenges: boolean
           inapp_company: boolean
+          inapp_reward_confirm: boolean
+          inapp_reward_threshold: boolean
           inapp_rewards: boolean
           inapp_streak: boolean
           inapp_trip_flag: boolean
           push_bike: boolean
           push_challenges: boolean
           push_company: boolean
+          push_reward_confirm: boolean
+          push_reward_threshold: boolean
           push_rewards: boolean
           push_streak: boolean
           push_trip_flag: boolean
@@ -1087,18 +1093,24 @@ export type Database = {
           email_challenges?: boolean
           email_company?: boolean
           email_product?: boolean
+          email_reward_confirm?: boolean
+          email_reward_threshold?: boolean
           email_rewards?: boolean
           email_streak?: boolean
           email_trip_flag?: boolean
           inapp_bike?: boolean
           inapp_challenges?: boolean
           inapp_company?: boolean
+          inapp_reward_confirm?: boolean
+          inapp_reward_threshold?: boolean
           inapp_rewards?: boolean
           inapp_streak?: boolean
           inapp_trip_flag?: boolean
           push_bike?: boolean
           push_challenges?: boolean
           push_company?: boolean
+          push_reward_confirm?: boolean
+          push_reward_threshold?: boolean
           push_rewards?: boolean
           push_streak?: boolean
           push_trip_flag?: boolean
@@ -1110,18 +1122,24 @@ export type Database = {
           email_challenges?: boolean
           email_company?: boolean
           email_product?: boolean
+          email_reward_confirm?: boolean
+          email_reward_threshold?: boolean
           email_rewards?: boolean
           email_streak?: boolean
           email_trip_flag?: boolean
           inapp_bike?: boolean
           inapp_challenges?: boolean
           inapp_company?: boolean
+          inapp_reward_confirm?: boolean
+          inapp_reward_threshold?: boolean
           inapp_rewards?: boolean
           inapp_streak?: boolean
           inapp_trip_flag?: boolean
           push_bike?: boolean
           push_challenges?: boolean
           push_company?: boolean
+          push_reward_confirm?: boolean
+          push_reward_threshold?: boolean
           push_rewards?: boolean
           push_streak?: boolean
           push_trip_flag?: boolean
@@ -1271,6 +1289,7 @@ export type Database = {
       }
       reward_redemptions: {
         Row: {
+          cancel_reason: string | null
           code: string
           expires_at: string | null
           id: string
@@ -1282,6 +1301,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cancel_reason?: string | null
           code: string
           expires_at?: string | null
           id?: string
@@ -1293,6 +1313,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cancel_reason?: string | null
           code?: string
           expires_at?: string | null
           id?: string
@@ -1905,6 +1926,7 @@ export type Database = {
       redeem_reward_for_user: {
         Args: { _reward_id: string; _user_id: string }
         Returns: {
+          cancel_reason: string | null
           code: string
           expires_at: string | null
           id: string
