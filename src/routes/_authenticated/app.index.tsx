@@ -16,6 +16,8 @@ import { Wind, Flame, Locate, Loader2, Layers, X, Radio, AlertTriangle, RefreshC
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAirQuality } from "@/lib/air-quality.functions";
+import { fetchAirQualityFallback } from "@/lib/air-quality-fallback";
+
 import { endTrip, getPointsConfig } from "@/lib/trips.functions";
 import { computeLivePointsPreview } from "@/lib/trip-points";
 import { getMyTrackingWindow } from "@/lib/companies.functions";
@@ -405,8 +407,21 @@ function MapHome() {
     staleTime: 5 * 60_000,
     refetchInterval: 5 * 60_000,
     refetchIntervalInBackground: false,
-    queryFn: () => fetchAQ({ data: { lat: geo.position![0], lng: geo.position![1] } }),
+    retry: 2,
+    retryDelay: (attempt) => Math.min(4000, 800 * 2 ** attempt),
+    queryFn: async () => {
+      const lat = geo.position![0];
+      const lng = geo.position![1];
+      try {
+        const res = await fetchAQ({ data: { lat, lng } });
+        if (res && res.aqi != null) return res;
+      } catch {
+        // ignora: proviamo il fallback pubblico lato client
+      }
+      return fetchAirQualityFallback(lat, lng);
+    },
   });
+
 
   // dettagli AQ usati dal trittico in basso (BottomTrio)
 
