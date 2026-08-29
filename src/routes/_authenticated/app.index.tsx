@@ -362,39 +362,8 @@ function MapHome() {
 
 
 
-  // ── Tracking in background su web/PWA ──
-  // Con schermo bloccato iOS/Android sospendono la pagina: il GPS si ferma.
-  // Avvisiamo all'avvio e segnaliamo i buchi rilevati al ritorno in primo piano.
-  const bgWarnedRef = useRef(false);
-  useEffect(() => {
-    // Su app nativa il watcher background si arma in modo asincrono: finché è
-    // in corso (nativePending) non mostriamo l'avviso "usa l'app dagli store".
-    if (!trip.recording || trip.nativeBackground || trip.nativePending) {
-      bgWarnedRef.current = false;
-      return;
-    }
-    if (bgWarnedRef.current) return;
-    bgWarnedRef.current = true;
-    toast.warning("Tracking attivo · schermo bloccato a rischio", {
-      description:
-        "Sul web teniamo la sessione sveglia, ma se blocchi lo schermo il telefono può sospendere l'app. Per il tracking garantito in tasca usa l'app dagli store.",
-      duration: 8000,
-    });
-
-  }, [trip.recording, trip.nativeBackground, trip.nativePending]);
-
-
-  const lastGapNotifiedRef = useRef<number | null>(null);
-  useEffect(() => {
-    if (!trip.lastGapAt || trip.lastGapAt === lastGapNotifiedRef.current) return;
-    lastGapNotifiedRef.current = trip.lastGapAt;
-    const min = Math.max(1, Math.round(trip.suspendedGapS / 60));
-    toast.warning(`Tracking interrotto per ~${min} min`, {
-      description:
-        "Il telefono ha sospeso l'app: quel tratto non è stato registrato. Riprendo da qui.",
-      duration: 7000,
-    });
-  }, [trip.lastGapAt, trip.suspendedGapS]);
+  // Tracking in background gestito in silenzio: il keep-alive e il watcher
+  // nativo lavorano senza avvisi a schermo.
 
 
   const userWeight = 70;
