@@ -23,6 +23,7 @@ import { computeLivePointsPreview } from "@/lib/trip-points";
 import { getMyTrackingWindow } from "@/lib/companies.functions";
 import { listActiveChallenges } from "@/lib/gamification.functions";
 import { ActiveCupsBanner } from "@/components/cicla/ActiveCupsBanner";
+import { NotificationsBell } from "@/components/cicla/NotificationsBell";
 import { challengeMatchesMode, estimateDelta, challengeUnit } from "@/lib/challenge-match";
 import { computeRoute } from "@/lib/routes.functions";
 import { decodePolyline } from "@/lib/polyline";
