@@ -460,13 +460,25 @@ export function useTripRecorder(currentMode: TripMode) {
         });
       }
     };
+    const onHide = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    // Salvataggio anche a intervalli: su iOS l'app può essere terminata dal
+    // sistema senza emettere pagehide/freeze.
+    const iv = window.setInterval(flush, 5000);
     window.addEventListener("pagehide", flush);
+    window.addEventListener("blur", flush);
+    document.addEventListener("visibilitychange", onHide);
     document.addEventListener("freeze", flush);
     return () => {
+      window.clearInterval(iv);
       window.removeEventListener("pagehide", flush);
+      window.removeEventListener("blur", flush);
+      document.removeEventListener("visibilitychange", onHide);
       document.removeEventListener("freeze", flush);
     };
   }, []);
+
 
   // Ripresa automatica all'avvio (reload, tab sospesa, PWA riaperta).
   useEffect(() => {
