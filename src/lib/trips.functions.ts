@@ -393,14 +393,17 @@ export const endTrip = createServerFn({ method: "POST" })
             _count_trip: kmBike <= 0.05,
           } as any);
         }
-      } else {
+      } else if (effectiveMode !== "car") {
+        // Senza hint per-fix usiamo il mezzo effettivo (non quello dichiarato):
+        // così le gare "solo bici" non ricevono km percorsi con altri mezzi.
         await supabaseAdmin.rpc("apply_trip_to_challenges", {
           _user_id: userId,
-          _mode: data.mode,
+          _mode: effectiveMode,
           _distance_km: distance,
           _company_id: companyId,
         } as any);
       }
+
     } catch (e) {
       log.error("gamification-failed", { user: uid, message: (e as Error)?.message ?? String(e) });
     }
