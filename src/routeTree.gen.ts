@@ -37,6 +37,7 @@ import { Route as AuthenticatedAppPuntiRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAppSfideRouteImport } from './routes/_authenticated/app.sfide'
 import { Route as AuthenticatedAziendaIndexRouteImport } from './routes/_authenticated/azienda.index'
 import { Route as AuthenticatedAziendaOnboardingRouteImport } from './routes/_authenticated/azienda.onboarding'
+import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicCronMaintenanceRouteImport } from './routes/api/public/cron/maintenance'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -188,6 +189,11 @@ const AuthenticatedAziendaOnboardingRoute =
     path: '/onboarding',
     getParentRoute: () => AuthenticatedAziendaRoute,
   } as any)
+const LovableEmailEventsRoute = LovableEmailEventsRouteImport.update({
+  id: '/lovable/email/events',
+  path: '/lovable/email/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
@@ -253,6 +259,7 @@ export interface FileRoutesByFullPath {
   '/app/punti': typeof AuthenticatedAppPuntiRoute
   '/app/sfide': typeof AuthenticatedAppSfideRoute
   '/azienda/onboarding': typeof AuthenticatedAziendaOnboardingRoute
+  '/lovable/email/events': typeof LovableEmailEventsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/app/': typeof AuthenticatedAppIndexRoute
@@ -286,6 +293,7 @@ export interface FileRoutesByTo {
   '/app/punti': typeof AuthenticatedAppPuntiRoute
   '/app/sfide': typeof AuthenticatedAppSfideRoute
   '/azienda/onboarding': typeof AuthenticatedAziendaOnboardingRoute
+  '/lovable/email/events': typeof LovableEmailEventsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/app': typeof AuthenticatedAppIndexRoute
@@ -324,6 +332,7 @@ export interface FileRoutesById {
   '/_authenticated/app/punti': typeof AuthenticatedAppPuntiRoute
   '/_authenticated/app/sfide': typeof AuthenticatedAppSfideRoute
   '/_authenticated/azienda/onboarding': typeof AuthenticatedAziendaOnboardingRoute
+  '/lovable/email/events': typeof LovableEmailEventsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/app/': typeof AuthenticatedAppIndexRoute
@@ -362,6 +371,7 @@ export interface FileRouteTypes {
     | '/app/punti'
     | '/app/sfide'
     | '/azienda/onboarding'
+    | '/lovable/email/events'
     | '/lovable/email/suppression'
     | '/admin/'
     | '/app/'
@@ -395,6 +405,7 @@ export interface FileRouteTypes {
     | '/app/punti'
     | '/app/sfide'
     | '/azienda/onboarding'
+    | '/lovable/email/events'
     | '/lovable/email/suppression'
     | '/admin'
     | '/app'
@@ -432,6 +443,7 @@ export interface FileRouteTypes {
     | '/_authenticated/app/punti'
     | '/_authenticated/app/sfide'
     | '/_authenticated/azienda/onboarding'
+    | '/lovable/email/events'
     | '/lovable/email/suppression'
     | '/_authenticated/admin/'
     | '/_authenticated/app/'
@@ -458,6 +470,7 @@ export interface RootRouteChildren {
   LegalPermessiRoute: typeof LegalPermessiRoute
   LegalPrivacyRoute: typeof LegalPrivacyRoute
   LegalTermsRoute: typeof LegalTermsRoute
+  LovableEmailEventsRoute: typeof LovableEmailEventsRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicCronMaintenanceRoute: typeof ApiPublicCronMaintenanceRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -665,6 +678,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAziendaOnboardingRouteImport
       parentRoute: typeof AuthenticatedAziendaRoute
     }
+    '/lovable/email/events': {
+      id: '/lovable/email/events'
+      path: '/lovable/email/events'
+      fullPath: '/lovable/email/events'
+      preLoaderRoute: typeof LovableEmailEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
       path: '/lovable/email/suppression'
@@ -797,6 +817,7 @@ const rootRouteChildren: RootRouteChildren = {
   LegalPermessiRoute: LegalPermessiRoute,
   LegalPrivacyRoute: LegalPrivacyRoute,
   LegalTermsRoute: LegalTermsRoute,
+  LovableEmailEventsRoute: LovableEmailEventsRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicCronMaintenanceRoute: ApiPublicCronMaintenanceRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
