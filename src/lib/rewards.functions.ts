@@ -268,15 +268,23 @@ export const confirmCompanyRedemption = createServerFn({ method: "POST" })
 
     const confirming = data.action === "confirm";
     const reason = confirming ? null : (data.reason ?? null);
-    const { error } = await supabaseAdmin
-      .from("reward_redemptions")
-      .update({
-        status: confirming ? "confirmed" : "cancelled",
-        used_at: confirming ? new Date().toISOString() : null,
-        cancel_reason: reason,
-      })
-      .eq("id", red.id);
-    if (error) throw new Error("Aggiornamento riscatto fallito");
+    if (confirming) {
+      const { error } = await supabaseAdmin
+        .from("reward_redemptions")
+        .update({ status: "confirmed", used_at: new Date().toISOString(), cancel_reason: null })
+        .eq("id", red.id);
+      if (error) throw new Error("Aggiornamento riscatto fallito");
+    } else {
+      // Annullamento atomico: rimborsa i punti, ripristina lo stock e chiude
+      // l'eventuale richiesta di pagamento in sospeso per i premi in denaro.
+      const { error } = await supabaseAdmin.rpc("cancel_reward_redemption", {
+        _redemption_id: red.id,
+        _company_id: companyId,
+        _reason: reason,
+      });
+      if (error) throw new Error(error.message || "Annullamento riscatto fallito");
+    }
+
 
     try {
       const { notifyUsers } = await import("@/lib/notify.server");
