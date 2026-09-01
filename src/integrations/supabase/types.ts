@@ -1809,6 +1809,27 @@ export type Database = {
         Args: { _mode: string; _user_id: string }
         Returns: undefined
       }
+      cancel_reward_redemption: {
+        Args: { _company_id: string; _reason?: string; _redemption_id: string }
+        Returns: {
+          cancel_reason: string | null
+          code: string
+          expires_at: string | null
+          id: string
+          points_spent: number
+          redeemed_at: string
+          reward_id: string
+          status: string
+          used_at: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "reward_redemptions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       company_leaderboard: {
         Args: { _company_id: string }
         Returns: {
