@@ -280,7 +280,7 @@ export const confirmCompanyRedemption = createServerFn({ method: "POST" })
       const { error } = await supabaseAdmin.rpc("cancel_reward_redemption", {
         _redemption_id: red.id,
         _company_id: companyId,
-        _reason: reason,
+        _reason: reason ?? undefined,
       });
       if (error) throw new Error(error.message || "Annullamento riscatto fallito");
     }
