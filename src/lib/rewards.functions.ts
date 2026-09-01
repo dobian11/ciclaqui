@@ -295,7 +295,7 @@ export const confirmCompanyRedemption = createServerFn({ method: "POST" })
         title: confirming ? "Premio confermato" : "Riscatto annullato",
         body: confirming
           ? `Il tuo ente ha confermato "${reward.title}". Mostra il codice ${red.code} per ritirarlo.`
-          : `Il riscatto di "${reward.title}" è stato annullato dal tuo ente.${reason ? ` Motivo: ${reason}` : " Contattalo per maggiori informazioni."}`,
+          : `Il riscatto di "${reward.title}" è stato annullato dal tuo ente e i ${red.points_spent} punti sono stati riaccreditati.${reason ? ` Motivo: ${reason}` : ""}`,
         url: "/app/punti?tab=rewards",
         companyId,
         code: confirming ? red.code : undefined,
