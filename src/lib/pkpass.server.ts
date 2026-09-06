@@ -125,16 +125,17 @@ export async function signManifest(
   certPassword: string,
   wwdrPem: string,
 ): Promise<Uint8Array> {
-  const forge = (await import("node-forge")).default;
+  const forgeMod = await import("node-forge");
+  const forge = (forgeMod.default ?? forgeMod) as any;
   const p12Der = forge.util.decode64(certP12Base64.replace(/\s/g, ""));
   const p12Asn1 = forge.asn1.fromDer(p12Der);
   const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, certPassword);
 
-  let certificate: forge.pki.Certificate | null = null;
-  let privateKey: forge.pki.PrivateKey | null = null;
+  let certificate: any = null;
+  let privateKey: any = null;
 
-  for (const safeContent of p12.safeContents) {
-    for (const bag of safeContent.safeBags) {
+  for (const safeContent of p12.safeContents as any[]) {
+    for (const bag of safeContent.safeBags as any[]) {
       if (bag.type === forge.pki.oids.certBag && bag.cert && !certificate) {
         certificate = bag.cert;
       }
@@ -154,12 +155,11 @@ export async function signManifest(
   const p7 = forge.pkcs7.createSignedData();
   p7.content = forge.util.createBuffer(
     String.fromCharCode(...Array.from(manifest)),
-    "binary",
   );
   p7.addCertificate(certificate);
   p7.addCertificate(wwdr);
   p7.addSigner({
-    key: privateKey as forge.pki.rsa.PrivateKey,
+    key: privateKey,
     certificate,
     digestAlgorithm: forge.pki.oids.sha256,
     authenticatedAttributes: [
