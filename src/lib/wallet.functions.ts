@@ -100,9 +100,9 @@ export const getAppleWalletPass = createServerFn({ method: "POST" })
     if (bike.owner_id !== context.userId) throw new Error("Non autorizzato");
 
     const { zipStore, sha1Hex, signManifest, bytesToBase64 } = await import("./pkpass.server");
-    const { getPublicUrl } = await import("./public-url");
+    const { PUBLIC_APP_URL } = await import("./public-url");
 
-    const origin = getPublicUrl();
+    const origin = PUBLIC_APP_URL;
     const iconRes = await fetch(`${origin}/icons/icon-192.png`);
     if (!iconRes.ok) throw new Error("Icona del pass non disponibile");
     const icon = new Uint8Array(await iconRes.arrayBuffer());
