@@ -636,41 +636,59 @@ export type Database = {
       }
       company_subscriptions: {
         Row: {
+          cancel_at_period_end: boolean
           company_id: string
           created_at: string
           current_period_end: string | null
+          current_period_start: string | null
           discount_code: string | null
+          environment: string
           id: string
           monthly_price_eur: number
+          pending_plan: Database["public"]["Enums"]["subscription_plan"] | null
+          pending_plan_effective_at: string | null
           plan: Database["public"]["Enums"]["subscription_plan"]
           seats: number
           status: Database["public"]["Enums"]["subscription_status"]
+          stripe_customer_id: string | null
           stripe_subscription_id: string | null
           updated_at: string
         }
         Insert: {
+          cancel_at_period_end?: boolean
           company_id: string
           created_at?: string
           current_period_end?: string | null
+          current_period_start?: string | null
           discount_code?: string | null
+          environment?: string
           id?: string
           monthly_price_eur?: number
+          pending_plan?: Database["public"]["Enums"]["subscription_plan"] | null
+          pending_plan_effective_at?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           seats?: number
           status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string
         }
         Update: {
+          cancel_at_period_end?: boolean
           company_id?: string
           created_at?: string
           current_period_end?: string | null
+          current_period_start?: string | null
           discount_code?: string | null
+          environment?: string
           id?: string
           monthly_price_eur?: number
+          pending_plan?: Database["public"]["Enums"]["subscription_plan"] | null
+          pending_plan_effective_at?: string | null
           plan?: Database["public"]["Enums"]["subscription_plan"]
           seats?: number
           status?: Database["public"]["Enums"]["subscription_status"]
+          stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           updated_at?: string
         }
