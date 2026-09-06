@@ -14,7 +14,10 @@ export type Plan = {
   seats: number;
   seatsLabel: string;
   highlights: string[];
+  /** Identificativo del prezzo ricorrente mensile nel sistema di pagamento. */
+  priceId: string;
 };
+
 
 export const PLANS: Plan[] = [
   {
