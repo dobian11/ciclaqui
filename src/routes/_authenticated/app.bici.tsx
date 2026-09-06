@@ -1643,6 +1643,20 @@ function WalletButtons({ bikeId }: { bikeId: string }) {
       const res = await appleFn({ data: { bike_id: bikeId } });
       if (!res.configured) {
         toast.info("Apple Wallet non ancora configurato dall'admin.");
+      } else {
+        const bin = atob(res.pkpassBase64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const url = URL.createObjectURL(
+          new Blob([bytes], { type: "application/vnd.apple.pkpass" }),
+        );
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = res.filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Errore Apple Wallet");
@@ -1650,6 +1664,7 @@ function WalletButtons({ bikeId }: { bikeId: string }) {
       setLoading(null);
     }
   }
+
 
   return (
     <div className="mt-2 grid grid-cols-2 gap-2">
