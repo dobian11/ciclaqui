@@ -14,7 +14,10 @@ export type Plan = {
   seats: number;
   seatsLabel: string;
   highlights: string[];
+  /** Identificativo del prezzo ricorrente mensile nel sistema di pagamento. */
+  priceId: string;
 };
+
 
 export const PLANS: Plan[] = [
   {
@@ -24,6 +27,7 @@ export const PLANS: Plan[] = [
     seats: 10,
     seatsLabel: "fino a 10 account",
     highlights: ["Codice ente", "Classifica e sfide", "Premi e voucher"],
+    priceId: "starter_monthly",
   },
   {
     id: "pro",
@@ -32,6 +36,7 @@ export const PLANS: Plan[] = [
     seats: 50,
     seatsLabel: "fino a 50 account",
     highlights: ["Tutto di Starter", "Report avanzati", "Sfide personalizzate"],
+    priceId: "pro_monthly",
   },
   {
     id: "enterprise",
@@ -40,6 +45,7 @@ export const PLANS: Plan[] = [
     seats: UNLIMITED_SEATS,
     seatsLabel: "account illimitati",
     highlights: ["Tutto di Pro", "Account illimitati", "Supporto prioritario"],
+    priceId: "enterprise_monthly",
   },
 ];
 
@@ -49,4 +55,8 @@ export function getPlan(id: string): Plan {
 
 export function formatSeats(seats: number): string {
   return seats >= UNLIMITED_SEATS ? "illimitati" : String(seats);
+}
+
+export function planByPriceId(priceId: string | null | undefined): Plan | null {
+  return PLANS.find((p) => p.priceId === priceId) ?? null;
 }
