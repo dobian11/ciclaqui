@@ -4,11 +4,18 @@ import { createSubscriptionCheckout } from "@/lib/subscriptions.functions";
 import type { PlanId } from "@/lib/plans";
 
 /** Modulo di pagamento in pagina per l'abbonamento mensile dell'ente. */
-export function SubscriptionCheckout({ plan }: { plan: PlanId }) {
+export function SubscriptionCheckout({
+  plan,
+  discountCode,
+}: {
+  plan: PlanId;
+  discountCode?: string;
+}) {
   const fetchClientSecret = async (): Promise<string> => {
     const result = await createSubscriptionCheckout({
       data: {
         plan,
+        ...(discountCode ? { discountCode } : {}),
         environment: getStripeEnvironment(),
         returnUrl: `${window.location.origin}/azienda?checkout=done`,
       },

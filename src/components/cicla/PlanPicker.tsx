@@ -131,11 +131,6 @@ export function PlanPicker({
         toast.error("Pagamenti non ancora disponibili in questa versione dell'app");
         return;
       }
-      if (discount) {
-        toast.info(
-          "Gli sconti parziali si applicano solo con codice al 100%: procedi con il pagamento del piano intero.",
-        );
-      }
       setPayOpen(true);
       return;
     }
@@ -351,13 +346,21 @@ export function PlanPicker({
         <PaymentTestModeBanner />
         <div className="flex items-center justify-between">
           <div className="text-sm font-semibold">
-            {selected.name} · {selected.priceEur}€ al mese
+            {selected.name} ·{" "}
+            {discount ? (
+              <>
+                <span className="line-through opacity-60">{selected.priceEur}€</span>{" "}
+                {discount.final.toFixed(2)}€ al mese (-{discount.percent_off}%)
+              </>
+            ) : (
+              <>{selected.priceEur}€ al mese</>
+            )}
           </div>
           <Button variant="ghost" size="sm" onClick={() => setPayOpen(false)}>
             Cambia piano
           </Button>
         </div>
-        <SubscriptionCheckout plan={plan} />
+        <SubscriptionCheckout plan={plan} discountCode={discount ? code.trim() : undefined} />
         <p className="text-[11px] leading-snug text-muted-foreground">
           L'abbonamento si rinnova ogni mese. Un cambio di piano richiesto durante il mese
           diventa effettivo solo alla scadenza del periodo già pagato.

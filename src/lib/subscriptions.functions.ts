@@ -27,7 +27,16 @@ async function resolvePromoCoupon(stripe: any): Promise<string | null> {
   if (percent <= 0) return null;
   if (new Date(promo.ends_at).getTime() <= Date.now()) return null;
 
-  const couponId = `cicla_promo_${percent}`;
+  return ensureCoupon(stripe, `cicla_promo_${percent}`, percent, `Promo Cicla Qui -${percent}%`);
+}
+
+/** Crea (o riusa) un coupon Stripe percentuale con id stabile. */
+async function ensureCoupon(
+  stripe: any,
+  couponId: string,
+  percent: number,
+  name: string,
+): Promise<string> {
   try {
     await stripe.coupons.retrieve(couponId);
   } catch {
@@ -35,7 +44,7 @@ async function resolvePromoCoupon(stripe: any): Promise<string | null> {
       id: couponId,
       percent_off: percent,
       duration: "forever",
-      name: `Promo Cicla Qui -${percent}%`,
+      name,
     });
   }
   return couponId;
@@ -107,6 +116,7 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
         plan: planSchema,
         environment: envSchema,
         returnUrl: z.string().url(),
+        discountCode: z.string().trim().max(40).optional(),
       })
       .parse(d),
   )
@@ -156,7 +166,33 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
       if (!price) throw new Error("Prezzo del piano non trovato");
 
       // Sconto promozionale attivo dalla dashboard admin (es. -10% entro una data)
-      const promoDiscount = await resolvePromoCoupon(stripe);
+      const promoCoupon = await resolvePromoCoupon(stripe);
+      const promoPercent = promoCoupon
+        ? Number(promoCoupon.replace("cicla_promo_", "")) || 0
+        : 0;
+
+      // Codice sconto inserito dal titolare: va rivalidato lato server e
+      // applicato davvero al pagamento (altrimenti pagherebbe il prezzo pieno).
+      let codePercent = 0;
+      let appliedCode: string | null = null;
+      let codeCoupon: string | null = null;
+      if (data.discountCode) {
+        const { checkDiscountCode } = await import("@/lib/discounts.server");
+        const check = await checkDiscountCode(data.discountCode, plan.id);
+        if (!check.ok) return { error: check.reason };
+        codePercent = check.percent_off;
+        appliedCode = check.code;
+        codeCoupon = await ensureCoupon(
+          stripe,
+          `cicla_code_${check.code.replace(/[^A-Z0-9]/gi, "").toUpperCase()}_${codePercent}`,
+          codePercent,
+          `Codice ${check.code} -${codePercent}%`,
+        );
+      }
+
+      // Stripe accetta un solo coupon: si applica quello più conveniente.
+      const promoDiscount =
+        codeCoupon && codePercent >= promoPercent ? codeCoupon : promoCoupon;
 
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
@@ -165,8 +201,14 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
         customer: customerId,
         line_items: [{ price: price.id, quantity: 1 }],
         ...(promoDiscount ? { discounts: [{ coupon: promoDiscount }] } : {}),
-        metadata: { companyId, plan: plan.id },
-        subscription_data: { metadata: { companyId, plan: plan.id } },
+        metadata: { companyId, plan: plan.id, ...(appliedCode ? { discountCode: appliedCode } : {}) },
+        subscription_data: {
+          metadata: {
+            companyId,
+            plan: plan.id,
+            ...(appliedCode ? { discountCode: appliedCode } : {}),
+          },
+        },
         managed_payments: { enabled: true },
       } as any);
 
