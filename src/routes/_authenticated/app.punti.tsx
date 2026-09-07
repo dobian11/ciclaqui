@@ -103,7 +103,8 @@ function PuntiPage() {
         <PoweredBy className="mt-0.5" />
         <p className="mt-1 text-sm text-muted-foreground">
           I punti si trasformano in premi (denaro, voucher o incentivi) decisi dalla
-          tua azienda o dal tuo Comune. Bici 10 pt/km · piedi 3 pt/km · auto 0.
+          tua azienda o dal tuo Comune. Bici 20 cent/km · piedi 6 cent/km · auto 0.
+          Puoi accumulare fino a 50 € al mese.
         </p>
 
         <div className="mt-4 flex gap-1.5 overflow-x-auto text-[11px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

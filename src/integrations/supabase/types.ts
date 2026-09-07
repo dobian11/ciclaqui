@@ -87,6 +87,7 @@ export type Database = {
           daily_cap_km: number
           eur_per_point: number
           id: number
+          monthly_cap_eur: number
           payout_threshold_eur: number
           points_per_km_bike: number
           points_per_km_car: number
@@ -99,6 +100,7 @@ export type Database = {
           daily_cap_km?: number
           eur_per_point?: number
           id?: number
+          monthly_cap_eur?: number
           payout_threshold_eur?: number
           points_per_km_bike?: number
           points_per_km_car?: number
@@ -111,6 +113,7 @@ export type Database = {
           daily_cap_km?: number
           eur_per_point?: number
           id?: number
+          monthly_cap_eur?: number
           payout_threshold_eur?: number
           points_per_km_bike?: number
           points_per_km_car?: number
