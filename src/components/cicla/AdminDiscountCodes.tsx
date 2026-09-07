@@ -30,6 +30,8 @@ export function AdminDiscountCodes() {
   const { data: codes, isLoading } = useQuery({
     queryKey: ["admin-discount-codes"],
     queryFn: () => list({}),
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   });
 
   async function handleCreate(e: React.FormEvent<HTMLFormElement>) {

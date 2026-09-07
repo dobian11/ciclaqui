@@ -36,6 +36,8 @@ export function AdminUsersPanel() {
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users", query],
     queryFn: () => listUsers({ data: { query } }),
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
   });
 
   const all = users ?? [];
