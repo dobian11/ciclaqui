@@ -381,7 +381,7 @@ export const adminDecideCompany = createServerFn({ method: "POST" })
       .rpc("admin_decide_company", {
         _company_id: data.company_id,
         _decision: data.decision,
-        _reason: data.reason ?? null,
+        _reason: data.reason,
         _actor_id: context.userId,
       })
       .single();

@@ -1,7 +1,7 @@
 # Roadmap
 
 ## In corso
-- Correggere il salvataggio e l'aggiornamento immediato dell'approvazione enti.
+- Nessuna attività aperta.
 
 ## Da fare
 - Nessuna attività aperta.
