@@ -1879,6 +1879,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_decide_company: {
+        Args: { _company_id: string; _decision: string; _reason?: string }
+        Returns: {
+          company_id: string
+          company_status: Database["public"]["Enums"]["company_status"]
+          decided_at: string
+        }[]
+      }
       apply_trip_to_challenges: {
         Args: {
           _company_id: string
