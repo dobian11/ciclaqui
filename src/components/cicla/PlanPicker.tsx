@@ -224,7 +224,8 @@ export function PlanPicker({
               </div>
               <div className="font-display text-xl font-bold">{current.name}</div>
               <div className="text-[12px] text-muted-foreground">
-                {current.priceEur ?? "su misura"}€ al mese · {current.seatsLabel} {memberLabel}
+                {current.priceEur ? `${current.priceEur}€ al mese · ` : "Piano su misura · "}
+                {current.seatsLabel} {memberLabel}
               </div>
             </div>
             <div className="text-right text-[12px] text-muted-foreground">
