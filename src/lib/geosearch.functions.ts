@@ -25,9 +25,9 @@ export const searchPlaces = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => schema.parse(d))
   .handler(async ({ data }): Promise<{ results: GeoSearchResult[]; source: string }> => {
-    const key = process.env.GOOGLE_API_KEY;
+    const key = process.env.GOOGLE_MAPS_API_KEY_1 ?? process.env.GOOGLE_API_KEY;
     const lovableKey = process.env.LOVABLE_API_KEY;
-    const gmKey = process.env.GOOGLE_MAPS_API_KEY;
+    const gmKey = process.env.GOOGLE_MAPS_API_KEY_1 ?? process.env.GOOGLE_MAPS_API_KEY;
 
     const parse = (json: any): GeoSearchResult[] =>
       (json?.places ?? [])
