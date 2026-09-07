@@ -78,7 +78,7 @@ async function syncSubscription(subscription: any, env: StripeEnv) {
   if (plan) {
     row["plan"] = plan.id;
     row["seats"] = plan.seats;
-    row["monthly_price_eur"] = plan.priceEur;
+    row["monthly_price_eur"] = plan.priceEur ?? 0;
   }
 
   await supabase.from("company_subscriptions").upsert(row, { onConflict: "company_id" });

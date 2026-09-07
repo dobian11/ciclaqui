@@ -27,6 +27,7 @@ import { AdminUsersPanel } from "@/components/cicla/AdminUsersPanel";
 import { AdminTopupsPanel } from "@/components/cicla/AdminTopupsPanel";
 import { AdminLogsPanel } from "@/components/cicla/AdminLogsPanel";
 import { AdminDiscountCodes } from "@/components/cicla/AdminDiscountCodes";
+import { AdminPromoBanner } from "@/components/cicla/AdminPromoBanner";
 import { DocumentViewerDialog, type DocTarget } from "@/components/cicla/DocumentViewerDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -675,7 +676,12 @@ function AdminDashboard() {
 
           {tab === "diagnostica" && <AdminLogsPanel />}
 
-          {tab === "sconti" && <AdminDiscountCodes />}
+          {tab === "sconti" && (
+            <div className="space-y-4">
+              <AdminPromoBanner />
+              <AdminDiscountCodes />
+            </div>
+          )}
 
           {/* Coda anti-frode */}
           {tab === "antifrode" && (

@@ -9,7 +9,37 @@ import {
 import { getPlan, PLANS } from "@/lib/plans";
 
 const envSchema = z.enum(["sandbox", "live"]);
-const planSchema = z.enum(["starter", "pro", "enterprise"]);
+const planSchema = z.enum(["starter", "pro", "advanced"]);
+
+/**
+ * Se l'amministratore ha attivato la promo (es. 10% entro il 15.01.27), crea o
+ * riusa il coupon corrispondente e ne restituisce l'id per il checkout.
+ */
+async function resolvePromoCoupon(stripe: any): Promise<string | null> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: promo } = await (supabaseAdmin as any)
+    .from("promo_banner")
+    .select("active, percent_off, ends_at")
+    .eq("id", 1)
+    .maybeSingle();
+  if (!promo?.active) return null;
+  const percent = Number(promo.percent_off ?? 0);
+  if (percent <= 0) return null;
+  if (new Date(promo.ends_at).getTime() <= Date.now()) return null;
+
+  const couponId = `cicla_promo_${percent}`;
+  try {
+    await stripe.coupons.retrieve(couponId);
+  } catch {
+    await stripe.coupons.create({
+      id: couponId,
+      percent_off: percent,
+      duration: "forever",
+      name: `Promo Cicla Qui -${percent}%`,
+    });
+  }
+  return couponId;
+}
 
 /** Verifica che l'utente sia titolare di un ente e ne restituisce l'id. */
 async function ownedCompanyId(context: {
@@ -125,12 +155,16 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
       const price = prices.data[0];
       if (!price) throw new Error("Prezzo del piano non trovato");
 
+      // Sconto promozionale attivo dalla dashboard admin (es. -10% entro una data)
+      const promoDiscount = await resolvePromoCoupon(stripe);
+
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         ui_mode: "embedded_page",
         return_url: data.returnUrl,
         customer: customerId,
         line_items: [{ price: price.id, quantity: 1 }],
+        ...(promoDiscount ? { discounts: [{ coupon: promoDiscount }] } : {}),
         metadata: { companyId, plan: plan.id },
         subscription_data: { metadata: { companyId, plan: plan.id } },
         managed_payments: { enabled: true },
