@@ -16,10 +16,13 @@ const TRAVEL_MODE = {
   car: "DRIVE",
 } as const;
 
-const OSRM_PROFILE = {
-  bike: "bike",
-  foot: "foot",
-  car: "car",
+const OSRM_ENDPOINT = {
+  // Il server pubblico OSRM principale accetta solo il profilo `driving`:
+  // /bike e /foot rispondono 403. I server OSM dedicati usano anch'essi
+  // `driving` nel percorso URL, ma applicano il profilo bici/pedone corretto.
+  bike: "https://routing.openstreetmap.de/routed-bike/route/v1/driving",
+  foot: "https://routing.openstreetmap.de/routed-foot/route/v1/driving",
+  car: "https://router.project-osrm.org/route/v1/driving",
 } as const;
 
 interface RouteResult {
@@ -121,9 +124,9 @@ export const computeRoute = createServerFn({ method: "POST" })
     }
 
     // 3) OSRM (OpenStreetMap)
-    const profile = OSRM_PROFILE[data.mode];
+    const endpoint = OSRM_ENDPOINT[data.mode];
     const url =
-      `https://router.project-osrm.org/route/v1/${profile}/` +
+      `${endpoint}/` +
       `${data.origin.lng},${data.origin.lat};${data.destination.lng},${data.destination.lat}` +
       `?overview=full&geometries=polyline`;
     const res = await fetch(url, {
