@@ -1,6 +1,7 @@
 import { memo, useEffect, useRef, useState } from "react";
-import { loadGoogleMaps } from "@/lib/google-maps-loader";
+import { GOOGLE_MAPS_AUTH_ERROR_EVENT, loadGoogleMaps } from "@/lib/google-maps-loader";
 import { fetchPois, getKnownPois, POI_META, type Poi, type PoiCategory } from "@/lib/pois";
+import { MapView } from "@/components/cicla/MapView";
 
 
 
@@ -181,6 +182,10 @@ function GoogleMapViewImpl({
   // Init mappa
   useEffect(() => {
     let cancelled = false;
+    const handleAuthError = () => {
+      if (!cancelled) setError("Google Maps non disponibile");
+    };
+    window.addEventListener(GOOGLE_MAPS_AUTH_ERROR_EVENT, handleAuthError);
     loadGoogleMaps()
       .then((google) => {
         if (cancelled || !ref.current) return;
@@ -199,6 +204,7 @@ function GoogleMapViewImpl({
       .catch((e) => setError(e?.message ?? "Errore caricamento mappa"));
     return () => {
       cancelled = true;
+      window.removeEventListener(GOOGLE_MAPS_AUTH_ERROR_EVENT, handleAuthError);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -554,14 +560,37 @@ function GoogleMapViewImpl({
 
 
 
+  if (error) {
+    return (
+      <>
+        <MapView
+          position={position}
+          mode={mode}
+          follow={follow}
+          path={path}
+          poiCategories={poiCategories}
+          refreshKey={refreshKey}
+          onRefreshError={onRefreshError}
+          onRefreshComplete={onRefreshComplete}
+          onPoiLoadingChange={onPoiLoadingChange}
+          onPoiSelect={onPoiSelect}
+          selectedPoiId={selectedPoiId}
+          routePath={routePath}
+          focusPoi={focusPoi}
+          interactionsLocked={interactionsLocked}
+        />
+        <div className="pointer-events-none absolute inset-x-0 top-20 z-10 flex justify-center px-4">
+          <div className="rounded-md border border-border bg-card/90 px-3 py-2 text-xs text-muted-foreground shadow-lg backdrop-blur">
+            Mappa alternativa attiva
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <div ref={ref} className="absolute inset-0 h-full w-full" />
-      {error && (
-        <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 px-6 text-center text-sm text-destructive">
-          {error}
-        </div>
-      )}
     </>
   );
 }
