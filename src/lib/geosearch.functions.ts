@@ -16,11 +16,123 @@ export interface GeoSearchResult {
   lng: number;
 }
 
-/** Ricerca indirizzi e luoghi tramite Nominatim/OpenStreetMap, senza API key. */
+/**
+ * Ricerca indirizzi/luoghi. Prova prima Google Places (New) con la chiave del
+ * progetto; se la API non è abilitata sulla chiave (403) ricade su Nominatim
+ * (OpenStreetMap), così la barra di ricerca funziona comunque.
+ */
 export const searchPlaces = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => schema.parse(d))
   .handler(async ({ data }): Promise<{ results: GeoSearchResult[]; source: string }> => {
+    const key = process.env.GOOGLE_API_KEY;
+    const lovableKey = process.env.LOVABLE_API_KEY;
+    const gmKey = process.env.GOOGLE_MAPS_API_KEY;
+
+    const parse = (json: any): GeoSearchResult[] =>
+      (json?.places ?? [])
+        .filter((p: any) => p.location)
+        .map((p: any) => ({
+          id: `g:${p.id}`,
+          name: p.displayName?.text ?? p.formattedAddress ?? data.q,
+          address: p.formattedAddress ?? "",
+          lat: p.location.latitude,
+          lng: p.location.longitude,
+        }));
+
+    const searchBody: Record<string, unknown> = {
+      textQuery: data.q,
+      languageCode: "it",
+      regionCode: "IT",
+      maxResultCount: 6,
+    };
+    if (data.lat != null && data.lng != null) {
+      searchBody.locationBias = {
+        circle: { center: { latitude: data.lat, longitude: data.lng }, radius: 40000 },
+      };
+    }
+    const fieldMask =
+      "places.id,places.displayName,places.formattedAddress,places.location";
+
+    // 1) Connector gateway Google Maps
+    if (lovableKey && gmKey) {
+      try {
+        const res = await fetch(
+          "https://connector-gateway.lovable.dev/google_maps/places/v1/places:searchText",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${lovableKey}`,
+              "X-Connection-Api-Key": gmKey,
+              "Content-Type": "application/json",
+              "X-Goog-FieldMask": fieldMask,
+            },
+            body: JSON.stringify(searchBody),
+            signal: AbortSignal.timeout(8000),
+          },
+        );
+        if (res.ok) {
+          const results = parse(await res.json());
+          if (results.length > 0) return { results, source: "google-gateway" };
+        } else {
+          console.error("[geosearch] gateway", res.status, (await res.text()).slice(0, 200));
+        }
+      } catch (e) {
+        console.error("[geosearch] gateway exception", e);
+      }
+    }
+
+    if (key) {
+
+      try {
+        const body: Record<string, unknown> = {
+          textQuery: data.q,
+          languageCode: "it",
+          regionCode: "IT",
+          maxResultCount: 6,
+        };
+        if (data.lat != null && data.lng != null) {
+          body.locationBias = {
+            circle: { center: { latitude: data.lat, longitude: data.lng }, radius: 40000 },
+          };
+        }
+        const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": key,
+            "X-Goog-FieldMask":
+              "places.id,places.displayName,places.formattedAddress,places.location",
+          },
+          body: JSON.stringify(body),
+          signal: AbortSignal.timeout(8000),
+        });
+        if (res.ok) {
+          const json = (await res.json()) as {
+            places?: Array<{
+              id: string;
+              displayName?: { text?: string };
+              formattedAddress?: string;
+              location?: { latitude: number; longitude: number };
+            }>;
+          };
+          const results = (json.places ?? [])
+            .filter((p) => p.location)
+            .map((p) => ({
+              id: `g:${p.id}`,
+              name: p.displayName?.text ?? p.formattedAddress ?? data.q,
+              address: p.formattedAddress ?? "",
+              lat: p.location!.latitude,
+              lng: p.location!.longitude,
+            }));
+          if (results.length > 0) return { results, source: "google" };
+        }
+      } catch {
+        /* fallback sotto */
+      }
+    }
+
+    // Fallback OpenStreetMap
     const url = new URL("https://nominatim.openstreetmap.org/search");
     url.searchParams.set("q", data.q);
     url.searchParams.set("format", "jsonv2");
