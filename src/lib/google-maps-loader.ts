@@ -26,7 +26,7 @@ function isLovableHost() {
   return LOVABLE_HOSTS.some((d) => h.endsWith(d)) || h === "localhost" || h === "127.0.0.1";
 }
 
-const KEY_CACHE = "cicla:gmaps-key";
+const KEY_CACHE = "cicla:gmaps-key-v2";
 
 async function resolveKey(): Promise<string | null> {
   const managed = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY as
