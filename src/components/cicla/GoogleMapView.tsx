@@ -10,7 +10,7 @@ export interface TripPathPoint {
 }
 
 /**
- * Mappa principale dell'app: OpenStreetMap (stile scuro CARTO), senza alcuna
+ * Mappa principale dell'app: OpenStreetMap, senza alcuna
  * chiave API. Il componente mantiene il nome e le props storiche così tutte
  * le schermate esistenti continuano a funzionare invariato.
  */
