@@ -403,7 +403,35 @@ export function PlanPicker({
             </button>
           );
         })}
+
+        {PLANS.filter((p) => p.custom).map((p) => (
+          <a
+            key={p.id}
+            href={`mailto:${ENTERPRISE_CONTACT_EMAIL}?subject=${encodeURIComponent("Richiesta piano Enterprise Cicla Qui")}`}
+            className="rounded-2xl border border-dashed border-border/60 bg-card p-4 text-left transition-colors hover:border-cicla/60"
+          >
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm font-semibold">{p.name}</span>
+              <span className="text-xs font-semibold text-cicla">Su misura</span>
+            </div>
+            <div className="text-[11px] text-muted-foreground">{p.seatsLabel}</div>
+            <ul className="mt-2 space-y-1">
+              {p.highlights.map((h) => (
+                <li
+                  key={h}
+                  className="flex items-center gap-1.5 text-[11px] text-muted-foreground"
+                >
+                  <Check className="size-3 text-cicla" /> {h}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-2 text-[11px] font-semibold text-cicla">
+              Richiedi il tuo piano
+            </div>
+          </a>
+        ))}
       </div>
+
 
       <Card className="border-border/60 p-4">
         <Label htmlFor="discount" className="flex items-center gap-1.5 text-xs">
