@@ -26,7 +26,7 @@ function isLovableHost() {
   return LOVABLE_HOSTS.some((d) => h.endsWith(d)) || h === "localhost" || h === "127.0.0.1";
 }
 
-const KEY_CACHE = "cicla:gmaps-key";
+const KEY_CACHE = "cicla:gmaps-key-v2";
 
 async function resolveKey(): Promise<string | null> {
   const managed = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY as
@@ -94,6 +94,13 @@ export function loadGoogleMaps(libraries: string[] = ["places", "geometry"]): Pr
 
     window.gm_authFailure = () => {
       authFailed = true;
+      // La chiave in cache potrebbe essere quella non valida: la scartiamo
+      // così al prossimo caricamento viene richiesta di nuovo al server.
+      try {
+        sessionStorage.removeItem(KEY_CACHE);
+      } catch {
+        /* ignore */
+      }
       window.dispatchEvent(new CustomEvent(GOOGLE_MAPS_AUTH_ERROR_EVENT));
       if (settled) return;
       settled = true;

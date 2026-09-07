@@ -66,8 +66,8 @@ export const computeRoute = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => schema.parse(d))
   .handler(async ({ data }): Promise<RouteResult> => {
     const lovableKey = process.env.LOVABLE_API_KEY;
-    const gmKey = process.env.GOOGLE_MAPS_API_KEY;
-    const directKey = process.env.GOOGLE_API_KEY;
+    const gmKey = process.env.GOOGLE_MAPS_API_KEY_1 ?? process.env.GOOGLE_MAPS_API_KEY;
+    const directKey = process.env.GOOGLE_MAPS_API_KEY_1 ?? process.env.GOOGLE_API_KEY;
     const fieldMask =
       "routes.polyline.encodedPolyline,routes.distanceMeters,routes.duration";
 
