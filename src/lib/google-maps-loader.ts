@@ -94,6 +94,13 @@ export function loadGoogleMaps(libraries: string[] = ["places", "geometry"]): Pr
 
     window.gm_authFailure = () => {
       authFailed = true;
+      // La chiave in cache potrebbe essere quella non valida: la scartiamo
+      // così al prossimo caricamento viene richiesta di nuovo al server.
+      try {
+        sessionStorage.removeItem(KEY_CACHE);
+      } catch {
+        /* ignore */
+      }
       window.dispatchEvent(new CustomEvent(GOOGLE_MAPS_AUTH_ERROR_EVENT));
       if (settled) return;
       settled = true;
