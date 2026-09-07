@@ -122,6 +122,28 @@ async function syncSubscription(subscription: any, env: StripeEnv) {
   }
 }
 
+/** Ricarica del conto ente pagata con carta: accredito automatico. */
+async function creditCompanyTopup(session: any) {
+  if (session?.metadata?.kind !== "company_topup") return;
+  if (session.payment_status === "unpaid") return;
+  const topupId = session.metadata?.topupId as string | undefined;
+  if (!topupId) return;
+
+  const supabase = getSupabase();
+  const { data: topup } = await supabase
+    .from("company_topups")
+    .select("id, status, created_by")
+    .eq("id", topupId)
+    .maybeSingle();
+  if (!topup || topup.status !== "pending") return;
+
+  const { error } = await supabase.rpc("confirm_company_topup", {
+    _topup_id: topupId,
+    _actor: topup.created_by,
+  });
+  if (error) console.error("[payments webhook] accredito ricarica fallito", error.message);
+}
+
 async function handleWebhook(req: Request, env: StripeEnv) {
   const event = await verifyWebhook(req, env);
 
@@ -131,10 +153,15 @@ async function handleWebhook(req: Request, env: StripeEnv) {
     case "customer.subscription.deleted":
       await syncSubscription(event.data.object, env);
       break;
+    case "checkout.session.completed":
+    case "checkout.session.async_payment_succeeded":
+      await creditCompanyTopup(event.data.object);
+      break;
     default:
       console.log("[payments webhook] evento non gestito:", event.type);
   }
 }
+
 
 export const Route = createFileRoute("/api/public/payments/webhook")({
   server: {
