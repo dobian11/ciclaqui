@@ -526,4 +526,5 @@ a[href^="https://www.google.com/maps"],
 @media (prefers-reduced-motion: reduce) {
   .lp-blob, .lp-float, .lp-marquee-track { animation: none !important; }
   .lp-reveal { opacity: 1 !important; }
+  .lp-traveler { display: none; }
 }
