@@ -1,4 +1,5 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CiclaLogo } from "@/components/cicla/CiclaLogo";
@@ -116,12 +117,38 @@ function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
 const MARQUEE_ITEMS = [
   { icon: Bike, label: "20 centesimi al km in bici" },
   { icon: Footprints, label: "6 centesimi al km a piedi" },
+  { icon: Leaf, label: "Pass green" },
   { icon: ShieldCheck, label: "Passaporto bici antifurto" },
   { icon: Gift, label: "Premi da aziende e Comuni" },
   { icon: MapPin, label: "Fontanelle e rastrelliere in mappa" },
   { icon: Trophy, label: "Sfide, coppe e classifiche" },
   { icon: Wallet, label: "Riscatto in denaro o servizi" },
 ];
+
+function MarqueeTrack() {
+  const items = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
+  return (
+    <div
+      className="flex w-max will-change-transform"
+      style={{
+        animation: "lp-marquee 22s linear infinite",
+      }}
+    >
+      {items.map((item, i) => (
+        <span
+          key={i}
+          className="flex shrink-0 items-center gap-3 px-6 text-sm font-bold uppercase tracking-wider text-foreground/80 sm:px-10 sm:text-base"
+        >
+          <span className="grid size-7 place-items-center rounded-full bg-cicla/15 text-cicla sm:size-8">
+            <item.icon size={16} strokeWidth={2.2} />
+          </span>
+          {item.label}
+          <span className="ml-4 size-1.5 rounded-full bg-cicla sm:ml-6" />
+        </span>
+      ))}
+    </div>
+  );
+}
 
 function WelcomePage() {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -287,16 +314,12 @@ function WelcomePage() {
       </section>
 
       {/* ===== Marquee ===== */}
-      <div className="relative z-10 border-y border-foreground/10 bg-foreground/[0.03] py-4 backdrop-blur-sm">
-        <div className="lp-marquee-track gap-10 pr-10">
-          {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
-            <span key={i} className="flex shrink-0 items-center gap-2.5 text-sm font-semibold text-muted-foreground">
-              <item.icon size={16} className="text-cicla" />
-              {item.label}
-              <span className="ml-6 size-1 rounded-full bg-cicla/50" />
-            </span>
-          ))}
-        </div>
+      <div className="relative z-10 overflow-hidden border-y border-cicla/20 bg-cicla/[0.06] py-4 backdrop-blur-sm">
+        {/* fade sinistra */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-16 bg-gradient-to-r from-background to-transparent sm:w-24" />
+        {/* fade destra */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-16 bg-gradient-to-l from-background to-transparent sm:w-24" />
+        <MarqueeTrack />
       </div>
 
       {/* ===== Statistiche ===== */}
