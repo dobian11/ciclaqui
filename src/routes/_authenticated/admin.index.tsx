@@ -275,6 +275,18 @@ function AdminDashboard() {
         reason = c.value;
       }
       const res = await decideCompanyFn({ data: { company_id: id, decision, reason } });
+      qc.setQueryData<NonNullable<typeof companies>>(["admin-companies"], (current) =>
+        (current ?? []).map((company) =>
+          company.id === id
+            ? {
+                ...company,
+                status: decision,
+                rejection_reason: decision === "rejected" ? (reason ?? null) : null,
+                approved_at: decision === "approved" ? new Date().toISOString() : null,
+              }
+            : company,
+        ),
+      );
       toast.success(decision === "approved" ? "Ente approvato" : "Ente rifiutato");
 
       // Email di notifica all'ente (data, motivazione e prossimo passo)

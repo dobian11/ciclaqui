@@ -365,29 +365,9 @@ export const adminDecideCompany = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const nowIso = new Date().toISOString();
-    const patch =
-      data.decision === "approved"
-        ? {
-            status: "approved" as const,
-            rejection_reason: null,
-            approved_at: nowIso,
-            approved_by: context.userId,
-          }
-        : {
-            status: "rejected" as const,
-            rejection_reason: data.reason ?? null,
-          };
-    const { error } = await supabaseAdmin.from("companies").update(patch).eq("id", data.company_id);
-    if (error) throw new Error("Aggiornamento fallito");
 
-    const { data: company } = await supabaseAdmin
-      .from("companies")
-      .select("id, name, kind, code, contact_email, created_by")
-      .eq("id", data.company_id)
-      .maybeSingle();
-
-    // Aggiorna la review pending più recente con esito + motivo
+    // Conserva il riferimento alla pratica prima della decisione: la procedura
+    // atomica la chiude insieme allo stato dell'ente.
     const { data: latest } = await supabaseAdmin
       .from("company_reviews")
       .select("id")
@@ -396,17 +376,25 @@ export const adminDecideCompany = createServerFn({ method: "POST" })
       .order("submitted_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (latest) {
-      await supabaseAdmin
-        .from("company_reviews")
-        .update({
-          status: data.decision,
-          reason: data.decision === "rejected" ? (data.reason ?? null) : null,
-          reviewed_by: context.userId,
-          reviewed_at: nowIso,
-        })
-        .eq("id", latest.id);
+
+    const { data: decisionRow, error: decisionError } = await supabaseAdmin
+      .rpc("admin_decide_company", {
+        _company_id: data.company_id,
+        _decision: data.decision,
+        _reason: data.reason ?? null,
+        _actor_id: context.userId,
+      })
+      .single();
+    if (decisionError || decisionRow?.company_status !== data.decision) {
+      throw new Error("Lo stato dell'ente non è stato salvato. Riprova.");
     }
+    const nowIso = decisionRow.decided_at;
+
+    const { data: company } = await supabaseAdmin
+      .from("companies")
+      .select("id, name, kind, code, contact_email, created_by")
+      .eq("id", data.company_id)
+      .maybeSingle();
 
     // Audit: chi ha modificato lo stato di verifica dell'ente
     {

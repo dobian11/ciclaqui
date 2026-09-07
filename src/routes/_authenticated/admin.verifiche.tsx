@@ -138,6 +138,8 @@ function AdminVerificationsPage() {
     queryKey: ["admin-verifications"],
     queryFn: () => listVerifications({}),
     enabled: adminCheck?.admin === true,
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
   });
 
   const { data: auditRows, isLoading: auditLoading } = useQuery({
@@ -194,6 +196,18 @@ function AdminVerificationsPage() {
     setBusy(id);
     try {
       const res = await decideCompanyFn({ data: { company_id: id, decision, reason: motivo } });
+      qc.setQueryData<NonNullable<typeof companies>>(["admin-verifications"], (current) =>
+        (current ?? []).map((company) =>
+          company.id === id
+            ? {
+                ...company,
+                status: decision,
+                rejection_reason: decision === "rejected" ? (motivo ?? null) : null,
+                approved_at: decision === "approved" ? new Date().toISOString() : null,
+              }
+            : company,
+        ),
+      );
       toast.success(decision === "approved" ? "Ente approvato" : "Ente rifiutato");
 
       const pushRes = (

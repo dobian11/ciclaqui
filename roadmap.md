@@ -1,7 +1,7 @@
 # Roadmap
 
 ## In corso
-- Sostituire la grafica “rotella” nella hero con un disegno più elegante, mantenendo invariati testi e bottoni.
+- Correggere il salvataggio e l'aggiornamento immediato dell'approvazione enti.
 
 ## Da fare
-- Implementare la direzione scelta dall’utente.
+- Nessuna attività aperta.
