@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { PLANS, getPlan, type PlanId } from "@/lib/plans";
+import {
+  PURCHASABLE_PLANS,
+  PLANS,
+  ENTERPRISE_CONTACT_EMAIL,
+  getPlan,
+  type PlanId,
+} from "@/lib/plans";
+import { PromoBanner } from "@/components/cicla/PromoBanner";
 import { activateCompanySubscription, previewDiscountCode } from "@/lib/payments.functions";
 import {
   getCompanySubscriptionState,
@@ -84,7 +91,7 @@ export function PlanPicker({
 
   const sub = state?.subscription ?? null;
   const selected = getPlan(plan);
-  const price = discount ? discount.final : selected.priceEur;
+  const price = discount ? discount.final : (selected.priceEur ?? 0);
 
   async function refresh() {
     await Promise.all([
@@ -217,7 +224,7 @@ export function PlanPicker({
               </div>
               <div className="font-display text-xl font-bold">{current.name}</div>
               <div className="text-[12px] text-muted-foreground">
-                {current.priceEur}€ al mese · {current.seatsLabel} {memberLabel}
+                {current.priceEur ?? "su misura"}€ al mese · {current.seatsLabel} {memberLabel}
               </div>
             </div>
             <div className="text-right text-[12px] text-muted-foreground">
@@ -267,8 +274,8 @@ export function PlanPicker({
             Il nuovo piano parte alla scadenza del periodo già pagato ({fmtDate(sub.current_period_end)}):
             nessun rimborso e nessun addebito parziale.
           </p>
-          <div className="mt-2 grid gap-2 sm:grid-cols-3">
-            {PLANS.map((p) => {
+          <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {PURCHASABLE_PLANS.map((p) => {
               const isCurrent = p.id === sub.plan;
               const isPending = p.id === sub.pending_plan;
               return (
@@ -361,9 +368,10 @@ export function PlanPicker({
   return (
     <div className="space-y-4">
       <PaymentTestModeBanner />
+      <PromoBanner />
 
-      <div className="grid gap-2 sm:grid-cols-3">
-        {PLANS.map((p) => {
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        {PURCHASABLE_PLANS.map((p) => {
           const active = p.id === plan;
           return (
             <button
