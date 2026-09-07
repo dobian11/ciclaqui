@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Landmark, CreditCard, Copy, Check } from "lucide-react";
+import { TopupCheckout } from "@/components/cicla/TopupCheckout";
 
 const QUICK = [100, 250, 500, 1000];
 
@@ -37,12 +38,17 @@ export function CompanyTopupDialog({
   const [created, setCreated] = useState<{ reference: string; amount_eur: number } | null>(
     null,
   );
+  const [payingCard, setPayingCard] = useState<number | null>(null);
 
   const value = Number(amount.replace(",", "."));
   const valid = Number.isFinite(value) && value > 0;
 
   async function submit() {
     if (!valid) return;
+    if (method === "card") {
+      setPayingCard(value);
+      return;
+    }
     setLoading(true);
     try {
       const res = await topup({ data: { amount_eur: value, method } });
@@ -58,7 +64,10 @@ export function CompanyTopupDialog({
 
   function close(v: boolean) {
     onOpenChange(v);
-    if (!v) setCreated(null);
+    if (!v) {
+      setCreated(null);
+      setPayingCard(null);
+    }
   }
 
   return (
@@ -71,7 +80,18 @@ export function CompanyTopupDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {created ? (
+        {payingCard != null ? (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Ricarica di € {payingCard.toFixed(2)}: il saldo viene accreditato subito dopo il
+              pagamento, senza attendere nessuna conferma.
+            </p>
+            <TopupCheckout amountEur={payingCard} />
+            <Button variant="ghost" className="w-full" onClick={() => setPayingCard(null)}>
+              Annulla
+            </Button>
+          </div>
+        ) : created ? (
           <div className="space-y-3">
             <div className="rounded-xl border bg-card/60 p-4 text-sm">
               <div className="font-semibold">
@@ -122,7 +142,7 @@ export function CompanyTopupDialog({
                 onClick={() => setMethod("card")}
                 icon={<CreditCard className="size-4" />}
                 label="Carta"
-                hint="In attivazione"
+                hint="Accredito immediato"
               />
             </div>
 
@@ -153,7 +173,7 @@ export function CompanyTopupDialog({
 
             <Button className="w-full" disabled={!valid || loading} onClick={submit}>
               {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Conferma ricarica
+              {method === "card" ? "Paga con carta" : "Conferma ricarica"}
             </Button>
           </div>
         )}

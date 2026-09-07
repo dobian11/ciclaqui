@@ -989,6 +989,48 @@ export type Database = {
         }
         Relationships: []
       }
+      doctorbike_catalog: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          price_eur: number
+          sort_order: number
+          suggested_points: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          price_eur: number
+          sort_order?: number
+          suggested_points?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          price_eur?: number
+          sort_order?: number
+          suggested_points?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -1962,6 +2004,39 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "payout_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      purchase_doctorbike_item: {
+        Args: {
+          _actor: string
+          _company_id: string
+          _item_id: string
+          _points_cost: number
+          _qty: number
+        }
+        Returns: {
+          active: boolean
+          cash_value_eur: number | null
+          category: string
+          company_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          partner: string | null
+          points_cost: number
+          region: string | null
+          scope: string
+          stock: number | null
+          terms: string | null
+          title: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "rewards_catalog"
           isOneToOne: true
           isSetofReturn: false
         }

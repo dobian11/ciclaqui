@@ -1,6 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import {
+  type StripeEnv,
+  createStripeClient,
+  getStripeErrorMessage,
+} from "@/lib/stripe.server";
 
 /** Coordinate bancarie su cui l'ente effettua il bonifico di ricarica. */
 export const TOPUP_BANK = {
@@ -127,7 +132,7 @@ export const createCompanyTopup = createServerFn({ method: "POST" })
       card_checkout_url: null as string | null,
       message:
         data.method === "card"
-          ? "Pagamento con carta non ancora attivo: la ricarica resta in attesa e viene confermata dal team Cicla Qui."
+          ? "Completa il pagamento con carta: il saldo viene accreditato subito, senza attese."
           : "Effettua il bonifico indicando la causale: appena lo riceviamo il saldo viene accreditato.",
     };
   });
@@ -239,4 +244,95 @@ export const adminConfirmTopup = createServerFn({ method: "POST" })
     }
 
     return { id: topup.id, amount_eur: Number(topup.amount_eur), status: topup.status };
+  });
+
+/**
+ * Ricarica automatica con carta: crea la ricarica in attesa e apre il
+ * pagamento in pagina. Alla conferma di Stripe il saldo viene accreditato
+ * dal webhook, senza alcuna approvazione manuale.
+ */
+export const createCompanyTopupCheckout = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        amount_eur: z.number().positive().max(100000),
+        environment: z.enum(["sandbox", "live"]),
+        returnUrl: z.string().url(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }): Promise<{ clientSecret: string } | { error: string }> => {
+    const companyId = await requireOwner(context as never);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: company } = await supabaseAdmin
+      .from("companies")
+      .select("id, name, contact_email, stripe_customer_id")
+      .eq("id", companyId)
+      .maybeSingle();
+    if (!company) throw new Error("Ente non trovato");
+
+    const amount = Number(data.amount_eur.toFixed(2));
+    const reference = `CQ-${Date.now().toString(36).toUpperCase()}`;
+    const { data: topup, error } = await supabaseAdmin
+      .from("company_topups")
+      .insert({
+        company_id: companyId,
+        amount_eur: amount,
+        method: "card",
+        status: "pending",
+        reference,
+        created_by: context.userId,
+      })
+      .select("id")
+      .single();
+    if (error || !topup) throw new Error("Impossibile creare la ricarica");
+
+    try {
+      const stripe = createStripeClient(data.environment as StripeEnv);
+
+      let customerId = company.stripe_customer_id as string | null;
+      if (!customerId) {
+        const created = await stripe.customers.create({
+          name: company.name,
+          email: company.contact_email,
+          metadata: { companyId },
+        });
+        customerId = created.id;
+        await supabaseAdmin
+          .from("companies")
+          .update({ stripe_customer_id: customerId })
+          .eq("id", companyId);
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        mode: "payment",
+        ui_mode: "embedded_page",
+        return_url: data.returnUrl,
+        customer: customerId,
+        line_items: [
+          {
+            quantity: 1,
+            price_data: {
+              currency: "eur",
+              unit_amount: Math.round(amount * 100),
+              product_data: {
+                name: "Ricarica conto ente Cicla Qui",
+                description: `Credito prepagato · rif. ${reference}`,
+              },
+            },
+          },
+        ],
+        metadata: { kind: "company_topup", companyId, topupId: topup.id, reference },
+        payment_intent_data: {
+          metadata: { kind: "company_topup", companyId, topupId: topup.id },
+        },
+      } as any);
+
+      return { clientSecret: session.client_secret ?? "" };
+    } catch (e) {
+      await supabaseAdmin.from("company_topups").update({ status: "failed" }).eq("id", topup.id);
+      return { error: getStripeErrorMessage(e) };
+    }
   });
