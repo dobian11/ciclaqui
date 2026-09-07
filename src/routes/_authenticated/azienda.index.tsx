@@ -58,6 +58,8 @@ function CompanyDashboard() {
     queryFn: () => getMine({}),
     enabled: hasSession === true,
     retry: false,
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
   });
 
   const { data: reviews } = useQuery({
