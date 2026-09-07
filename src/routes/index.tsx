@@ -117,6 +117,7 @@ function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
 const MARQUEE_ITEMS = [
   { icon: Bike, label: "20 centesimi al km in bici" },
   { icon: Footprints, label: "6 centesimi al km a piedi" },
+  { icon: Leaf, label: "Pass green" },
   { icon: ShieldCheck, label: "Passaporto bici antifurto" },
   { icon: Gift, label: "Premi da aziende e Comuni" },
   { icon: MapPin, label: "Fontanelle e rastrelliere in mappa" },
