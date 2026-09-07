@@ -1305,6 +1305,36 @@ export type Database = {
           },
         ]
       }
+      promo_banner: {
+        Row: {
+          active: boolean
+          ends_at: string
+          id: number
+          message: string
+          percent_off: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          ends_at?: string
+          id?: number
+          message?: string
+          percent_off?: number
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          ends_at?: string
+          id?: number
+          message?: string
+          percent_off?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reward_redemptions: {
         Row: {
           cancel_reason: string | null
@@ -1995,7 +2025,7 @@ export type Database = {
       company_kind: "company" | "municipality"
       company_status: "pending" | "approved" | "rejected" | "suspended"
       payout_status: "pending" | "approved" | "paid" | "rejected"
-      subscription_plan: "starter" | "pro" | "enterprise"
+      subscription_plan: "starter" | "pro" | "enterprise" | "advanced"
       subscription_status:
         | "trial"
         | "active"
@@ -2144,7 +2174,7 @@ export const Constants = {
       company_kind: ["company", "municipality"],
       company_status: ["pending", "approved", "rejected", "suspended"],
       payout_status: ["pending", "approved", "paid", "rejected"],
-      subscription_plan: ["starter", "pro", "enterprise"],
+      subscription_plan: ["starter", "pro", "enterprise", "advanced"],
       subscription_status: [
         "trial",
         "active",
