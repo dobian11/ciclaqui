@@ -1,18 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Search, X, Loader2, MapPin } from "lucide-react";
-import { loadGoogleMaps } from "@/lib/google-maps-loader";
 import type { Poi } from "@/lib/pois";
 
 interface Suggestion {
   id: string;
   primary: string;
   secondary: string;
-  /** Callback che risolve il place in coordinate quando viene selezionato. */
+  /** Callback che risolve il luogo in coordinate quando viene selezionato. */
   resolve: () => Promise<Poi | null>;
 }
 
 /**
- * Ricerca indirizzi/luoghi con Places API (New).
+ * Ricerca indirizzi/luoghi con OpenStreetMap.
  * Il risultato viene restituito come Poi "place" così da riusare la
  * scheda di navigazione già esistente.
  */
@@ -34,7 +33,6 @@ export function MapSearchBar({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const tokenRef = useRef<any>(null);
   const debounceRef = useRef<number | null>(null);
   const reqIdRef = useRef(0);
 
@@ -66,7 +64,7 @@ export function MapSearchBar({
     debounceRef.current = window.setTimeout(async () => {
       const reqId = ++reqIdRef.current;
 
-      const serverSearch = async () => {
+      try {
         const { searchPlaces } = await import("@/lib/geosearch.functions");
         const { results } = await searchPlaces({
           data: origin ? { q, lat: origin[0], lng: origin[1] } : { q },
@@ -87,73 +85,10 @@ export function MapSearchBar({
             }),
           })),
         );
-      };
-
-      try {
-        await loadGoogleMaps(["places"]);
-        const g = (window as any).google;
-        const { AutocompleteSuggestion, AutocompleteSessionToken } =
-          await g.maps.importLibrary("places");
-        if (!tokenRef.current) tokenRef.current = new AutocompleteSessionToken();
-
-        const request: Record<string, unknown> = {
-          input: q,
-          sessionToken: tokenRef.current,
-          language: "it",
-          region: "it",
-        };
-        if (origin) {
-          request.locationBias = {
-            center: { lat: origin[0], lng: origin[1] },
-            radius: 40000,
-          };
-        }
-        const { suggestions } =
-          await AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
+      } catch (e: any) {
         if (reqId !== reqIdRef.current) return;
-
-        setItems(
-          (suggestions ?? [])
-            .filter((s: any) => s.placePrediction)
-            .slice(0, 6)
-            .map((s: any) => {
-              const pred = s.placePrediction;
-              return {
-                id: pred.placeId,
-                primary: pred.mainText?.text ?? pred.text?.text ?? "",
-                secondary: pred.secondaryText?.text ?? "",
-                resolve: async () => {
-                  const place = pred.toPlace();
-                  await place.fetchFields({
-                    fields: ["displayName", "formattedAddress", "location"],
-                  });
-                  const loc = place.location;
-                  if (!loc) return null;
-                  tokenRef.current = null; // chiude la sessione di autocomplete
-                  return {
-                    id: `place:${pred.placeId}`,
-                    category: "place" as const,
-                    lat: typeof loc.lat === "function" ? loc.lat() : loc.lat,
-                    lng: typeof loc.lng === "function" ? loc.lng() : loc.lng,
-                    name: place.displayName ?? pred.mainText?.text ?? "Destinazione",
-                    tags: place.formattedAddress
-                      ? { indirizzo: place.formattedAddress }
-                      : undefined,
-                  };
-                },
-              };
-            }),
-        );
-      } catch {
-        // Places API (New) non abilitata sulla chiave o errore rete:
-        // ricerca alternativa lato server (Google Places server / OpenStreetMap).
-        try {
-          await serverSearch();
-        } catch (e2: any) {
-          if (reqId !== reqIdRef.current) return;
-          setItems([]);
-          setError(e2?.message ?? "Ricerca non disponibile");
-        }
+        setItems([]);
+        setError(e?.message ?? "Ricerca non disponibile");
       } finally {
         if (reqId === reqIdRef.current) setLoading(false);
       }

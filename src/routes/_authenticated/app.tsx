@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import { BottomNav } from "@/components/cicla/BottomNav";
 import { PermissionsOnboarding } from "@/components/cicla/PermissionsOnboarding";
 import { InstallPrompt } from "@/components/cicla/InstallPrompt";
-import { prefetchGoogleMaps } from "@/lib/google-maps-loader";
 import { fetchRoleContext } from "@/lib/auth-redirect";
 import { useStableViewportHeight } from "@/hooks/use-stable-viewport";
 import { usePush, isNativeApp } from "@/hooks/use-push";
@@ -27,12 +26,6 @@ function AppLayout() {
   useStableViewportHeight();
   usePushListeners();
   const { register } = usePush();
-
-  // Scalda l'SDK mappe in idle: quando l'utente arriva sulla scheda Mappa
-  // (o ci torna da un'altra tab) lo script è già in cache.
-  useEffect(() => {
-    prefetchGoogleMaps();
-  }, []);
 
   // Su app nativa: se il permesso è già concesso, rinfresca il token FCM
   // (rotazione token / reinstallazione) senza mostrare prompt.
