@@ -887,6 +887,27 @@ export type Database = {
         }
         Relationships: []
       }
+      cron_tokens: {
+        Row: {
+          created_at: string
+          id: number
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       data_export_requests: {
         Row: {
           error: string | null
