@@ -144,6 +144,61 @@ async function creditCompanyTopup(session: any) {
   if (error) console.error("[payments webhook] accredito ricarica fallito", error.message);
 }
 
+/**
+ * Email automatica all'ente a ogni pagamento andato a buon fine: totale
+ * realmente addebitato (già scontato) e data di scadenza del periodo.
+ */
+async function sendSubscriptionReceipt(invoice: any, env: StripeEnv) {
+  try {
+    if (Number(invoice?.amount_paid ?? 0) <= 0) return;
+    const customerId =
+      typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+    if (!customerId) return;
+
+    const supabase = getSupabase();
+    const { data: company } = await supabase
+      .from("companies")
+      .select("id, name, contact_email")
+      .eq("stripe_customer_id", customerId)
+      .maybeSingle();
+    if (!company?.contact_email) return;
+
+    const line = invoice.lines?.data?.[invoice.lines.data.length - 1];
+    const plan = planFromPrice(line?.price ?? line?.pricing?.price_details);
+    const paid = Number(invoice.amount_paid) / 100;
+    const full = plan?.priceEur ?? null;
+
+    let periodEnd = isoFromUnix(line?.period?.end);
+    if (!periodEnd) {
+      const { data: sub } = await supabase
+        .from("company_subscriptions")
+        .select("current_period_end")
+        .eq("company_id", company.id)
+        .maybeSingle();
+      periodEnd = (sub?.["current_period_end"] as string | null) ?? null;
+    }
+
+    const discountPercent =
+      full && full > 0 && paid < full ? Math.round((1 - paid / full) * 100) : 0;
+
+    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    await sendTemplateEmail("company-subscription-receipt", company.contact_email, {
+      idempotencyKey: `sub-receipt-${env}-${invoice.id}`,
+      templateData: {
+        companyName: company.name,
+        planName: plan?.name ?? "Abbonamento",
+        amountEur: paid,
+        fullPriceEur: full,
+        discountLabel: discountPercent > 0 ? `sconto ${discountPercent}%` : null,
+        periodEnd,
+        seatsLabel: plan?.seatsLabel ?? "",
+      },
+    });
+  } catch (e) {
+    console.error("[payments webhook] invio ricevuta fallito", e);
+  }
+}
+
 async function handleWebhook(req: Request, env: StripeEnv) {
   const event = await verifyWebhook(req, env);
 
@@ -156,6 +211,9 @@ async function handleWebhook(req: Request, env: StripeEnv) {
     case "checkout.session.completed":
     case "checkout.session.async_payment_succeeded":
       await creditCompanyTopup(event.data.object);
+      break;
+    case "invoice.paid":
+      await sendSubscriptionReceipt(event.data.object, env);
       break;
     default:
       console.log("[payments webhook] evento non gestito:", event.type);
