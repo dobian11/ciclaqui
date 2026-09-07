@@ -188,6 +188,12 @@ function GoogleMapViewImpl({
           center: position ? { lat: position[0], lng: position[1] } : DEFAULT_CENTER,
           zoom: position ? 16 : 13,
           disableDefaultUI: true,
+          // Manteniamo l'interfaccia essenziale, ma lasciamo disponibile Pegman:
+          // con disableDefaultUI senza questa opzione Street View spariva del tutto.
+          streetViewControl: true,
+          streetViewControlOptions: {
+            position: google.maps.ControlPosition.LEFT_CENTER,
+          },
           gestureHandling: "greedy",
           clickableIcons: false,
           styles: DARK_STYLE,
