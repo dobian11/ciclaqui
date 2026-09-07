@@ -11,6 +11,36 @@ import { getPlan, PLANS } from "@/lib/plans";
 const envSchema = z.enum(["sandbox", "live"]);
 const planSchema = z.enum(["starter", "pro", "advanced"]);
 
+/**
+ * Se l'amministratore ha attivato la promo (es. 10% entro il 15.01.27), crea o
+ * riusa il coupon corrispondente e ne restituisce l'id per il checkout.
+ */
+async function resolvePromoCoupon(stripe: any): Promise<string | null> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: promo } = await (supabaseAdmin as any)
+    .from("promo_banner")
+    .select("active, percent_off, ends_at")
+    .eq("id", 1)
+    .maybeSingle();
+  if (!promo?.active) return null;
+  const percent = Number(promo.percent_off ?? 0);
+  if (percent <= 0) return null;
+  if (new Date(promo.ends_at).getTime() <= Date.now()) return null;
+
+  const couponId = `cicla_promo_${percent}`;
+  try {
+    await stripe.coupons.retrieve(couponId);
+  } catch {
+    await stripe.coupons.create({
+      id: couponId,
+      percent_off: percent,
+      duration: "forever",
+      name: `Promo Cicla Qui -${percent}%`,
+    });
+  }
+  return couponId;
+}
+
 /** Verifica che l'utente sia titolare di un ente e ne restituisce l'id. */
 async function ownedCompanyId(context: {
   supabase: any;
