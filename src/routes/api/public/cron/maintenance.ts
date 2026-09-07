@@ -13,13 +13,27 @@ export const Route = createFileRoute("/api/public/cron/maintenance")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const secret = process.env.CRON_SECRET;
         const provided = request.headers.get("x-cron-secret");
-        if (!secret || !provided || provided !== secret) {
+        if (!provided) {
           return new Response("Unauthorized", { status: 401 });
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+        // Il chiamante è valido se combacia col secret d'ambiente oppure con il
+        // token interno usato dallo scheduler del database (pg_cron).
+        let authorized = provided === process.env.CRON_SECRET;
+        if (!authorized) {
+          const { data: tok } = await supabaseAdmin
+            .from("cron_tokens")
+            .select("token")
+            .eq("id", 1)
+            .maybeSingle();
+          authorized = !!tok?.token && tok.token === provided;
+        }
+        if (!authorized) {
+          return new Response("Unauthorized", { status: 401 });
+        }
         const now = new Date();
         const nowIso = now.toISOString();
 
