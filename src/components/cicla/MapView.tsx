@@ -269,10 +269,10 @@ export function MapView({
       className="absolute inset-0 h-full w-full"
     >
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         maxZoom={19}
-        subdomains={["a", "b", "c", "d"]}
-        attribution='&copy; OpenStreetMap &copy; CARTO'
+        subdomains={["a", "b", "c"]}
+        attribution='&copy; OpenStreetMap contributors'
       />
       <LocationLayer position={position} mode={mode} follow={follow} />
       <FallbackLayers
