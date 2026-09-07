@@ -331,6 +331,8 @@ function CompanyDashboard() {
 
       {section === "badge" && <CompanyBadgesSection memberLabel={memberLabel.toLowerCase()} />}
 
+      {section === "marketplace" && <CompanyMarketplaceSection />}
+
       {section === "premi" && (
         <>
           <CompanyRewardsSection />
