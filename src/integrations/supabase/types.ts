@@ -1880,7 +1880,12 @@ export type Database = {
     }
     Functions: {
       admin_decide_company: {
-        Args: { _company_id: string; _decision: string; _reason?: string }
+        Args: {
+          _actor_id?: string
+          _company_id: string
+          _decision: string
+          _reason?: string
+        }
         Returns: {
           company_id: string
           company_status: Database["public"]["Enums"]["company_status"]
