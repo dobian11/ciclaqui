@@ -11,8 +11,11 @@ declare global {
   var google: any;
   interface Window {
     __ciclaInitGoogleMaps?: () => void;
+    gm_authFailure?: () => void;
   }
 }
+
+export const GOOGLE_MAPS_AUTH_ERROR_EVENT = "cicla:google-maps-auth-error";
 
 // I domini serviti dalla chiave gestita da Lovable.
 const LOVABLE_HOSTS = [".lovable.app", ".lovableproject.com"];
@@ -77,6 +80,23 @@ export function loadGoogleMaps(libraries: string[] = ["places", "geometry"]): Pr
       return;
     }
 
+    let settled = false;
+    const timeout = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      loadPromise = null;
+      reject(new Error("Google Maps non risponde"));
+    }, 10_000);
+
+    window.gm_authFailure = () => {
+      window.dispatchEvent(new CustomEvent(GOOGLE_MAPS_AUTH_ERROR_EVENT));
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      loadPromise = null;
+      reject(new Error("Chiave Google Maps non valida"));
+    };
+
     window.__ciclaInitGoogleMaps = () => {
       const g = (window as any).google;
       // Con caricamento async le librerie vanno esplicitamente importate:
@@ -87,10 +107,12 @@ export function loadGoogleMaps(libraries: string[] = ["places", "geometry"]): Pr
         wanted.map((lib) =>
           g.maps.importLibrary(lib).catch(() => null),
         ),
-      ).then(
-        () => resolve(g),
-        () => resolve(g),
-      );
+      ).then(() => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeout);
+        resolve(g);
+      });
     };
 
     const script = document.createElement("script");
@@ -103,9 +125,13 @@ export function loadGoogleMaps(libraries: string[] = ["places", "geometry"]): Pr
     if (channel) params.set("channel", channel);
 
     script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
+    script.dataset.ciclaGoogleMaps = "true";
     script.async = true;
     script.defer = true;
     script.onerror = () => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
       loadPromise = null;
       reject(new Error("Failed to load Google Maps JS"));
     };
