@@ -5,6 +5,7 @@
 // Il channel ID serve a Lovable per tracciare l'uso.
 
 let loadPromise: Promise<typeof google> | null = null;
+let authFailed = false;
 
 declare global {
   // eslint-disable-next-line no-var
@@ -63,6 +64,9 @@ export function loadGoogleMaps(libraries: string[] = ["places", "geometry"]): Pr
   if (typeof window === "undefined") {
     return Promise.reject(new Error("Google Maps requires browser"));
   }
+  if (authFailed) {
+    return Promise.reject(new Error("Chiave Google Maps non valida"));
+  }
   // Con loading=async la callback può scattare prima che le classi (Map, Size…)
   // siano pronte: considerate caricate solo se il costruttore Map esiste.
   if ((window as any).google?.maps?.Map) {
@@ -89,6 +93,7 @@ export function loadGoogleMaps(libraries: string[] = ["places", "geometry"]): Pr
     }, 10_000);
 
     window.gm_authFailure = () => {
+      authFailed = true;
       window.dispatchEvent(new CustomEvent(GOOGLE_MAPS_AUTH_ERROR_EVENT));
       if (settled) return;
       settled = true;
