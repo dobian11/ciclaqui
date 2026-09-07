@@ -52,7 +52,7 @@ export const redeemReward = createServerFn({ method: "POST" })
       const { notifyUsers, companyManagerIds } = await import("@/lib/notify.server");
       const { data: reward } = await supabaseAdmin
         .from("rewards_catalog")
-        .select("title, points_cost, category, cash_value_eur, company_id")
+        .select("title, points_cost, category, cash_value_eur, company_id, partner, terms")
         .eq("id", data.rewardId)
         .maybeSingle();
       isCash = reward?.category === "cash" && Number(reward?.cash_value_eur ?? 0) > 0;
@@ -62,6 +62,11 @@ export const redeemReward = createServerFn({ method: "POST" })
         .select("full_name, phone, company_id, iban")
         .eq("id", context.userId)
         .maybeSingle();
+
+      const expiry = redemption.expires_at
+        ? new Date(redemption.expires_at)
+        : new Date(Date.now() + 365 * 24 * 3600 * 1000);
+      const expiryLabel = expiry.toLocaleDateString("it-IT");
 
       await notifyUsers({
         userIds: [context.userId],
@@ -74,9 +79,26 @@ export const redeemReward = createServerFn({ method: "POST" })
         url: "/app/punti?tab=rewards",
         code: redemption.code,
         ctaLabel: "Vedi i miei premi",
-        details: reward?.points_cost
-          ? [{ label: "Punti spesi", value: String(reward.points_cost) }]
-          : [],
+        details: [
+          { label: "Numero premio", value: redemption.code },
+          { label: "Premio", value: reward?.title ?? "—" },
+          ...(reward?.partner ? [{ label: "Partner", value: reward.partner }] : []),
+          { label: "Intestatario", value: profile?.full_name ?? "—" },
+          { label: "Punti spesi", value: String(reward?.points_cost ?? 0) },
+          ...(reward?.cash_value_eur
+            ? [{ label: "Valore", value: `€ ${Number(reward.cash_value_eur).toFixed(2)}` }]
+            : []),
+          { label: "Valido fino al", value: expiryLabel },
+          ...(isCash
+            ? []
+            : [
+                {
+                  label: "Dove usarlo",
+                  value:
+                    "Mostra questa email allo staff di uno dei centri Doctorbike Italia entro 12 mesi.",
+                },
+              ]),
+        ],
         payload: { reward_id: data.rewardId, ref: redemption.code },
       });
 
@@ -108,7 +130,8 @@ export const redeemReward = createServerFn({ method: "POST" })
                     { label: "IBAN", value: profile?.iban ?? "—" },
                   ]
                 : []),
-              { label: "Codice", value: redemption.code },
+              { label: "Numero premio", value: redemption.code },
+              { label: "Valido fino al", value: expiryLabel },
             ],
             payload: { reward_id: data.rewardId, ref: redemption.code, user_id: context.userId },
           });
@@ -118,7 +141,7 @@ export const redeemReward = createServerFn({ method: "POST" })
       console.error("[redeemReward] notify failed", e);
     }
 
-    return { code: redemption.code, cash: isCash };
+    return { code: redemption.code, cash: isCash, expires_at: redemption.expires_at ?? null };
   });
 
 
