@@ -326,8 +326,8 @@ function WelcomePage() {
       <section className="relative z-10 mx-auto w-full max-w-7xl px-5 py-14 sm:px-8 sm:py-20">
         <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
           {[
-            { icon: Bike, value: 20, suffix: " cent", label: "per ogni km in bici" },
-            { icon: Footprints, value: 6, suffix: " cent", label: "per ogni km a piedi" },
+            { icon: Bike, value: 10, suffix: " pt", label: "per ogni km in bici" },
+            { icon: Footprints, value: 3, suffix: " pt", label: "per ogni km a piedi" },
             { icon: Gift, value: 500, suffix: " pt", label: "soglia per riscattare i premi" },
             { icon: Leaf, value: 100, suffix: "%", label: "green, zero emissioni" },
           ].map((s, i) => (
