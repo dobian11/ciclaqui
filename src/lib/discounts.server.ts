@@ -39,7 +39,7 @@ export async function checkDiscountCode(
     return { ok: false, reason: `Codice valido solo per il piano ${getPlan(data.plan).name}` };
   }
 
-  const base = getPlan(plan).priceEur;
+  const base = getPlan(plan).priceEur ?? 0;
   const final = Math.round(base * (1 - data.percent_off / 100) * 100) / 100;
 
   return {

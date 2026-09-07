@@ -9,7 +9,7 @@ import {
 import { getPlan, PLANS } from "@/lib/plans";
 
 const envSchema = z.enum(["sandbox", "live"]);
-const planSchema = z.enum(["starter", "pro", "enterprise"]);
+const planSchema = z.enum(["starter", "pro", "advanced"]);
 
 /** Verifica che l'utente sia titolare di un ente e ne restituisce l'id. */
 async function ownedCompanyId(context: {
@@ -125,12 +125,16 @@ export const createSubscriptionCheckout = createServerFn({ method: "POST" })
       const price = prices.data[0];
       if (!price) throw new Error("Prezzo del piano non trovato");
 
+      // Sconto promozionale attivo dalla dashboard admin (es. -10% entro una data)
+      const promoDiscount = await resolvePromoCoupon(stripe);
+
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         ui_mode: "embedded_page",
         return_url: data.returnUrl,
         customer: customerId,
         line_items: [{ price: price.id, quantity: 1 }],
+        ...(promoDiscount ? { discounts: [{ coupon: promoDiscount }] } : {}),
         metadata: { companyId, plan: plan.id },
         subscription_data: { metadata: { companyId, plan: plan.id } },
         managed_payments: { enabled: true },

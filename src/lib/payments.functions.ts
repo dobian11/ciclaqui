@@ -321,7 +321,7 @@ export const previewDiscountCode = createServerFn({ method: "POST" })
     z
       .object({
         code: z.string().trim().min(3).max(40),
-        plan: z.enum(["starter", "pro", "enterprise"]),
+        plan: z.enum(["starter", "pro", "advanced"]),
       })
       .parse(d),
   )
@@ -347,7 +347,7 @@ export const activateCompanySubscription = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z
       .object({
-        plan: z.enum(["starter", "pro", "enterprise"]),
+        plan: z.enum(["starter", "pro", "advanced"]),
         discount_code: z.string().trim().max(40).optional(),
       })
       .parse(d),
@@ -371,7 +371,7 @@ export const activateCompanySubscription = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     let discountCode: string | null = null;
-    let price = plan.priceEur;
+    let price = plan.priceEur ?? 0;
     let status: "active" | "trial" = "trial";
 
     if (data.discount_code) {
