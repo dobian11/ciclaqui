@@ -5,3 +5,4 @@
 
 ## Da fare
 - Implementare la direzione scelta dall’utente.
+- Google Maps su dominio custom: chiave pubblica dell'utente collegata via secret GOOGLE_API_KEY (fatto, l'app la usa automaticamente).
