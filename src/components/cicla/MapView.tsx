@@ -201,10 +201,10 @@ function FallbackLayers({
   return (
     <>
       {path && path.length > 1 && (
-        <Polyline positions={path.map((p) => [p.lat, p.lng])} pathOptions={{ color: MODE_COLORS[mode], weight: 5, opacity: 0.9 }} />
+        <Polyline positions={path.map((p) => [p.lat, p.lng] as [number, number])} pathOptions={{ color: MODE_COLORS[mode], weight: 5, opacity: 0.9 }} />
       )}
       {routePath && routePath.length > 1 && (
-        <Polyline positions={routePath.map((p) => [p.lat, p.lng])} pathOptions={{ color: MODE_COLORS.bike, weight: 7, opacity: 0.95 }} />
+        <Polyline positions={routePath.map((p) => [p.lat, p.lng] as [number, number])} pathOptions={{ color: MODE_COLORS.bike, weight: 7, opacity: 0.95 }} />
       )}
       {pois.map((poi) => (
         <Marker
