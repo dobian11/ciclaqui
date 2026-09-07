@@ -289,16 +289,12 @@ function WelcomePage() {
       </section>
 
       {/* ===== Marquee ===== */}
-      <div className="relative z-10 border-y border-foreground/10 bg-foreground/[0.03] py-4 backdrop-blur-sm">
-        <div className="lp-marquee-track gap-10 pr-10">
-          {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
-            <span key={i} className="flex shrink-0 items-center gap-2.5 text-sm font-semibold text-muted-foreground">
-              <item.icon size={16} className="text-cicla" />
-              {item.label}
-              <span className="ml-6 size-1 rounded-full bg-cicla/50" />
-            </span>
-          ))}
-        </div>
+      <div className="relative z-10 overflow-hidden border-y border-cicla/20 bg-cicla/[0.06] py-4 backdrop-blur-sm">
+        {/* fade sinistra */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-16 bg-gradient-to-r from-background to-transparent sm:w-24" />
+        {/* fade destra */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-16 bg-gradient-to-l from-background to-transparent sm:w-24" />
+        <MarqueeTrack />
       </div>
 
       {/* ===== Statistiche ===== */}
