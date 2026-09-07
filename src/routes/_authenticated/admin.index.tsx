@@ -106,12 +106,16 @@ function AdminDashboard() {
     queryKey: ["admin-stats"],
     queryFn: () => getStats({}),
     enabled: adminCheck?.admin === true,
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
   });
 
   const { data: payouts } = useQuery({
     queryKey: ["admin-payouts"],
     queryFn: () => listPayouts({}),
     enabled: adminCheck?.admin === true,
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
   });
 
   const listPendingCompanies = useServerFn(adminListPendingCompanies);
