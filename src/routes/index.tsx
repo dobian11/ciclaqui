@@ -125,6 +125,31 @@ const MARQUEE_ITEMS = [
   { icon: Wallet, label: "Riscatto in denaro o servizi" },
 ];
 
+function MarqueeTrack() {
+  const items = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
+  return (
+    <div
+      className="flex w-max will-change-transform"
+      style={{
+        animation: "lp-marquee 22s linear infinite",
+      }}
+    >
+      {items.map((item, i) => (
+        <span
+          key={i}
+          className="flex shrink-0 items-center gap-3 px-6 text-sm font-bold uppercase tracking-wider text-foreground/80 sm:px-10 sm:text-base"
+        >
+          <span className="grid size-7 place-items-center rounded-full bg-cicla/15 text-cicla sm:size-8">
+            <item.icon size={16} strokeWidth={2.2} />
+          </span>
+          {item.label}
+          <span className="ml-4 size-1.5 rounded-full bg-cicla sm:ml-6" />
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function WelcomePage() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
