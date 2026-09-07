@@ -14,6 +14,7 @@ import { PendingCompanyDashboard } from "@/components/cicla/PendingCompanyDashbo
 import { CompanyRejectionSection } from "@/components/cicla/CompanyRejectionSection";
 import { CompanyAccessStatus } from "@/components/cicla/CompanyAccessStatus";
 import { CompanyRewardsSection } from "@/components/cicla/CompanyRewardsSection";
+import { CompanyMarketplaceSection } from "@/components/cicla/CompanyMarketplaceSection";
 import { CompanyRedemptionsSection } from "@/components/cicla/CompanyRedemptionsSection";
 import { CompanyChallengesSection } from "@/components/cicla/CompanyChallengesSection";
 import { CompanyBadgesSection } from "@/components/cicla/CompanyBadgesSection";
@@ -28,7 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Loader2, Copy, Check, Users, CreditCard, Share2, LogOut, Building2, Landmark, Mail, Hash, Download, Bike, Clock,
-  LayoutDashboard, Trophy, Award, Gift, RefreshCw, Wallet,
+  LayoutDashboard, Trophy, Award, Gift, RefreshCw, Wallet, ShoppingBag,
 } from "lucide-react";
 
 
@@ -210,6 +211,7 @@ function CompanyDashboard() {
     { id: "membri", label: memberLabel, icon: Users, count: company.employees_count },
     { id: "coppe", label: "Coppe & maratone", icon: Trophy },
     { id: "badge", label: "Badge", icon: Award },
+    { id: "marketplace", label: "Marketplace", icon: ShoppingBag },
     { id: "premi", label: "Premi", icon: Gift },
     { id: "prelievi", label: "Prelievi", icon: Wallet },
     { id: "abbonamento", label: "Abbonamento", icon: CreditCard },

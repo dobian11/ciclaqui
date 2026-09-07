@@ -28,6 +28,7 @@ import { AdminTopupsPanel } from "@/components/cicla/AdminTopupsPanel";
 import { AdminLogsPanel } from "@/components/cicla/AdminLogsPanel";
 import { AdminDiscountCodes } from "@/components/cicla/AdminDiscountCodes";
 import { AdminPromoBanner } from "@/components/cicla/AdminPromoBanner";
+import { AdminRedemptionsPanel } from "@/components/cicla/AdminRedemptionsPanel";
 import { DocumentViewerDialog, type DocTarget } from "@/components/cicla/DocumentViewerDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -53,6 +54,7 @@ import {
   TicketPercent,
   Landmark,
   Terminal,
+  Gift,
 } from "lucide-react";
 
 type TabId =
@@ -62,6 +64,7 @@ type TabId =
   | "antifrode"
   | "prelievi"
   | "ricariche"
+  | "premi"
   | "sconti"
   | "notifiche"
   | "diagnostica";
@@ -374,6 +377,7 @@ function AdminDashboard() {
     { id: "antifrode", label: "Anti-frode", icon: AlertTriangle, count: pendingFlagsCount },
     { id: "prelievi", label: "Prelievi", icon: Wallet, count: pendingPayoutsCount },
     { id: "ricariche", label: "Ricariche", icon: Landmark },
+    { id: "premi", label: "Premi riscattati", icon: Gift },
     { id: "sconti", label: "Codici sconto", icon: TicketPercent },
     { id: "notifiche", label: "Notifiche", icon: Bell, count: unreadCount },
     { id: "diagnostica", label: "Diagnostica", icon: Terminal },
@@ -673,6 +677,8 @@ function AdminDashboard() {
           {tab === "utenti" && <AdminUsersPanel />}
 
           {tab === "ricariche" && <AdminTopupsPanel />}
+
+          {tab === "premi" && <AdminRedemptionsPanel />}
 
           {tab === "diagnostica" && <AdminLogsPanel />}
 
