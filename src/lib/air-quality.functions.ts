@@ -18,7 +18,7 @@ export const getAirQuality = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => schema.parse(data))
   .handler(async ({ data }) => {
     const lovableKey = process.env.LOVABLE_API_KEY;
-    const connKey = process.env.GOOGLE_MAPS_API_KEY;
+    const connKey = process.env.GOOGLE_MAPS_API_KEY_1 ?? process.env.GOOGLE_MAPS_API_KEY;
 
     // --- 1) Tenta Google Air Quality
     if (lovableKey && connKey) {
