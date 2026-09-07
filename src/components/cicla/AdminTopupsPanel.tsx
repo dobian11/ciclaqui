@@ -19,7 +19,12 @@ export function AdminTopupsPanel() {
   const confirm = useServerFn(adminConfirmTopup);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const q = useQuery({ queryKey: ["admin-topups"], queryFn: () => list() });
+  const q = useQuery({
+    queryKey: ["admin-topups"],
+    queryFn: () => list(),
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
+  });
 
   async function onConfirm(id: string) {
     setBusy(id);

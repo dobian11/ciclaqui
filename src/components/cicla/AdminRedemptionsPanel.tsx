@@ -24,6 +24,8 @@ export function AdminRedemptionsPanel() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin-redemptions"],
     queryFn: () => list({}),
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
   });
 
   if (isLoading) {

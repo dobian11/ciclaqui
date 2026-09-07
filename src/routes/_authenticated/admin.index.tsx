@@ -106,12 +106,16 @@ function AdminDashboard() {
     queryKey: ["admin-stats"],
     queryFn: () => getStats({}),
     enabled: adminCheck?.admin === true,
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
   });
 
   const { data: payouts } = useQuery({
     queryKey: ["admin-payouts"],
     queryFn: () => listPayouts({}),
     enabled: adminCheck?.admin === true,
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
   });
 
   const listPendingCompanies = useServerFn(adminListPendingCompanies);
@@ -127,12 +131,16 @@ function AdminDashboard() {
     queryKey: ["admin-companies"],
     queryFn: () => listPendingCompanies({}),
     enabled: adminCheck?.admin === true,
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
   });
 
   const { data: notifications } = useQuery({
     queryKey: ["admin-notifications"],
     queryFn: () => listNotifications({}),
     enabled: adminCheck?.admin === true,
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
   });
 
   // Realtime: sostituisce il polling. Si iscrive a notifiche admin,
@@ -173,6 +181,8 @@ function AdminDashboard() {
     queryKey: ["admin-trip-flags"],
     queryFn: () => listTripFlags({}),
     enabled: adminCheck?.admin === true,
+    refetchInterval: 20_000,
+    refetchOnWindowFocus: true,
   });
 
   async function handleFlagDecide(id: string, decision: "confirmed" | "dismissed") {
