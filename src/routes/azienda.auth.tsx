@@ -275,8 +275,9 @@ function CompanyAuthPage() {
                   <Label htmlFor="su-cpwd2">Ripeti password</Label>
                   <Input id="su-cpwd2" name="password2" type="password" required minLength={8} autoComplete="new-password" />
                 </div>
-                <label className="flex items-start gap-2.5 rounded-lg border border-border/60 bg-muted/30 p-3">
+                <label htmlFor="az-terms" className="flex items-start gap-2.5 rounded-lg border border-border/60 bg-muted/30 p-3">
                   <Checkbox
+                    id="az-terms"
                     checked={acceptTerms}
                     onCheckedChange={(v) => setAcceptTerms(v === true)}
                     className="mt-0.5"
