@@ -20,17 +20,17 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: "Cicla Qui · Mobilità sostenibile che premia" },
+      { title: "Cicla Qui · Mobilità Sostenibile per Aziende e Comuni" },
       {
         name: "description",
         content:
-          "Cicla Qui premia i tuoi spostamenti sostenibili. Per persone e aziende: punti, sicurezza e passaporto bici antifurto.",
+          "App che premia bici e piedi con punti convertibili in premi. Passaporto bici antifurto, mappa GPS e sfide green.",
       },
-      { property: "og:title", content: "Cicla Qui · Mobilità sostenibile che premia" },
+      { property: "og:title", content: "Cicla Qui · Mobilità Sostenibile per Aziende e Comuni" },
       {
         property: "og:description",
         content:
-          "Trasforma bici e passi in punti riscattabili con i premi della tua azienda o del tuo Comune.",
+          "App che premia bici e piedi con punti convertibili in premi. Passaporto bici antifurto, mappa GPS e sfide green.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://ciclaqui.it/" },
