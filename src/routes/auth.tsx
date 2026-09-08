@@ -328,7 +328,7 @@ function AuthPage() {
                     Comune. Dopo la conferma dell'email entri direttamente nell'app.
                   </p>
                 </div>
-                <label className="flex items-start gap-2.5 rounded-lg border border-border/60 bg-muted/30 p-3">
+                <label htmlFor="terms" className="flex items-start gap-2.5 rounded-lg border border-border/60 bg-muted/30 p-3">
                   <Checkbox
                     id="terms"
                     checked={acceptTerms}
