@@ -97,6 +97,8 @@ function CercaBiciPage() {
           className="mt-6 flex gap-2"
         >
           <input
+            id="frame-number"
+            aria-label="Numero di telaio della bici"
             value={query}
             onChange={(e) => setQuery(e.target.value.toUpperCase())}
             placeholder="Numero telaio"
