@@ -96,25 +96,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "Cicla Qui" },
       { name: "mobile-web-app-capable", content: "yes" },
-      { title: "Cicla Qui — La tua guida sicura per pedalare in Italia" },
+      { title: "Cicla Qui · Mobilità Sostenibile per Aziende e Comuni" },
       {
         name: "description",
         content:
-          "Assistente per ciclisti italiani: mappa GPS ottimizzata, passaporto bici antifurto QR, community Safe-Radar e punti convertibili in denaro.",
+          "App che premia bici e piedi con punti convertibili in premi. Passaporto bici antifurto, mappa GPS e sfide green.",
       },
       { name: "author", content: "Cicla Qui" },
-      { property: "og:title", content: "Cicla Qui — Mobilità sostenibile premiata" },
+      { property: "og:title", content: "Cicla Qui · Mobilità Sostenibile per Aziende e Comuni" },
       {
         property: "og:description",
         content:
-          "Pedala, cammina, guadagna punti convertibili in denaro. Per ciclisti e aziende che credono nella mobilità verde.",
+          "App che premia bici e piedi con punti convertibili in premi. Passaporto bici antifurto, mappa GPS e sfide green.",
       },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "Cicla Qui" },
       { property: "og:locale", content: "it_IT" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Cicla Qui" },
-      { name: "twitter:description", content: "Pedala, cammina, guadagna." },
+      { name: "twitter:title", content: "Cicla Qui · Mobilità Sostenibile per Aziende e Comuni" },
+      { name: "twitter:description", content: "App che premia bici e piedi con punti convertibili in premi. Passaporto bici antifurto, mappa GPS e sfide green." },
     ],
     scripts: [
       {
