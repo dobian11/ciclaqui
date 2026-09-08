@@ -96,25 +96,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "Cicla Qui" },
       { name: "mobile-web-app-capable", content: "yes" },
-      { title: "Cicla Qui · Mobilità Sostenibile per Aziende e Comuni" },
+      { title: "Cicla Qui" },
       {
         name: "description",
         content:
-          "App che premia bici e piedi con punti convertibili in premi. Passaporto bici antifurto, mappa GPS e sfide green.",
+          "Cicla Qui: l'app di mobilità sostenibile per dipendenti, cittadini, aziende e comuni.",
       },
       { name: "author", content: "Cicla Qui" },
-      { property: "og:title", content: "Cicla Qui · Mobilità Sostenibile per Aziende e Comuni" },
-      {
-        property: "og:description",
-        content:
-          "App che premia bici e piedi con punti convertibili in premi. Passaporto bici antifurto, mappa GPS e sfide green.",
-      },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "Cicla Qui" },
       { property: "og:locale", content: "it_IT" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Cicla Qui · Mobilità Sostenibile per Aziende e Comuni" },
-      { name: "twitter:description", content: "App che premia bici e piedi con punti convertibili in premi. Passaporto bici antifurto, mappa GPS e sfide green." },
     ],
     scripts: [
       {
