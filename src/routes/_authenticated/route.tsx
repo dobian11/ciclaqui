@@ -3,6 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
+  head: () => ({
+    meta: [{ name: "robots", content: "noindex, nofollow" }],
+  }),
   beforeLoad: async ({ location }) => {
     // Prima prova a leggere la sessione dallo storage (evita blocchi se il refresh
     // di rete è lento o fallisce). Se non c'è sessione, redirect a /auth.
