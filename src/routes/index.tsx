@@ -34,6 +34,14 @@ export const Route = createFileRoute("/")({
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://ciclaqui.it/" },
+      { property: "og:image", content: "https://ciclaqui.it/og-image.jpg" },
+      { name: "twitter:image", content: "https://ciclaqui.it/og-image.jpg" },
+      { name: "twitter:title", content: "Cicla Qui · Mobilità Sostenibile per Aziende e Comuni" },
+      {
+        name: "twitter:description",
+        content:
+          "App che premia bici e piedi con punti convertibili in premi. Passaporto bici antifurto, mappa GPS e sfide green.",
+      },
     ],
     links: [{ rel: "canonical", href: "https://ciclaqui.it/" }],
     scripts: [
