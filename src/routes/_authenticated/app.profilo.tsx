@@ -35,6 +35,7 @@ function ProfiloPage() {
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [fullName, setFullName] = useState("");
+  const [nickname, setNickname] = useState("");
   const [weight, setWeight] = useState<string>("");
   const [iban, setIban] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
