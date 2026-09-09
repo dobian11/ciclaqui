@@ -223,7 +223,7 @@ function SfidePage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold">
-                    {r.full_name ?? "Anonimo"}
+                    @{r.full_name ?? "ciclista"}
                   </div>
                   <div className="text-[10px] text-muted-foreground">
                     {Number(r.lifetime_km).toFixed(1)} km · streak {r.current_streak}

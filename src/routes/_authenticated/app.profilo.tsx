@@ -49,7 +49,7 @@ function ProfiloPage() {
       const [{ data: profile }, { data: roles }] = await Promise.all([
         supabase
           .from("profiles")
-          .select("full_name, weight_kg, company_id, avatar_url, iban")
+          .select("full_name, nickname, weight_kg, company_id, avatar_url, iban")
           .eq("id", user.user.id)
           .maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", user.user.id),
