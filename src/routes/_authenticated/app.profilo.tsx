@@ -230,6 +230,26 @@ function ProfiloPage() {
                 placeholder="Mario Rossi"
                 className="mt-1"
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Visibile solo a te e al tuo ente. Gli altri ciclisti vedono solo il nickname.
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="nickname">Nickname pubblico</Label>
+              <Input
+                id="nickname"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value.replace(/\s/g, ""))}
+                placeholder="ciclista1234"
+                maxLength={20}
+                autoComplete="off"
+                spellCheck={false}
+                className="mt-1 font-mono"
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                È il nome con cui appari in classifica. Deve essere unico: 3-20 caratteri
+                tra lettere, numeri, punto e underscore.
+              </p>
             </div>
             <div>
               <Label htmlFor="weight">Peso (kg) — per il calcolo calorie</Label>
