@@ -77,6 +77,7 @@ function ProfiloPage() {
   useEffect(() => {
     if (!profileQ.data?.profile) return;
     setFullName(profileQ.data.profile.full_name ?? "");
+    setNickname(profileQ.data.profile.nickname ?? "");
     setWeight(profileQ.data.profile.weight_kg?.toString() ?? "");
     setIban(profileQ.data.profile.iban ?? "");
     setAvatar(profileQ.data.profile.avatar_url ?? null);
@@ -110,6 +111,11 @@ function ProfiloPage() {
       toast.error(`IBAN: ${ibanCheck.reason}`);
       return;
     }
+    const nick = nickname.trim();
+    if (!/^[A-Za-z0-9_.]{3,20}$/.test(nick)) {
+      toast.error("Nickname: 3-20 caratteri, solo lettere, numeri, punto o underscore");
+      return;
+    }
     const ibanClean = ibanCheck.ok ? ibanCheck.iban : null;
     setSaving(true);
     try {
@@ -117,6 +123,7 @@ function ProfiloPage() {
         .from("profiles")
         .update({
           full_name: fullName || null,
+          nickname: nick,
           weight_kg: weight ? Number(weight) : null,
           iban: ibanClean,
           avatar_url: avatar,
