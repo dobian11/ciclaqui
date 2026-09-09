@@ -1326,6 +1326,7 @@ export type Database = {
           full_name: string | null
           iban: string | null
           id: string
+          nickname: string | null
           phone: string | null
           preferences: Json
           stripe_account_id: string | null
@@ -1340,6 +1341,7 @@ export type Database = {
           full_name?: string | null
           iban?: string | null
           id: string
+          nickname?: string | null
           phone?: string | null
           preferences?: Json
           stripe_account_id?: string | null
@@ -1354,6 +1356,7 @@ export type Database = {
           full_name?: string | null
           iban?: string | null
           id?: string
+          nickname?: string | null
           phone?: string | null
           preferences?: Json
           stripe_account_id?: string | null
@@ -2013,6 +2016,7 @@ export type Database = {
         Returns: undefined
       }
       generate_company_code: { Args: { _name: string }; Returns: string }
+      generate_nickname: { Args: { _seed: string }; Returns: string }
       get_my_prize_code: { Args: { _prize_id: string }; Returns: string }
       has_role: {
         Args: {

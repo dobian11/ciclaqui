@@ -35,6 +35,7 @@ function ProfiloPage() {
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [fullName, setFullName] = useState("");
+  const [nickname, setNickname] = useState("");
   const [weight, setWeight] = useState<string>("");
   const [iban, setIban] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -49,7 +50,7 @@ function ProfiloPage() {
       const [{ data: profile }, { data: roles }] = await Promise.all([
         supabase
           .from("profiles")
-          .select("full_name, weight_kg, company_id, avatar_url, iban")
+          .select("full_name, nickname, weight_kg, company_id, avatar_url, iban")
           .eq("id", user.user.id)
           .maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", user.user.id),
@@ -76,6 +77,7 @@ function ProfiloPage() {
   useEffect(() => {
     if (!profileQ.data?.profile) return;
     setFullName(profileQ.data.profile.full_name ?? "");
+    setNickname(profileQ.data.profile.nickname ?? "");
     setWeight(profileQ.data.profile.weight_kg?.toString() ?? "");
     setIban(profileQ.data.profile.iban ?? "");
     setAvatar(profileQ.data.profile.avatar_url ?? null);
@@ -109,6 +111,11 @@ function ProfiloPage() {
       toast.error(`IBAN: ${ibanCheck.reason}`);
       return;
     }
+    const nick = nickname.trim();
+    if (!/^[A-Za-z0-9_.]{3,20}$/.test(nick)) {
+      toast.error("Nickname: 3-20 caratteri, solo lettere, numeri, punto o underscore");
+      return;
+    }
     const ibanClean = ibanCheck.ok ? ibanCheck.iban : null;
     setSaving(true);
     try {
@@ -116,6 +123,7 @@ function ProfiloPage() {
         .from("profiles")
         .update({
           full_name: fullName || null,
+          nickname: nick,
           weight_kg: weight ? Number(weight) : null,
           iban: ibanClean,
           avatar_url: avatar,
@@ -125,7 +133,11 @@ function ProfiloPage() {
       toast.success("Profilo aggiornato");
       queryClient.invalidateQueries({ queryKey: ["me"] });
     } catch (e: any) {
-      toast.error(e.message ?? "Errore salvataggio");
+      if (e?.code === "23505" || /duplicate key/i.test(e?.message ?? "")) {
+        toast.error("Questo nickname è già in uso, scegline un altro");
+      } else {
+        toast.error(e.message ?? "Errore salvataggio");
+      }
     } finally {
       setSaving(false);
     }
@@ -218,6 +230,26 @@ function ProfiloPage() {
                 placeholder="Mario Rossi"
                 className="mt-1"
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Visibile solo a te e al tuo ente. Gli altri ciclisti vedono solo il nickname.
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="nickname">Nickname pubblico</Label>
+              <Input
+                id="nickname"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value.replace(/\s/g, ""))}
+                placeholder="ciclista1234"
+                maxLength={20}
+                autoComplete="off"
+                spellCheck={false}
+                className="mt-1 font-mono"
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                È il nome con cui appari in classifica. Deve essere unico: 3-20 caratteri
+                tra lettere, numeri, punto e underscore.
+              </p>
             </div>
             <div>
               <Label htmlFor="weight">Peso (kg) — per il calcolo calorie</Label>
