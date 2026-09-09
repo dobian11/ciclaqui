@@ -133,7 +133,11 @@ function ProfiloPage() {
       toast.success("Profilo aggiornato");
       queryClient.invalidateQueries({ queryKey: ["me"] });
     } catch (e: any) {
-      toast.error(e.message ?? "Errore salvataggio");
+      if (e?.code === "23505" || /duplicate key/i.test(e?.message ?? "")) {
+        toast.error("Questo nickname è già in uso, scegline un altro");
+      } else {
+        toast.error(e.message ?? "Errore salvataggio");
+      }
     } finally {
       setSaving(false);
     }
