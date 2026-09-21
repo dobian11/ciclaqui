@@ -9,15 +9,27 @@ export const sendPushToUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { targetUserId: string; title: string; body: string; data?: Record<string, string> }) => input)
   .handler(async ({ data, context }) => {
-    // Solo admin o stessa company
+    // Solo admin, oppure il titolare/gestore dell'ente a cui appartiene il destinatario.
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) {
-      // controllo company manager → stessa company del target
-      const { data: caller } = await context.supabase.from("profiles").select("company_id").eq("id", context.userId).maybeSingle();
-      const { data: target } = await context.supabase.from("profiles").select("company_id").eq("id", data.targetUserId).maybeSingle();
-      if (!caller?.company_id || caller.company_id !== target?.company_id) {
-        throw new Error("Forbidden");
-      }
+      const { data: isManager } = await context.supabase.rpc("has_role", {
+        _user_id: context.userId,
+        _role: "company_manager",
+      });
+      if (!isManager) throw new Error("Forbidden");
+
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: target } = await supabaseAdmin
+        .from("profiles")
+        .select("company_id")
+        .eq("id", data.targetUserId)
+        .maybeSingle();
+      if (!target?.company_id) throw new Error("Forbidden");
+
+      const { data: owns } = await context.supabase.rpc("owns_company", {
+        _company_id: target.company_id,
+      });
+      if (!owns) throw new Error("Forbidden");
     }
 
     const { sendPushToUsers } = await import("@/lib/push.server");
