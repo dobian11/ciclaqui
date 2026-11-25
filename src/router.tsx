@@ -1,6 +1,6 @@
 import { QueryClient, QueryCache, MutationCache } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { createRouter } from "@tanstack/react-router";
+import { createRouter, type ErrorComponentProps } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 import { friendlyMessage } from "./lib/error-message";
 import { ErrorScreen } from "./components/cicla/ErrorScreen";
@@ -43,7 +43,9 @@ export const getRouter = () => {
     defaultPendingMs: 150,
     defaultPendingMinMs: 300,
     // Nessuno schermo bianco: ogni errore di loader/serverFn mostra la schermata dedicata
-    defaultErrorComponent: ({ error, reset }) => <ErrorScreen error={error} reset={reset} />,
+    defaultErrorComponent: ({ error, reset }: ErrorComponentProps) => (
+      <ErrorScreen error={error instanceof Error ? error : new Error(String(error))} reset={reset} />
+    ),
   });
 
   return router;
